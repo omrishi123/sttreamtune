@@ -41,17 +41,22 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [queue, setQueueState] = useState<Track[]>([]);
   const [progress, setProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   
   const userData = useUserData();
 
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  // A ref to track if we're in native app mode
   const isNativeMode = useRef(false);
 
   useEffect(() => {
-    // We only manage the YouTube player if not in native mode
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     if (!isNativeMode.current && isPlaying && isReady && playerRef.current) {
       playerRef.current.getInternalPlayer()?.playVideo();
       startProgressInterval();
@@ -63,18 +68,17 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       stopProgressInterval();
     }
-  }, [isReady, isPlaying]);
+  }, [isMounted, isReady, isPlaying]);
 
   useEffect(() => {
-    if (currentTrack && userData?.addRecentlyPlayed) {
+    if (currentTrack?.id && userData?.addRecentlyPlayed) {
         userData.addRecentlyPlayed(currentTrack.id);
         userData.addTrackToCache(currentTrack);
     }
-  }, [currentTrack?.id]);
+  }, [currentTrack?.id, userData?.addRecentlyPlayed, userData?.addTrackToCache]);
 
 
   const startProgressInterval = () => {
-    // This function will need to be adapted if the native side can report progress
     if (isNativeMode.current) return;
     stopProgressInterval(); 
     progressIntervalRef.current = setInterval(async () => {
@@ -99,26 +103,22 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     let trackToPlay = track || currentTrack || queue[0];
   
     if (trackToPlay) {
-       // Set UI state immediately for responsiveness
        if (currentTrack?.id !== trackToPlay.id) {
           setProgress(0);
           setCurrentTrack(trackToPlay);
        }
        setIsPlaying(true);
 
-       // THE CRITICAL CHECK
        if (window.AndroidBridge && typeof window.AndroidBridge.playSong === 'function') {
             isNativeMode.current = true;
             console.log("Running in Android App. Delegating playback.");
             const trackInfoJson = JSON.stringify(trackToPlay);
             window.AndroidBridge.playSong(trackInfoJson);
-            // The embedded YouTube player will NOT be used.
        } else {
-            // FALLBACK FOR BROWSER
             isNativeMode.current = false;
             console.log("Running in a standard browser. Playing audio directly.");
             if (currentTrack?.id !== trackToPlay.id) {
-                setIsReady(false); // Reset readiness for the new track in the YouTube player
+                setIsReady(false);
             }
        }
     }
@@ -128,8 +128,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsPlaying(false);
     if (isNativeMode.current && window.AndroidBridge && typeof window.AndroidBridge.pause === 'function') {
         window.AndroidBridge.pause();
-    } else {
-       // Browser fallback is handled by the useEffect
     }
   };
 
@@ -172,7 +170,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleStateChange = (event: any) => {
-    if (isNativeMode.current) return; // Don't respond to YouTube events in native mode
+    if (isNativeMode.current) return;
 
     if (event.data === YouTube.PlayerState.PLAYING) {
       startProgressInterval();
@@ -189,7 +187,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setProgress(newProgress);
       
       if (isNativeMode.current) {
-        // You would need a seekTo method on your bridge
         // window.AndroidBridge.seekTo(newProgress);
       } else {
         const player = playerRef.current?.getInternalPlayer();
@@ -219,6 +216,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     progress,
     handleSeek
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <PlayerContext.Provider value={value}>
