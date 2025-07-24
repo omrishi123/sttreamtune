@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Image from "next/image";
+import YouTube from "react-youtube";
 import {
   Play,
   Pause,
@@ -21,34 +22,21 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { QueueSheet } from "./queue-sheet";
 
 export function Player() {
-  const { currentTrack, isPlaying, play, pause, playNext, playPrev } = usePlayer();
-  const [progress, setProgress] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(50);
+  const { 
+    currentTrack, 
+    isPlaying, 
+    play, 
+    pause, 
+    playNext, 
+    playPrev,
+    progress,
+    handleSeek
+  } = usePlayer();
+  const [isMuted, setIsMuted] = React.useState(false);
+  const [volume, setVolume] = React.useState(50);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isPlaying && currentTrack) {
-      timer = setInterval(() => {
-        setProgress((prev) => {
-          const newProgress = prev + 100 / currentTrack.duration;
-          if (newProgress >= 100) {
-            playNext();
-            return 0;
-          }
-          return newProgress;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isPlaying, currentTrack, playNext]);
-
-  useEffect(() => {
-    setProgress(0);
-  }, [currentTrack]);
-  
   if (!currentTrack) {
-    return null; // Don't render player if no track is selected
+    return null; 
   }
 
   const handlePlayPause = () => {
@@ -70,7 +58,6 @@ export function Player() {
   return (
     <footer className="bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
       <div className="flex items-center justify-between w-full">
-        {/* Track Info */}
         <div className="w-1/4 flex items-center gap-3">
           <Image
             src={currentTrack.artwork}
@@ -89,7 +76,6 @@ export function Player() {
             </Button>
         </div>
 
-        {/* Player Controls */}
         <div className="w-1/2 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon">
@@ -116,14 +102,13 @@ export function Player() {
             <span className="text-xs text-muted-foreground">{formatTime(currentPosition)}</span>
             <Slider
               value={[progress]}
-              onValueChange={(value) => setProgress(value[0])}
+              onValueChange={handleSeek}
               className="w-full"
             />
             <span className="text-xs text-muted-foreground">{formatTime(currentTrack.duration)}</span>
           </div>
         </div>
 
-        {/* Volume & Queue Controls */}
         <div className="w-1/4 flex items-center justify-end gap-2">
            <Popover>
             <PopoverTrigger asChild>
