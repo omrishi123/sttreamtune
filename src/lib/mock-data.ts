@@ -313,22 +313,22 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
 ];
 
 export const getPlaylistById = async (id: string): Promise<Playlist | undefined> => {
-    // In a real app, you'd fetch this from your DB or the YouTube API.
-    // For now, we'll check our mock data, but this might not be sufficient
-    // if the playlist is coming directly from the new YouTube playlist flow.
-    const allPlaylists = homePagePlaylists.flatMap(section => section.playlists);
+    const allPlaylists = homePagePlaylists.flatMap(section => section.playlists)
+        .concat(userPlaylists);
+    
     const mockPlaylist = allPlaylists.find(p => p.id === id);
     if(mockPlaylist) return mockPlaylist;
     
-    // This part is tricky because we don't have a direct way to fetch a single
-    // playlist from youtube by its ID without a new flow. 
-    // For the scope of this change, we'll assume the playlist details are passed
-    // or we can make a new call if necessary.
-    // Placeholder for fetching from YouTube API by ID if needed.
     return undefined;
 }
 
 export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]> => {
+    // For local user-created playlists, just find the tracks from mock-data
+    const userPlaylist = userPlaylists.find(p => p.id === playlistId);
+    if (userPlaylist) {
+        return userPlaylist.trackIds.map(id => tracks.find(t => t.id === id)).filter(Boolean) as Track[];
+    }
+    
     const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
     if (!apiKey) {
         console.error("YOUTUBE_API_KEY is not set.");
