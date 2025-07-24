@@ -70,7 +70,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         userData.addRecentlyPlayed(currentTrack.id);
         userData.addTrackToCache(currentTrack);
     }
-  }, [currentTrack?.id, userData]);
+  }, [currentTrack?.id]);
 
 
   const startProgressInterval = () => {
