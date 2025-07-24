@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import type { Playlist, Track } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePlayer } from "@/context/player-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
-export default function PlaylistPage({ params: { id } }: { params: { id: string } }) {
+export default function PlaylistPage({ params }: { params: { id: string } }) {
+  const resolvedParams = React.use(Promise.resolve(params));
+  const id = resolvedParams.id;
   const { getPlaylistById, getTrackById } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   
