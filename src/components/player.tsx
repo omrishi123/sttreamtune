@@ -81,7 +81,7 @@ export function Player() {
                 className="rounded-md"
                 data-ai-hint={currentTrack['data-ai-hint']}
               />
-              <div className="truncate">
+              <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
                 <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
               </div>
@@ -111,8 +111,9 @@ export function Player() {
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
-      <div className="flex items-center justify-between w-full">
-        <div className="w-1/4 flex items-center gap-3">
+      <div className="grid grid-cols-[1fr_2fr_1fr] items-center w-full">
+        {/* Left Section: Track Info */}
+        <div className="flex items-center gap-3 overflow-hidden">
           <Image
             src={currentTrack.artwork}
             alt={currentTrack.title}
@@ -121,7 +122,7 @@ export function Player() {
             className="rounded-md"
             data-ai-hint={currentTrack['data-ai-hint']}
           />
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
@@ -131,7 +132,8 @@ export function Player() {
             <AddToPlaylistMenu trackId={currentTrack.id} />
         </div>
 
-        <div className="w-1/2 flex flex-col items-center justify-center gap-2">
+        {/* Center Section: Player Controls */}
+        <div className="flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon">
               <Shuffle className="h-5 w-5 text-muted-foreground" />
@@ -153,7 +155,7 @@ export function Player() {
               <Repeat className="h-5 w-5 text-muted-foreground" />
             </Button>
           </div>
-          <div className="flex items-center gap-2 w-full max-w-md">
+          <div className="flex items-center gap-2 w-full max-w-xl">
             <span className="text-xs text-muted-foreground">{formatTime(currentPosition)}</span>
             <Slider
               value={[progress]}
@@ -164,7 +166,8 @@ export function Player() {
           </div>
         </div>
 
-        <div className="w-1/4 flex items-center justify-end gap-2">
+        {/* Right Section: Volume and Queue */}
+        <div className="flex items-center justify-end gap-2">
            <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon">
