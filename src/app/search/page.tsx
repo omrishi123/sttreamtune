@@ -23,6 +23,7 @@ export default function SearchPage() {
     if (!query) return;
 
     setIsLoading(true);
+    setResults([]);
     try {
       const searchResults = await searchYoutube({ query });
       setResults(searchResults);
@@ -30,14 +31,17 @@ export default function SearchPage() {
         toast({
           title: "No results found",
           description: "Try a different search term.",
-        });5
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Search failed:", error);
+      const isApiError = error.message?.includes('403');
       toast({
         variant: "destructive",
-        title: "Search Failed",
-        description: "Could not connect to YouTube. Please check your API key and try again.",
+        title: isApiError ? "YouTube API Error" : "Search Failed",
+        description: isApiError 
+          ? "The request was forbidden. Please check your YouTube API key and ensure the 'YouTube Data API v3' is enabled in your Google Cloud project."
+          : "Could not perform search. Please try again later.",
       });
     } finally {
       setIsLoading(false);
