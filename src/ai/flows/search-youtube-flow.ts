@@ -12,7 +12,7 @@ import { z } from 'genkit';
 import { Track } from '@/lib/types';
 import 'dotenv/config';
 
-const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const YOUTUBE_API_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_VIDEOS_API_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
@@ -37,7 +37,7 @@ export type YoutubeSearchOutput = z.infer<typeof YoutubeSearchOutputSchema>;
 
 async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
     if (!YOUTUBE_API_KEY) {
-        throw new Error("NEXT_PUBLIC_YOUTUBE_API_KEY is not set in environment variables.");
+        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
     const url = new URL(YOUTUBE_VIDEOS_API_URL);
     url.searchParams.append('part', 'contentDetails');
@@ -71,12 +71,12 @@ const searchYoutubeFlow = ai.defineFlow(
   },
   async (input) => {
     if (!YOUTUBE_API_KEY) {
-        throw new Error("NEXT_PUBLIC_YOUTUBE_API_KEY is not set in environment variables.");
+        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
     const url = new URL(YOUTUBE_API_URL);
     url.searchParams.append('part', 'snippet');
     url.searchParams.append('q', `${input.query} official audio`);
-    url.searchParams.append('key', YOUTUBE_API_KEY);
+    url.search_params.append('key', YOUTUBE_API_KEY);
     url.searchParams.append('type', 'video');
     url.searchParams.append('maxResults', '10');
 

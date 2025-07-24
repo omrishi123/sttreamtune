@@ -12,7 +12,7 @@ import { z } from 'genkit';
 import { Playlist } from '@/lib/types';
 import 'dotenv/config';
 
-const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const YOUTUBE_SEARCH_API_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_PLAYLISTS_API_URL = 'https://www.googleapis.com/youtube/v3/playlists';
 
@@ -50,7 +50,7 @@ const getYoutubePlaylistsFlow = ai.defineFlow(
   },
   async (input) => {
     if (!YOUTUBE_API_KEY) {
-      throw new Error("NEXT_PUBLIC_YOUTUBE_API_KEY is not set in environment variables.");
+      throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
     const url = new URL(YOUTUBE_SEARCH_API_URL);
     url.searchParams.append('part', 'snippet');
@@ -97,7 +97,7 @@ const getYoutubePlaylistDetailsFlow = ai.defineFlow(
   },
   async ({ playlistId }) => {
     if (!YOUTUBE_API_KEY) {
-      throw new Error("NEXT_PUBLIC_YOUTUBE_API_KEY is not set in environment variables.");
+      throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
     const url = new URL(YOUTUBE_PLAYLISTS_API_URL);
     url.searchParams.append('part', 'snippet,contentDetails');

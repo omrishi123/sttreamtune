@@ -76,7 +76,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEF-J_tIORZ6xE_OXkGuKjjY",
           "name": "Party Songs",
           "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
-          "coverArt": "https://i.ytimg.com/vi/1_omv_G2g-E/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Lme-AZ1n7dM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -99,7 +99,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLwgf_2_aBmU1kYCWHfvX9kVhKoof35qzg",
           "name": "Bollywood Dance",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/1_omv_G2g-E/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/eY2kew8n2u4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -108,7 +108,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL1gfuz7ZYcaM2Z7sCGOWORCF0CGmonzOv",
           "name": "Spotify Playlist",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/Lme-AZ1n7dM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/aA6II82-4cI/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -117,7 +117,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6NYoMAN0XncJu4tvibirSmN",
           "name": "Punjabi Song Playlist",
           "description": "Sad songs are songs that make you feel sad.",
-          "coverArt": "https://i.ytimg.com/vi/eY2kew8n2u4/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/gvyUuxdRdR4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -329,7 +329,7 @@ export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]>
         return userPlaylist.trackIds.map(id => tracks.find(t => t.id === id)).filter(Boolean) as Track[];
     }
     
-    const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+    const apiKey = process.env.YOUTUBE_API_KEY;
     if (!apiKey) {
         console.error("YOUTUBE_API_KEY is not set.");
         return [];
@@ -395,9 +395,9 @@ export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]>
 }
 
 async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
-    const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+    const apiKey = process.env.YOUTUBE_API_KEY;
     if (!apiKey) {
-        throw new Error("NEXT_PUBLIC_YOUTUBE_API_KEY is not set in environment variables.");
+        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
     const url = new URL('https://www.googleapis.com/youtube/v3/videos');
     url.searchParams.append('part', 'contentDetails');
