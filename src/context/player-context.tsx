@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useRef } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
 import type { Track } from '@/lib/types';
 import YouTube from 'react-youtube';
 
@@ -25,9 +25,18 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [queue, setQueueState] = useState<Track[]>([]);
   const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isPlaying && isReady) {
+      playerRef.current?.getInternalPlayer()?.playVideo();
+      startProgressInterval();
+    }
+  }, [currentTrack, isReady, isPlaying]);
+
 
   const startProgressInterval = () => {
     if (progressIntervalRef.current) {
@@ -54,26 +63,28 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const play = (track?: Track) => {
     let trackToPlay = track;
   
-    if (trackToPlay) {
-      // If a specific track is provided, play it.
-      setCurrentTrack(trackToPlay);
-    } else if (!currentTrack && queue.length > 0) {
-      // If no track is playing and the queue is not empty, play the first track.
-      trackToPlay = queue[0];
-      setCurrentTrack(trackToPlay);
+    if (!trackToPlay) {
+      if(currentTrack) {
+        trackToPlay = currentTrack;
+      } else if (queue.length > 0) {
+        trackToPlay = queue[0];
+      }
     }
-  
-    // If there's a track to play, start playback.
+
     if (trackToPlay) {
-      setProgress(0);
+       if (currentTrack?.id !== trackToPlay.id) {
+        setIsReady(false);
+        setProgress(0);
+        setCurrentTrack(trackToPlay);
+      }
       setIsPlaying(true);
-      // The onReady handler will call playVideo if isPlaying is true.
     }
   };
 
   const pause = () => {
     playerRef.current?.getInternalPlayer()?.pauseVideo();
     setIsPlaying(false);
+    stopProgressInterval();
   };
 
   const playNext = () => {
@@ -110,7 +121,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-
   const handleStateChange = (event: any) => {
     if (event.data === YouTube.PlayerState.PLAYING) {
       setIsPlaying(true);
@@ -133,9 +143,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const handleReady = (event: any) => {
-    if (isPlaying) {
-      event.target.playVideo();
-    }
+    setIsReady(true);
   }
 
   const value = {
@@ -164,11 +172,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                     height: '0',
                     width: '0',
                     playerVars: {
-                        autoplay: isPlaying ? 1 : 0,
+                        autoplay: 1, // Autoplay is handled by the useEffect now
                     },
                 }}
                 onStateChange={handleStateChange}
                 onReady={handleReady}
+                onEnd={playNext}
                 className="hidden"
             />
         )}
