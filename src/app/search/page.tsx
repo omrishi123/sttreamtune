@@ -15,7 +15,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<YoutubeSearchOutput>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
+  const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -45,8 +45,6 @@ export default function SearchPage() {
   };
 
   const handlePlayTrack = (trackId: string) => {
-    // This ensures the queue is always set with the current search results
-    // and the correct track starts playing.
     setQueueAndPlay(results, trackId);
   };
 
