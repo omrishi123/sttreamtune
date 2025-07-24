@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -14,19 +15,34 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
-import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    login();
-    router.push('/');
-    router.refresh(); // To reflect login state change
+    setIsLoading(true);
+    try {
+      await login(email, password);
+      router.push('/');
+      router.refresh();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-
+  
   const handleGuest = () => {
     router.push('/');
   };
@@ -37,16 +53,16 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-headline">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account. Or continue as a guest.
+            Enter your email below to login to your account or continue as a guest.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline">
+            <Button variant="outline" type="button" disabled>
               <Icons.google className="mr-2 h-4 w-4" />
               Google
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" type="button" disabled>
               <Icons.facebook className="mr-2 h-4 w-4" />
               Facebook
             </Button>
@@ -63,23 +79,23 @@ export default function LoginPage() {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required defaultValue="jane.doe@example.com" />
+            <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required defaultValue="password" />
+            <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
           </div>
-          <Button type="submit" className="w-full">
-            Sign in
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign in"}
           </Button>
-           <Button variant="secondary" className="w-full" onClick={handleGuest}>
+           <Button variant="secondary" className="w-full" type="button" onClick={handleGuest}>
             Continue as a Guest
           </Button>
         </CardContent>
         <CardFooter className="text-sm">
           <p>
             Don&apos;t have an account?{" "}
-            <Link href="#" className="underline hover:text-primary">
+            <Link href="/signup" className="underline hover:text-primary">
               Sign up
             </Link>
           </p>

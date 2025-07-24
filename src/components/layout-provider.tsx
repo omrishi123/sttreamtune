@@ -1,33 +1,28 @@
 "use client";
 
-import React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AuthLayout } from "@/components/auth-layout";
 import { PlayerLayout } from "@/components/player-layout";
-import { getSession } from "@/lib/auth";
+import { onAuthChange } from "@/lib/auth";
+import type { User } from "@/lib/types";
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const [user, setUser] = useState<User | null>(null);
 
-  // This is a simple protection mechanism.
-  // In a real app, this would be handled by middleware.
-  React.useEffect(() => {
-    const session = getSession();
-    if (!session.isLoggedIn && !isAuthPage && !session.user) {
-       // Allow guest access, but if there's no user at all, redirect to login.
-       const guestAllowed = localStorage.getItem('guest-access') === 'true';
-       if (!guestAllowed) {
-         // router.push("/login");
-       }
-    }
-  }, [pathname, router, isAuthPage]);
-
+  useEffect(() => {
+    const unsubscribe = onAuthChange((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   if (isAuthPage) {
     return <AuthLayout>{children}</AuthLayout>;
   }
 
-  return <PlayerLayout>{children}</PlayerLayout>;
+  // Pass user to PlayerLayout
+  return <PlayerLayout user={user}>{children}</PlayerLayout>;
 }

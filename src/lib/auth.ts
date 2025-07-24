@@ -1,7 +1,14 @@
-import { User } from '@/lib/types';
-
-// This is a temporary auth system.
-// In a real application, you would use a proper authentication provider.
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { auth } from './firebase';
+import type { User } from '@/lib/types';
+import { userPlaylists, tracks as allTracks } from './mock-data';
 
 const GUEST_USER: User = {
   id: 'guest',
@@ -11,37 +18,37 @@ const GUEST_USER: User = {
   playlists: [],
 };
 
-const LOGGED_IN_USER: User = {
-  id: 'user-1',
-  name: 'Jane Doe',
-  email: 'jane.doe@example.com',
-  likedSongs: ['1', '5', '9'],
-  playlists: ['pl-6', 'pl-7', 'pl-8'],
+// This function adapts a Firebase user to our application's User type.
+const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
+  // In a real app, you might fetch additional user data from Firestore here.
+  // For now, we'll use some mock data for playlists and liked songs for logged-in users.
+  return {
+    id: firebaseUser.uid,
+    name: firebaseUser.displayName || 'User',
+    email: firebaseUser.email || '',
+    likedSongs: ['1', '5', '9'], // Mock data
+    playlists: userPlaylists.map(p => p.id), // Mock data
+  };
 };
 
-// This function would typically check for a valid session.
-// For now, it's controlled by a simple flag in localStorage.
-export const getSession = (): { user: User | null; isLoggedIn: boolean } => {
-  if (typeof window === 'undefined') {
-    return { user: null, isLoggedIn: false };
-  }
-
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-
-  if (isLoggedIn) {
-    return { user: LOGGED_IN_USER, isLoggedIn: true };
-  }
-  return { user: GUEST_USER, isLoggedIn: false };
+export const onAuthChange = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, (firebaseUser) => {
+    if (firebaseUser) {
+      callback(adaptFirebaseUser(firebaseUser));
+    } else {
+      callback(GUEST_USER);
+    }
+  });
 };
 
-export const login = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('isLoggedIn', 'true');
-  }
+export const signUp = (email, password) => {
+  return createUserWithEmailAndPassword(auth, email, password);
+};
+
+export const login = (email, password) => {
+  return signInWithEmailAndPassword(auth, email, password);
 };
 
 export const logout = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('isLoggedIn');
-  }
+  return signOut(auth);
 };

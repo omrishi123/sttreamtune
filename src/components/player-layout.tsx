@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { userPlaylists, getPlaylistById } from "@/lib/mock-data";
-import { getSession, logout } from "@/lib/auth";
+import { getPlaylistById } from "@/lib/mock-data";
+import { logout } from "@/lib/auth";
 import { Icons } from "@/components/icons";
 import { Player } from "@/components/player";
 import {
@@ -41,19 +41,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "./ui/button";
+import type { User as AppUser } from "@/lib/types";
 
-export function PlayerLayout({ children }: { children: React.ReactNode }) {
+interface PlayerLayoutProps {
+  children: React.ReactNode;
+  user: AppUser | null;
+}
+
+export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [session, setSession] = React.useState<{ user: any; isLoggedIn: boolean } | null>(null);
 
-  React.useEffect(() => {
-    setSession(getSession());
-  }, [pathname]);
-
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
     router.refresh();
   };
@@ -63,18 +63,18 @@ export function PlayerLayout({ children }: { children: React.ReactNode }) {
     { href: "/search", label: "Search", icon: Search },
     { href: "/library", label: "Your Library", icon: Library },
   ];
-
-  const currentUserPlaylists = session?.user?.playlists?.map((id: any) => getPlaylistById(id)).filter(Boolean) as any[] || [];
   
-  // Render a loading state or a skeleton if the session is not yet loaded.
-  if (!session) {
+  const currentUserPlaylists = user?.playlists?.map((id: any) => getPlaylistById(id)).filter(Boolean) as any[] || [];
+
+  if (!user) {
     return (
       <div className="flex h-screen items-center justify-center">
-        {/* You can replace this with a more sophisticated loading spinner or skeleton loader */}
         <p>Loading...</p>
       </div>
     );
   }
+  
+  const isGuest = user.id === 'guest';
 
   return (
     <SidebarProvider defaultOpen>
@@ -114,31 +114,35 @@ export function PlayerLayout({ children }: { children: React.ReactNode }) {
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
-              <SidebarSeparator />
-              <SidebarGroup>
-                <SidebarGroupLabel className="flex items-center justify-between">
-                  <span>Playlists</span>
-                  <button className="p-1 hover:text-sidebar-foreground transition-colors">
-                    <PlusCircle className="h-4 w-4" />
-                  </button>
-                </SidebarGroupLabel>
-                <SidebarMenu>
-                  {currentUserPlaylists.map((playlist) => (
-                    <SidebarMenuItem key={playlist.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === `/playlists/${playlist.id}`}
-                        tooltip={playlist.name}
-                      >
-                        <Link href={`/playlists/${playlist.id}`}>
-                          <Icons.playlist className="text-muted-foreground" />
-                          <span>{playlist.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroup>
+              {!isGuest && (
+                <>
+                  <SidebarSeparator />
+                  <SidebarGroup>
+                    <SidebarGroupLabel className="flex items-center justify-between">
+                      <span>Playlists</span>
+                      <button className="p-1 hover:text-sidebar-foreground transition-colors">
+                        <PlusCircle className="h-4 w-4" />
+                      </button>
+                    </SidebarGroupLabel>
+                    <SidebarMenu>
+                      {currentUserPlaylists.map((playlist) => (
+                        <SidebarMenuItem key={playlist.id}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={pathname === `/playlists/${playlist.id}`}
+                            tooltip={playlist.name}
+                          >
+                            <Link href={`/playlists/${playlist.id}`}>
+                              <Icons.playlist className="text-muted-foreground" />
+                              <span>{playlist.name}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroup>
+                </>
+              )}
             </SidebarContent>
             <SidebarFooter>
                <DropdownMenu>
@@ -146,25 +150,31 @@ export function PlayerLayout({ children }: { children: React.ReactNode }) {
                    <SidebarMenuButton asChild tooltip="Profile" className="w-full justify-start">
                       <div>
                         <Avatar className="h-7 w-7">
-                          <AvatarImage src="https://placehold.co/100x100.png" alt="User" data-ai-hint="user avatar" />
-                          <AvatarFallback>{session.user?.name?.charAt(0)}</AvatarFallback>
+                          <AvatarImage src="https://placehold.co/100x100.png" alt={user.name} data-ai-hint="user avatar" />
+                          <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{session.user?.name}</span>
+                        <span className="font-medium">{user.name}</span>
                       </div>
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 mb-2 ml-2" side="top" align="start">
-                  <DropdownMenuLabel>{session.user?.name}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem disabled={isGuest}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                   {session.isLoggedIn && (
+                   {!isGuest && (
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>
+                  )}
+                  {isGuest && (
+                     <DropdownMenuItem onClick={() => router.push('/login')}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log in</span>
+                      </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
