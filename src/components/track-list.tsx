@@ -19,7 +19,7 @@ interface TrackListProps {
 }
 
 export function TrackList({ tracks, playlist }: TrackListProps) {
-  const { setQueue, currentTrack, isPlaying, play, pause } = usePlayer();
+  const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
 
   const handlePlayTrack = (trackId: string) => {
     if (currentTrack?.id === trackId && isPlaying) {
@@ -28,7 +28,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
       play();
     }
     else {
-      setQueue(tracks, trackId);
+      setQueueAndPlay(tracks, trackId);
     }
   };
 

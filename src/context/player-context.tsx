@@ -12,6 +12,7 @@ interface PlayerContextType {
   pause: () => void;
   playNext: () => void;
   playPrev: () => void;
+  setQueue: (tracks: Track[], startTrackId?: string) => void;
   setQueueAndPlay: (tracks: Track[], startTrackId?: string) => void;
   playerRef: React.RefObject<YouTube | null>;
   progress: number;
@@ -23,7 +24,7 @@ const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [queue, setQueue] = useState<Track[]>([]);
+  const [queue, setQueueState] = useState<Track[]>([]);
   const [progress, setProgress] = useState(0);
 
   const playerRef = useRef<YouTube | null>(null);
@@ -97,10 +98,24 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setIsPlaying(true);
     }
   };
+  
+  const setQueue = (tracks: Track[], startTrackId?: string) => {
+    const newQueue = [...tracks];
+    setQueueState(newQueue);
+    
+    const trackToPlay = startTrackId 
+        ? newQueue.find(t => t.id === startTrackId) 
+        : newQueue[0];
+
+    if (trackToPlay && trackToPlay.id !== currentTrack?.id) {
+      setCurrentTrack(trackToPlay);
+      setProgress(0);
+    }
+  }
 
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string) => {
     const newQueue = [...tracks];
-    setQueue(newQueue);
+    setQueueState(newQueue);
     
     const trackToPlay = startTrackId 
         ? newQueue.find(t => t.id === startTrackId) 
@@ -141,6 +156,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     pause,
     playNext,
     playPrev,
+    setQueue,
     setQueueAndPlay,
     playerRef,
     progress,
