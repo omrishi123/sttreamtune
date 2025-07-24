@@ -26,28 +26,29 @@ export default function PlaylistPage({ params: { id } }: { params: { id: string 
   useEffect(() => {
     const fetchPlaylistData = async () => {
       setIsLoading(true);
-      let foundPlaylist: Playlist | undefined;
+      let foundPlaylist: Playlist | undefined | null;
 
-      // Check user-created playlists first
-      foundPlaylist = getPlaylistById(id);
-
-      // If not a user playlist, it might be a YouTube playlist
-      if (!foundPlaylist) {
+      // Check user-created playlists, liked songs, or recently played first
+      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played') {
+        foundPlaylist = getPlaylistById(id);
+      } else {
+        // Otherwise, assume it's a YouTube playlist
         try {
           foundPlaylist = await getYoutubePlaylistDetails({ playlistId: id });
         } catch (error) {
            console.error("Failed to fetch from youtube", error)
+           foundPlaylist = null;
         }
       }
       
       if (foundPlaylist) {
         setPlaylist(foundPlaylist);
-        // If it's a special playlist like 'Liked Songs' or a user-created one
-        if (foundPlaylist.isLikedSongs || foundPlaylist.id === 'recently-played' || foundPlaylist.id.startsWith('playlist-')) {
-            const playlistTracks = foundPlaylist.trackIds.map(id => getTrackById(id)).filter(Boolean) as Track[];
+        // If it's a local playlist (user-created, liked, recently played)
+        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played') {
+            const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
             setTracks(playlistTracks);
         } else {
-            // It's a youtube playlist, fetch tracks for it
+            // It's a youtube playlist, fetch tracks for it from the API
             const youtubeTracks = await getTracksForPlaylist(id);
             setTracks(youtubeTracks);
         }
