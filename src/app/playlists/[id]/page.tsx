@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import { usePlayer } from "@/context/player-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
+
 export default function PlaylistPage({ params: { id } }: { params: { id: string } }) {
   const { getPlaylistById, getTrackById } = useUserData();
   const { setQueueAndPlay } = usePlayer();
@@ -22,6 +24,7 @@ export default function PlaylistPage({ params: { id } }: { params: { id: string 
   const [playlist, setPlaylist] = useState<Playlist | undefined | null>(undefined);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchPlaylistData = async () => {
@@ -43,6 +46,7 @@ export default function PlaylistPage({ params: { id } }: { params: { id: string 
       
       if (foundPlaylist) {
         setPlaylist(foundPlaylist);
+        setImgSrc(foundPlaylist.coverArt);
         // If it's a local playlist (user-created, liked, recently played)
         if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played') {
             const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
@@ -101,13 +105,14 @@ export default function PlaylistPage({ params: { id } }: { params: { id: string 
     <div className="space-y-8">
       <header className="flex flex-col md:flex-row items-center gap-8">
         <Image
-          src={playlist.coverArt}
+          src={imgSrc || playlist.coverArt}
           alt={playlist.name}
           width={200}
           height={200}
           className="rounded-lg shadow-lg aspect-square object-cover"
           priority
           data-ai-hint={playlist['data-ai-hint']}
+          onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
         />
         <div className="space-y-3 text-center md:text-left">
           <p className="text-sm font-semibold">Playlist</p>
