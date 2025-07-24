@@ -30,6 +30,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarInset,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -41,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { User as AppUser, Playlist } from "@/lib/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlayerLayoutProps {
   children: React.ReactNode;
@@ -50,6 +52,7 @@ interface PlayerLayoutProps {
 export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     await logout();
@@ -86,7 +89,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
             side="left"
             variant="sidebar"
             collapsible="icon"
-            className="border-r border-sidebar-border bg-sidebar"
+            className="hidden md:flex border-r border-sidebar-border bg-sidebar"
           >
             <SidebarHeader>
               <Link
@@ -182,11 +185,67 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
               </DropdownMenu>
             </SidebarFooter>
           </Sidebar>
-          <SidebarInset className="overflow-y-auto bg-background">
-            <main className="p-6">{children}</main>
+          <SidebarInset className="overflow-y-auto bg-background pb-24 md:pb-0">
+            <header className="p-4 md:hidden flex items-center justify-between">
+                 <Link
+                    href="/"
+                    className="flex items-center gap-2 text-lg font-semibold"
+                  >
+                    <Icons.logo className="h-6 w-6" />
+                    <span className="font-headline">
+                      StreamTune
+                    </span>
+                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Avatar className="h-8 w-8 cursor-pointer">
+                        <AvatarImage src="https://placehold.co/100x100.png" alt={user.name} data-ai-hint="user avatar" />
+                        <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
+                      </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 mr-4" side="bottom" align="end">
+                      <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem disabled={isGuest}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      {!isGuest && (
+                        <DropdownMenuItem onClick={handleLogout}>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Log out</span>
+                        </DropdownMenuItem>
+                      )}
+                      {isGuest && (
+                         <DropdownMenuItem onClick={() => router.push('/login')}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log in</span>
+                          </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </header>
+            <main className="p-6 pt-0 md:pt-6">{children}</main>
           </SidebarInset>
         </div>
         <Player />
+        {isMobile && (
+          <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden">
+            <div className="flex justify-around items-center h-16">
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <div className={cn(
+                    "flex flex-col items-center justify-center gap-1 w-20 transition-colors",
+                    pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  )}>
+                    <item.icon className="h-6 w-6" />
+                    <span className="text-xs font-medium">{item.label}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
       </div>
     </SidebarProvider>
   );
