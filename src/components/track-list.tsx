@@ -53,7 +53,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
           const isActive = currentTrack?.id === track.id;
           return (
             <TableRow
-              key={track.id}
+              key={`${track.id}-${index}`}
               className="group cursor-pointer"
               onClick={() => handlePlayTrack(track.id)}
               data-state={isActive ? "selected" : undefined}

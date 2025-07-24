@@ -80,7 +80,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > -1 && currentIndex < queue.length - 1) {
-      setCurrentTrack(queue[currentIndex + 1]);
+      const nextTrack = queue[currentIndex + 1];
+      setCurrentTrack(nextTrack);
       setProgress(0);
       setIsPlaying(true);
     } else {
@@ -93,7 +94,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > 0) {
-      setCurrentTrack(queue[currentIndex - 1]);
+      const prevTrack = queue[currentIndex - 1];
+      setCurrentTrack(prevTrack);
        setProgress(0);
       setIsPlaying(true);
     }
@@ -110,6 +112,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (trackToPlay && trackToPlay.id !== currentTrack?.id) {
       setCurrentTrack(trackToPlay);
       setProgress(0);
+      setIsPlaying(false);
     }
   }
 
@@ -147,6 +150,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           player.seekTo((newProgress / 100) * currentTrack.duration, true);
       }
   }
+  
+  const handleReady = (event: any) => {
+    if (isPlaying) {
+      event.target.playVideo();
+    }
+  }
 
   const value = {
     currentTrack,
@@ -179,7 +188,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                     },
                 }}
                 onStateChange={handleStateChange}
-                onReady={(e) => e.target.playVideo()}
+                onReady={handleReady}
                 className="hidden"
             />
         )}
