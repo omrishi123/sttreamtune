@@ -66,11 +66,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [isReady, isPlaying]);
 
   useEffect(() => {
-    if (currentTrack && userData) {
-      userData.addRecentlyPlayed(currentTrack.id);
-      userData.addTrackToCache(currentTrack);
+    if (currentTrack && userData?.addRecentlyPlayed) {
+        userData.addRecentlyPlayed(currentTrack.id);
+        userData.addTrackToCache(currentTrack);
     }
-  }, [currentTrack?.id]);
+  }, [currentTrack?.id, userData]);
 
 
   const startProgressInterval = () => {
@@ -156,7 +156,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
     const newQueue = [...tracks];
-    userData.addTracksToCache(newQueue);
+    if (userData?.addTracksToCache) {
+      userData.addTracksToCache(newQueue);
+    }
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     
