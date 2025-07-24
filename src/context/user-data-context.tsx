@@ -124,7 +124,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
       trackIds: [],
       public: false,
       owner: user.name,
-      coverArt: 'https://placehold.co/300x300.png',
+      coverArt: 'https://i.ibb.co/R4m2S1z/logo.png',
       'data-ai-hint': 'playlist cover',
     };
     setUserData(prev => ({
@@ -134,7 +134,10 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
   };
   
   const addTrackToPlaylist = (playlistId: string, trackId: string) => {
-      addTrackToCache(getTrackById(trackId)!); // Ensure track is in cache
+      const track = getTrackById(trackId);
+      if (track) {
+        addTrackToCache(track); // Ensure track is in cache
+      }
       setUserData(prev => ({
       ...prev,
       playlists: prev.playlists.map(p => 

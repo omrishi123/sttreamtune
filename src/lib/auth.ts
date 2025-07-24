@@ -10,13 +10,12 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 import type { User } from '@/lib/types';
-import { userPlaylists, tracks as allTracks } from './mock-data';
 
 const GUEST_USER: User = {
   id: 'guest',
   name: 'Guest',
   email: '',
-  photoURL: 'https://placehold.co/100x100.png',
+  photoURL: 'https://i.ibb.co/R4m2S1z/logo.png',
 };
 
 // This function adapts a Firebase user to our application's User type.
@@ -25,7 +24,7 @@ const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || 'User',
     email: firebaseUser.email || '',
-    photoURL: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
+    photoURL: firebaseUser.photoURL || 'https://i.ibb.co/R4m2S1z/logo.png',
   };
 };
 
