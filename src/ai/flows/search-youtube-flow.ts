@@ -15,12 +15,12 @@ const YOUTUBE_API_KEY = 'AIzaSyATeAWo_f9rOY4wj0h-YnACaVR0PZy4uhM';
 const YOUTUBE_API_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_VIDEOS_API_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
-export const YoutubeSearchInputSchema = z.object({
+const YoutubeSearchInputSchema = z.object({
   query: z.string().describe('The search query for YouTube.'),
 });
 export type YoutubeSearchInput = z.infer<typeof YoutubeSearchInputSchema>;
 
-export const YoutubeSearchOutputSchema = z.array(
+const YoutubeSearchOutputSchema = z.array(
   z.object({
     id: z.string(),
     youtubeVideoId: z.string(),
@@ -59,7 +59,7 @@ async function getVideosDurations(videoIds: string[]): Promise<Map<string, numbe
     return durations;
   }
 
-export const searchYoutubeFlow = ai.defineFlow(
+const searchYoutubeFlow = ai.defineFlow(
   {
     name: 'searchYoutubeFlow',
     inputSchema: YoutubeSearchInputSchema,
