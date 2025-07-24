@@ -4,7 +4,6 @@
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
 import type { Track, Playlist } from '@/lib/types';
 import YouTube from 'react-youtube';
-import { useUserData } from './user-data-context';
 
 // Extend the window type to include our optional AndroidBridge
 declare global {
@@ -43,8 +42,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   
-  const userData = useUserData();
-
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -69,14 +66,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       stopProgressInterval();
     }
   }, [isMounted, isReady, isPlaying]);
-
-  useEffect(() => {
-    if (currentTrack?.id && userData?.addRecentlyPlayed) {
-        userData.addRecentlyPlayed(currentTrack.id);
-        userData.addTrackToCache(currentTrack);
-    }
-  }, [currentTrack?.id, userData?.addRecentlyPlayed, userData?.addTrackToCache]);
-
 
   const startProgressInterval = () => {
     if (isNativeMode.current) return;
@@ -154,9 +143,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
     const newQueue = [...tracks];
-    if (userData?.addTracksToCache) {
-      userData.addTracksToCache(newQueue);
-    }
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     

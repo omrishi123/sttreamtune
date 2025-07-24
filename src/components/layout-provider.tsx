@@ -6,10 +6,28 @@ import { usePathname } from "next/navigation";
 import { AuthLayout } from "@/components/auth-layout";
 import { PlayerLayout } from "@/components/player-layout";
 import { onAuthChange } from "@/lib/auth";
-import type { User } from "@/lib/types";
-import { UserDataProvider } from "@/context/user-data-context";
-import { PlayerProvider } from "@/context/player-context";
+import type { User, Track } from "@/lib/types";
+import { UserDataProvider, useUserData } from "@/context/user-data-context";
+import { PlayerProvider, usePlayer } from "@/context/player-context";
 import { Icons } from "./icons";
+
+
+function AppInitializer({ children }: { children: React.ReactNode }) {
+  const { addRecentlyPlayed, addTrackToCache } = useUserData();
+  const { currentTrack } = usePlayer();
+  const [lastPlayedTrackId, setLastPlayedTrackId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentTrack && currentTrack.id !== lastPlayedTrackId) {
+      addTrackToCache(currentTrack);
+      addRecentlyPlayed(currentTrack.id);
+      setLastPlayedTrackId(currentTrack.id);
+    }
+  }, [currentTrack, addRecentlyPlayed, addTrackToCache, lastPlayedTrackId]);
+
+  return <>{children}</>;
+}
+
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -43,7 +61,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   return (
     <UserDataProvider user={user!}>
       <PlayerProvider>
-        <PlayerLayout user={user!}>{children}</PlayerLayout>
+        <AppInitializer>
+          <PlayerLayout user={user!}>{children}</PlayerLayout>
+        </AppInitializer>
       </PlayerProvider>
     </UserDataProvider>
   );
