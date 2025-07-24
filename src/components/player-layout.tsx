@@ -46,7 +46,7 @@ import { Button } from "./ui/button";
 export function PlayerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [session, setSession] = React.useState(getSession());
+  const [session, setSession] = React.useState<{ user: any; isLoggedIn: boolean } | null>(null);
 
   React.useEffect(() => {
     setSession(getSession());
@@ -64,7 +64,17 @@ export function PlayerLayout({ children }: { children: React.ReactNode }) {
     { href: "/library", label: "Your Library", icon: Library },
   ];
 
-  const currentUserPlaylists = session.user?.playlists?.map(id => getPlaylistById(id)).filter(Boolean) as any[] || [];
+  const currentUserPlaylists = session?.user?.playlists?.map((id: any) => getPlaylistById(id)).filter(Boolean) as any[] || [];
+  
+  // Render a loading state or a skeleton if the session is not yet loaded.
+  if (!session) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        {/* You can replace this with a more sophisticated loading spinner or skeleton loader */}
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen>
@@ -137,7 +147,7 @@ export function PlayerLayout({ children }: { children: React.ReactNode }) {
                       <div>
                         <Avatar className="h-7 w-7">
                           <AvatarImage src="https://placehold.co/100x100.png" alt="User" data-ai-hint="user avatar" />
-                          <AvatarFallback>{session.user?.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>{session.user?.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{session.user?.name}</span>
                       </div>
