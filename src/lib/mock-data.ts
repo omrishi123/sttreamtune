@@ -38,25 +38,25 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/gvyUuxdRdR4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "T-Series"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLO7-VO1D0_6NmK47v6tpOcxurcxdW-hZa",
           "name": "Latest Bollywood Songs 2025",
           "description": "Trending songs are the most popular songs that are being listened to by a large number of people.",
-          "coverArt": "https://i.ytimg.com/vi/64Ibd22w5So/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/aA6II82-4cI/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "JioSaavn"
+          "owner": "OM RISHI"
         },
         {
           "id": "PL9bw4S5ePsEGrOA88bJtxgfKaN2HPhkNS",
           "name": "Bollywood Top 50",
           "description": "Presenting the Top 50 songs of the week for all the Bollywood fans.",
-          "coverArt": "https://i.ytimg.com/vi/dF169o8p4-c/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/KoAIsL52jH8/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "T-Series"
+          "owner": "OM RISHI"
         }
       ]
     },
@@ -67,10 +67,10 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6MnOoKQGmYNY2OoCOP3GRfm",
           "name": "Hindi New Song 2025",
           "description": "Hindi New Song 2025.",
-          "coverArt": "https://i.ytimg.com/vi/Dz_O6gS-d38/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/h390c8a_54Y/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RSIHI"
+          "owner": "OM RISHI"
         },
         {
           "id": "PL9bw4S5ePsEF-J_tIORZ6xE_OXkGuKjjY",
@@ -79,16 +79,16 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/PTi6_x3aT-I/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "T-Series"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLO7-VO1D0_6M1xUjj8HxTxskouWx48SNw",
           "name": "Bollywood Songs ",
           "description": "Shiva is one of the principal deities of Hinduism.",
-          "coverArt": "https://i.ytimg.com/vi/hpwnlr-Zp6Y/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/p8gL21-pMms/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "JioSaavn"
+          "owner": "OM RISHI"
         }
       ]
     },
@@ -99,28 +99,28 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLwgf_2_aBmU1kYCWHfvX9kVhKoof35qzg",
           "name": "Bollywood Dance",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/Lme-AZ1n7dM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/1_omv_G2g-E/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Filmi Gaane"
+          "owner": "OM RISHI"
         },
         {
           "id": "PL1gfuz7ZYcaM2Z7sCGOWORCF0CGmonzOv",
           "name": "Spotify Playlist",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/3P62-j0w2b4/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Lme-AZ1n7dM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Ishtar Music"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLO7-VO1D0_6NYoMAN0XncJu4tvibirSmN",
           "name": "Punjabi Song Playlist",
           "description": "Sad songs are songs that make you feel sad.",
-          "coverArt": "https://i.ytimg.com/vi/b4G8IIy1jY0/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/eY2kew8n2u4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "JioSaavn"
+          "owner": "OM RISHI"
         }
       ]
     },
@@ -131,10 +131,10 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLEK4199_zBwCqNxwJygffUonzfROKn0Kh",
           "name": "Punjabi Hits",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/K0-C41d2yI0/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/x2o1xY-ldfM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Lofi Girl"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLf0EVMk_zZgYD7bfe6KDmRtf58M9EjOEn",
@@ -143,7 +143,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/Otf9-iRw2pE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Ankush Raja"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLNCA1T91UH31M7mN8iKSxMwwWB_mkzwT6",
@@ -152,7 +152,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/5g0__-cEec4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Jass Records"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLmfcCDSUSykbw9ewtVgSDKazPDwoTBm8E",
@@ -161,7 +161,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/mN6r9Dk2TfE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Everest Marathi"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLdYKFelfD72exdwCQ6XzPzJDvc91tCpKm",
@@ -170,7 +170,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/gvyUuxdRdR4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "T-Series"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLyORnIW1xT6xk8134gbFnvDrD6mXiIlrF",
@@ -179,7 +179,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/YqeW9_5kURI/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Pop"
+          "owner": "OM RISHI"
         }
       ]
     },
@@ -193,7 +193,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/u3y8-o4j4gE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Arijit Singh"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLFFyMei_d85XaYHYUy8gFt_TQ7LqBNgEv",
@@ -202,7 +202,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/dF169o8p4-c/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Neha Kakkar"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLFFyMei_d85X5UuHRCJ63jcl84x--WGLu",
@@ -211,7 +211,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/hpwnlr-Zp6Y/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Jubin Nautiyal"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLO7-VO1D0_6N2ePPlPE9NKCgUBA15aOk2",
@@ -220,7 +220,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/C9xZ4S0p1c4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Sonu Nigam"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLDIoUOhQQPlXzhp-83rECoLaV6BwFtNC4",
@@ -229,7 +229,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/T8iS1f4i4cE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Lata Mangeshkar"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLTo6svdhIL1cxS4ffGueFpVCF756ip-ab",
@@ -238,7 +238,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/--_0A129T34/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Kishore Kumar"
+          "owner": "OM RISHI"
         }
       ]
     },
@@ -252,7 +252,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/5g0__-cEec4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Jass Records"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLWJCstrm0l02WSdUBNcwAR6fJWQIqr5OE",
@@ -261,7 +261,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/Otf9-iRw2pE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Ankush Raja"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLJ3M6AoVR-gYDJqZoVGvLfY8Fd3gBaZW9",
@@ -270,7 +270,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/3P62-j0w2b4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Ishtar Music"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLJ3M6AoVR-gZMysByi-wXsMGNCefYqI1_",
@@ -279,7 +279,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/b4G8IIy1jY0/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "JioSaavn"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLJ3M6AoVR-gbI0Y8WWkIZFq2WLt1uj-nd",
@@ -288,7 +288,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/u3y8-o4j4gE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "JioSaavn"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLY5D8wTRCsJdrvZb8H48QPKbSvPmrnO_B",
@@ -297,7 +297,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/PTi6_x3aT-I/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "T-Series"
+          "owner": "OM RISHI"
         },
         {
           "id": "PLqqxLEV7gl8VN3h_RFZEe82AyNgKS_FSB",
@@ -306,7 +306,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "coverArt": "https://i.ytimg.com/vi/dF169o8p4-c/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "Romantic"
+          "owner": "OM RISHI"
         }
       ]
     }
