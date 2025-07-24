@@ -69,41 +69,43 @@ export function Player() {
 
   if (isMobile) {
     return (
-       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-3 text-card-foreground shadow-md z-40">
+       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-40">
         <div className="w-full">
            <Slider
               value={[progress]}
               onValueChange={handleSeek}
               className="w-full h-1 absolute -top-[5px] left-0 right-0 p-0 m-0 [&>span:last-child]:hidden [&>div:first-child>span]:h-1"
             />
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <Image
-                src={currentTrack.artwork}
-                alt={currentTrack.title}
-                width={40}
-                height={40}
-                className="rounded-md"
-                data-ai-hint={currentTrack['data-ai-hint']}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
-                <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+          <div className="flex flex-col">
+             <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3 overflow-hidden min-w-0">
+                <Image
+                  src={currentTrack.artwork}
+                  alt={currentTrack.title}
+                  width={40}
+                  height={40}
+                  className="rounded-md"
+                  data-ai-hint={currentTrack['data-ai-hint']}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center">
-               <Button variant="ghost" size="icon" onClick={handleToggleLike}>
-                <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={handlePlayPause}
-              >
-                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              </Button>
-               <QueueSheet />
+              <div className="flex items-center">
+                 <Button variant="ghost" size="icon" onClick={handleToggleLike}>
+                  <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handlePlayPause}
+                >
+                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                </Button>
+                 <QueueSheet />
+              </div>
             </div>
           </div>
         </div>
