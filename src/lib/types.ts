@@ -19,3 +19,11 @@ export interface Playlist {
   owner: string; // user display name
   'data-ai-hint'?: string;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  likedSongs: string[];
+  playlists: string[];
+}
