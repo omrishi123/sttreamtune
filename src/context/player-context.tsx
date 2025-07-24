@@ -6,6 +6,17 @@ import type { Track, Playlist } from '@/lib/types';
 import YouTube from 'react-youtube';
 import { useUserData } from './user-data-context';
 
+// Extend the window type to include our optional AndroidBridge
+declare global {
+  interface Window {
+    AndroidBridge?: {
+      playSong: (trackInfoJson: string) => void;
+      pause: () => void;
+      // Add other methods you might need, e.g., resume, seekTo, etc.
+    };
+  }
+}
+
 interface PlayerContextType {
   currentTrack: Track | null;
   currentPlaylist: Playlist | null;
@@ -35,12 +46,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // A ref to track if we're in native app mode
+  const isNativeMode = useRef(false);
 
   useEffect(() => {
-    if (isPlaying && isReady && playerRef.current) {
+    // We only manage the YouTube player if not in native mode
+    if (!isNativeMode.current && isPlaying && isReady && playerRef.current) {
       playerRef.current.getInternalPlayer()?.playVideo();
       startProgressInterval();
-    } else if (!isPlaying && isReady && playerRef.current) {
+    } else if (!isNativeMode.current && !isPlaying && isReady && playerRef.current) {
       playerRef.current?.getInternalPlayer()?.pauseVideo();
       stopProgressInterval();
     }
@@ -59,7 +74,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
 
   const startProgressInterval = () => {
-    stopProgressInterval(); // Ensure no multiple intervals
+    // This function will need to be adapted if the native side can report progress
+    if (isNativeMode.current) return;
+    stopProgressInterval(); 
     progressIntervalRef.current = setInterval(async () => {
       const player = playerRef.current?.getInternalPlayer();
       if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
@@ -82,17 +99,38 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     let trackToPlay = track || currentTrack || queue[0];
   
     if (trackToPlay) {
+       // Set UI state immediately for responsiveness
        if (currentTrack?.id !== trackToPlay.id) {
-        setIsReady(false);
-        setProgress(0);
-        setCurrentTrack(trackToPlay);
-      }
-      setIsPlaying(true);
+          setProgress(0);
+          setCurrentTrack(trackToPlay);
+       }
+       setIsPlaying(true);
+
+       // THE CRITICAL CHECK
+       if (window.AndroidBridge && typeof window.AndroidBridge.playSong === 'function') {
+            isNativeMode.current = true;
+            console.log("Running in Android App. Delegating playback.");
+            const trackInfoJson = JSON.stringify(trackToPlay);
+            window.AndroidBridge.playSong(trackInfoJson);
+            // The embedded YouTube player will NOT be used.
+       } else {
+            // FALLBACK FOR BROWSER
+            isNativeMode.current = false;
+            console.log("Running in a standard browser. Playing audio directly.");
+            if (currentTrack?.id !== trackToPlay.id) {
+                setIsReady(false); // Reset readiness for the new track in the YouTube player
+            }
+       }
     }
   };
 
   const pause = () => {
     setIsPlaying(false);
+    if (isNativeMode.current && window.AndroidBridge && typeof window.AndroidBridge.pause === 'function') {
+        window.AndroidBridge.pause();
+    } else {
+       // Browser fallback is handled by the useEffect
+    }
   };
 
   const playNext = () => {
@@ -132,6 +170,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleStateChange = (event: any) => {
+    if (isNativeMode.current) return; // Don't respond to YouTube events in native mode
+
     if (event.data === YouTube.PlayerState.PLAYING) {
       startProgressInterval();
       if(!isPlaying) setIsPlaying(true);
@@ -145,14 +185,22 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const handleSeek = (value: number[]) => {
       const newProgress = value[0];
       setProgress(newProgress);
-      const player = playerRef.current?.getInternalPlayer();
-      if(player && currentTrack) {
-          player.seekTo((newProgress / 100) * currentTrack.duration, true);
+      
+      if (isNativeMode.current) {
+        // You would need a seekTo method on your bridge
+        // window.AndroidBridge.seekTo(newProgress);
+      } else {
+        const player = playerRef.current?.getInternalPlayer();
+        if(player && currentTrack) {
+            player.seekTo((newProgress / 100) * currentTrack.duration, true);
+        }
       }
   }
   
   const handleReady = (event: any) => {
-    setIsReady(true);
+    if (!isNativeMode.current) {
+        setIsReady(true);
+    }
   }
 
   const value = {
@@ -173,7 +221,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlayerContext.Provider value={value}>
         {children}
-         {currentTrack && (
+         {currentTrack && !isNativeMode.current && (
             <YouTube
                 key={currentTrack.id}
                 ref={playerRef}
