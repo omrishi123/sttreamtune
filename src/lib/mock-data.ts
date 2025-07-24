@@ -76,7 +76,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEF-J_tIORZ6xE_OXkGuKjjY",
           "name": "Party Songs",
           "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
-          "coverArt": "https://i.ytimg.com/vi/PTi6_x3aT-I/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/1_omv_G2g-E/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -85,7 +85,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6M1xUjj8HxTxskouWx48SNw",
           "name": "Bollywood Songs ",
           "description": "Shiva is one of the principal deities of Hinduism.",
-          "coverArt": "https://i.ytimg.com/vi/p8gL21-pMms/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/YqeW9_5kURI/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -199,7 +199,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLFFyMei_d85XaYHYUy8gFt_TQ7LqBNgEv",
           "name": " Punjabi Songs 2025 ",
           "description": "Neha Kakkar Singh is an Indian singer.",
-          "coverArt": "https://i.ytimg.com/vi/dF169o8p4-c/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/hpwnlr-Zp6Y/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -335,36 +335,58 @@ export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]>
         return [];
     }
 
-    const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
-    url.searchParams.append('part', 'snippet,contentDetails');
-    url.searchParams.append('playlistId', playlistId);
-    url.searchParams.append('key', apiKey);
-    url.searchParams.append('maxResults', '20');
+    let allTracks: Track[] = [];
+    let nextPageToken: string | undefined = undefined;
 
     try {
-        const response = await fetch(url.toString());
-        const data = await response.json();
+        do {
+            const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+            url.searchParams.append('part', 'snippet,contentDetails');
+            url.searchParams.append('playlistId', playlistId);
+            url.searchParams.append('key', apiKey);
+            url.searchParams.append('maxResults', '50');
+            if (nextPageToken) {
+                url.searchParams.append('pageToken', nextPageToken);
+            }
 
-        if (data.error || !data.items) {
-            console.error('YouTube API Error fetching playlist items:', data.error);
-            return [];
-        }
+            const response = await fetch(url.toString());
+            const data = await response.json();
 
-        const videoIds = data.items.map((item: any) => item.contentDetails.videoId).filter(Boolean);
-        const durations = await getVideosDurations(videoIds);
-        
-        const tracks: Track[] = data.items.map((item: any): Track => ({
-            id: item.contentDetails.videoId,
-            youtubeVideoId: item.contentDetails.videoId,
-            title: item.snippet.title,
-            artist: item.snippet.videoOwnerChannelTitle || 'Unknown Artist',
-            album: 'YouTube Playlist',
-            artwork: item.snippet.thumbnails?.high?.url || 'https://placehold.co/300x300.png',
-            duration: durations.get(item.contentDetails.videoId) || 0,
-            'data-ai-hint': 'youtube video'
-        }));
+            if (data.error || !data.items) {
+                console.error('YouTube API Error fetching playlist items:', data.error);
+                break; 
+            }
 
-        return tracks;
+            const videoIds = data.items
+              .map((item: any) => item.contentDetails?.videoId)
+              .filter(Boolean);
+
+            if (videoIds.length === 0) {
+              nextPageToken = data.nextPageToken;
+              continue;
+            }
+
+            const durations = await getVideosDurations(videoIds);
+            
+            const fetchedTracks: Track[] = data.items
+                .filter((item: any) => item.contentDetails?.videoId)
+                .map((item: any): Track => ({
+                    id: item.contentDetails.videoId,
+                    youtubeVideoId: item.contentDetails.videoId,
+                    title: item.snippet.title,
+                    artist: item.snippet.videoOwnerChannelTitle || 'Unknown Artist',
+                    album: 'YouTube Playlist',
+                    artwork: item.snippet.thumbnails?.high?.url || 'https://placehold.co/300x300.png',
+                    duration: durations.get(item.contentDetails.videoId) || 0,
+                    'data-ai-hint': 'youtube video'
+                }));
+
+            allTracks = allTracks.concat(fetchedTracks);
+            nextPageToken = data.nextPageToken;
+
+        } while (nextPageToken);
+
+        return allTracks;
 
     } catch (error) {
         console.error('Failed to fetch playlist tracks:', error);
