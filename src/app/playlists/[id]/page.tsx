@@ -3,8 +3,7 @@
 "use client";
 
 import Image from "next/image";
-import { getTracksForPlaylist } from "@/lib/mock-data";
-import { getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
+import { getTracksForPlaylist, getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
 import { notFound } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";

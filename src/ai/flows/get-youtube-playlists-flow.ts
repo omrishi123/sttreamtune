@@ -8,7 +8,7 @@
  */
 
 import { z } from 'zod';
-import { Playlist } from '@/lib/types';
+import { Playlist, Track } from '@/lib/types';
 import 'dotenv/config';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
@@ -112,4 +112,98 @@ export async function getYoutubePlaylistDetails({ playlistId }: YoutubePlaylistD
         console.error("Failed to get playlist details:", error);
         return undefined;
     }
+}
+
+export async function getTracksForPlaylist(playlistId: string): Promise<Track[]> {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) {
+        console.error("YOUTUBE_API_KEY is not set.");
+        return [];
+    }
+
+    let allTracks: Track[] = [];
+    let nextPageToken: string | undefined = undefined;
+
+    try {
+        do {
+            const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+            url.searchParams.append('part', 'snippet,contentDetails');
+            url.searchParams.append('playlistId', playlistId);
+            url.searchParams.append('key', apiKey);
+            url.searchParams.append('maxResults', '50');
+            if (nextPageToken) {
+                url.searchParams.append('pageToken', nextPageToken);
+            }
+
+            const response = await fetch(url.toString());
+            const data = await response.json();
+
+            if (data.error || !data.items) {
+                console.error('YouTube API Error fetching playlist items:', data.error);
+                break;
+            }
+
+            const videoIds = data.items
+              .map((item: any) => item.contentDetails?.videoId)
+              .filter(Boolean);
+
+            if (videoIds.length === 0) {
+              nextPageToken = data.nextPageToken;
+              continue;
+            }
+
+            const durations = await getVideosDurations(videoIds);
+
+            const fetchedTracks: Track[] = data.items
+                .filter((item: any) => item.contentDetails?.videoId)
+                .map((item: any): Track => ({
+                    id: item.contentDetails.videoId,
+                    youtubeVideoId: item.contentDetails.videoId,
+                    title: item.snippet.title,
+                    artist: item.snippet.videoOwnerChannelTitle || 'Unknown Artist',
+                    album: 'YouTube Playlist',
+                    artwork: item.snippet.thumbnails?.high?.url || 'https://placehold.co/300x300.png',
+                    duration: durations.get(item.contentDetails.videoId) || 0,
+                    'data-ai-hint': 'youtube video'
+                }));
+
+            allTracks = allTracks.concat(fetchedTracks);
+            nextPageToken = data.nextPageToken;
+
+        } while (nextPageToken);
+
+        return allTracks;
+
+    } catch (error) {
+        console.error('Failed to fetch playlist tracks:', error);
+        return [];
+    }
+}
+
+async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) {
+        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
+    }
+    const url = new URL('https://www.googleapis.com/youtube/v3/videos');
+    url.searchParams.append('part', 'contentDetails');
+    url.searchParams.append('id', videoIds.join(','));
+    url.searchParams.append('key', apiKey);
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const durations = new Map<string, number>();
+    if (data.items) {
+      for (const item of data.items) {
+        const durationISO = item.contentDetails.duration;
+        const match = durationISO.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+        const hours = (parseInt(match?.[1] ?? '0') || 0);
+        const minutes = (parseInt(match?.[2] ?? '0') || 0);
+        const seconds = (parseInt(match?.[3] ?? '0') || 0);
+        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+        durations.set(item.id, totalSeconds);
+      }
+    }
+    return durations;
 }
