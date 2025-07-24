@@ -35,7 +35,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEEqCMJSiYZ-KTtEjzVy0YvK",
           "name": "Best of Bollywood Hindi Love Songs ",
           "description": "Listen to all the trending songs of the week in this playlist!",
-          "coverArt": "https://i.ytimg.com/vi/l1EssSA_G9I/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/gvyUuxdRdR4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "T-Series"
@@ -44,7 +44,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6NmK47v6tpOcxurcxdW-hZa",
           "name": "Latest Bollywood Songs 2025",
           "description": "Trending songs are the most popular songs that are being listened to by a large number of people.",
-          "coverArt": "https://i.ytimg.com/vi/D16c02aG6v8/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/64Ibd22w5So/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "JioSaavn"
@@ -53,7 +53,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEGrOA88bJtxgfKaN2HPhkNS",
           "name": "Bollywood Top 50",
           "description": "Presenting the Top 50 songs of the week for all the Bollywood fans.",
-          "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/dF169o8p4-c/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "T-Series"
@@ -67,7 +67,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6MnOoKQGmYNY2OoCOP3GRfm",
           "name": "Hindi New Song 2025",
           "description": "Hindi New Song 2025.",
-          "coverArt": "https://i.ytimg.com/vi/M36y8-k32vA/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Dz_O6gS-d38/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RSIHI"
@@ -76,7 +76,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEF-J_tIORZ6xE_OXkGuKjjY",
           "name": "Party Songs",
           "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
-          "coverArt": "https://i.ytimg.com/vi/G84_-P4O0vE/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/PTi6_x3aT-I/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "T-Series"
@@ -85,7 +85,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6M1xUjj8HxTxskouWx48SNw",
           "name": "Bollywood Songs ",
           "description": "Shiva is one of the principal deities of Hinduism.",
-          "coverArt": "https://i.ytimg.com/vi/Q23ANvH_C7k/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/hpwnlr-Zp6Y/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "JioSaavn"
@@ -99,7 +99,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLwgf_2_aBmU1kYCWHfvX9kVhKoof35qzg",
           "name": "Bollywood Dance",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/Gqz5-0d_mS4/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Lme-AZ1n7dM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Filmi Gaane"
@@ -108,7 +108,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL1gfuz7ZYcaM2Z7sCGOWORCF0CGmonzOv",
           "name": "Spotify Playlist",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/3P62-j0w2b4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Ishtar Music"
@@ -117,7 +117,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6NYoMAN0XncJu4tvibirSmN",
           "name": "Punjabi Song Playlist",
           "description": "Sad songs are songs that make you feel sad.",
-          "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/b4G8IIy1jY0/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "JioSaavn"
@@ -131,7 +131,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLEK4199_zBwCqNxwJygffUonzfROKn0Kh",
           "name": "Punjabi Hits",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/cbuZ9S-f_2s/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/K0-C41d2yI0/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Lofi Girl"
@@ -140,7 +140,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLf0EVMk_zZgYD7bfe6KDmRtf58M9EjOEn",
           "name": "Punjabi Hits SPOTIFY",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/6nQNIyK2b8I/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Otf9-iRw2pE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Ankush Raja"
@@ -149,7 +149,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLNCA1T91UH31M7mN8iKSxMwwWB_mkzwT6",
           "name": "Punjabi Songs",
           "description": "Punjabi songs are the most popular songs in India.",
-          "coverArt": "https://i.ytimg.com/vi/ebrAk0hEk24/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/5g0__-cEec4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Jass Records"
@@ -158,7 +158,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLmfcCDSUSykbw9ewtVgSDKazPDwoTBm8E",
           "name": "Punjabi Hits",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/B49m8dfroME/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/mN6r9Dk2TfE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Everest Marathi"
@@ -167,7 +167,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLdYKFelfD72exdwCQ6XzPzJDvc91tCpKm",
           "name": "Romantic Songs PUNJABI",
           "description": "A playlist of romantic songs from Bollywood.",
-          "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/gvyUuxdRdR4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "T-Series"
@@ -176,7 +176,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLyORnIW1xT6xk8134gbFnvDrD6mXiIlrF",
           "name": "Pop",
           "description": "Pop music is a genre of popular music that originated in its modern form during the mid-1950s in the United States and the United Kingdom.",
-          "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/YqeW9_5kURI/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Pop"
@@ -190,7 +190,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL-oM5qTjmK2vxdTsj2Xghu5fjxhtuMaxo",
           "name": "punjabi songs 2025",
           "description": "Arijit Singh is an Indian singer and music composer.",
-          "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/u3y8-o4j4gE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Arijit Singh"
@@ -199,7 +199,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLFFyMei_d85XaYHYUy8gFt_TQ7LqBNgEv",
           "name": " Punjabi Songs 2025 ",
           "description": "Neha Kakkar Singh is an Indian singer.",
-          "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/dF169o8p4-c/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Neha Kakkar"
@@ -208,7 +208,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLFFyMei_d85X5UuHRCJ63jcl84x--WGLu",
           "name": "PUNJABI HITS",
           "description": "Jubin Nautiyal is an Indian playback singer and performer.",
-          "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/hpwnlr-Zp6Y/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Jubin Nautiyal"
@@ -217,7 +217,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6N2ePPlPE9NKCgUBA15aOk2",
           "name": "English Songs",
           "description": "Sonu Nigam is an Indian singer, music director and actor.",
-          "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/C9xZ4S0p1c4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Sonu Nigam"
@@ -226,7 +226,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLDIoUOhQQPlXzhp-83rECoLaV6BwFtNC4",
           "name": "English Songs",
           "description": "Lata Mangeshkar was an Indian playback singer and occasional music composer.",
-          "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/T8iS1f4i4cE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Lata Mangeshkar"
@@ -235,7 +235,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLTo6svdhIL1cxS4ffGueFpVCF756ip-ab",
           "name": "TikTok Songs 2025",
           "description": "Kishore Kumar was an Indian playback singer and actor.",
-          "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/--_0A129T34/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Kishore Kumar"
@@ -249,7 +249,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLNCA1T91UH313UXRVbc-kgLul6PG6qjEJ",
           "name": "Bhojpuri Songs 2025",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/ebrAk0hEk24/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/5g0__-cEec4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Jass Records"
@@ -258,7 +258,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLWJCstrm0l02WSdUBNcwAR6fJWQIqr5OE",
           "name": "Bhojpuri Songs 2025 songs",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/6nQNIyK2b8I/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Otf9-iRw2pE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Ankush Raja"
@@ -267,7 +267,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLJ3M6AoVR-gYDJqZoVGvLfY8Fd3gBaZW9",
           "name": "Worldwide Records Bhojpuri",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/3P62-j0w2b4/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Ishtar Music"
@@ -276,7 +276,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLJ3M6AoVR-gZMysByi-wXsMGNCefYqI1_",
           "name": "Worldwide Records Bhojpuri ",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/b4G8IIy1jY0/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "JioSaavn"
@@ -285,7 +285,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLJ3M6AoVR-gbI0Y8WWkIZFq2WLt1uj-nd",
           "name": "Bhojpuri ",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/Q23ANvH_C7k/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/u3y8-o4j4gE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "JioSaavn"
@@ -294,7 +294,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLY5D8wTRCsJdrvZb8H48QPKbSvPmrnO_B",
           "name": "Mix Bhojpuri Dj",
           "description": "",
-          "coverArt": "https://i.ytimg.com/vi/G84_-P4O0vE/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/PTi6_x3aT-I/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "T-Series"
@@ -303,7 +303,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLqqxLEV7gl8VN3h_RFZEe82AyNgKS_FSB",
           "name": "Old Teth Nagpuri",
           "description": "Romantic songs are songs with lyrics about love and romance.",
-          "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
+          "coverArt": "https://i.ytimg.com/vi/dF169o8p4-c/hqdefault.jpg",
           "trackIds": [],
           "public": true,
           "owner": "Romantic"
@@ -375,7 +375,7 @@ export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]>
 async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
     const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
     if (!apiKey) {
-        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
+        throw new Error("NEXT_PUBLIC_YOUTUBE_API_KEY is not set in environment variables.");
     }
     const url = new URL('https://www.googleapis.com/youtube/v3/videos');
     url.searchParams.append('part', 'contentDetails');
