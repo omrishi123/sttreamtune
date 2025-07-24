@@ -12,7 +12,7 @@ interface PlayerContextType {
   pause: () => void;
   playNext: () => void;
   playPrev: () => void;
-  setQueue: (tracks: Track[], startTrackId?: string) => void;
+  setQueueState: (tracks: Track[], startTrackId?: string) => void;
   setQueueAndPlay: (tracks: Track[], startTrackId?: string) => void;
   playerRef: React.RefObject<YouTube | null>;
   progress: number;
@@ -101,7 +101,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const setQueue = (tracks: Track[], startTrackId?: string) => {
+  const setQueueStateAndTrack = (tracks: Track[], startTrackId?: string) => {
     const newQueue = [...tracks];
     setQueueState(newQueue);
     
@@ -152,6 +152,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const handleReady = (event: any) => {
+    // When the player is ready, and we want it to be playing, play the video.
     if (isPlaying) {
       event.target.playVideo();
     }
@@ -165,7 +166,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     pause,
     playNext,
     playPrev,
-    setQueue,
+    setQueueState: setQueueStateAndTrack,
     setQueueAndPlay,
     playerRef,
     progress,
@@ -184,7 +185,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                     height: '0',
                     width: '0',
                     playerVars: {
-                        autoplay: 1,
+                        autoplay: isPlaying ? 1 : 0,
                     },
                 }}
                 onStateChange={handleStateChange}
