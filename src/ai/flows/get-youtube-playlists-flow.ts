@@ -66,16 +66,18 @@ const getYoutubePlaylistsFlow = ai.defineFlow(
       return [];
     }
 
-    const playlists: Playlist[] = data.items.map((item: any): Playlist => ({
-      id: item.id.playlistId,
-      name: item.snippet.title,
-      description: item.snippet.description,
-      coverArt: item.snippet.thumbnails.high.url,
-      trackIds: [], // We'll fetch these on demand
-      public: true,
-      owner: item.snippet.channelTitle,
-      'data-ai-hint': 'youtube playlist'
-    }));
+    const playlists: Playlist[] = data.items
+      .filter((item: any) => item.id && item.id.playlistId)
+      .map((item: any): Playlist => ({
+        id: item.id.playlistId,
+        name: item.snippet.title,
+        description: item.snippet.description,
+        coverArt: item.snippet.thumbnails.high.url,
+        trackIds: [], // We'll fetch these on demand
+        public: true,
+        owner: item.snippet.channelTitle,
+        'data-ai-hint': 'youtube playlist'
+      }));
 
     return playlists;
   }
