@@ -19,7 +19,7 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
       <Card className="overflow-hidden transition-all hover:shadow-lg hover:bg-card/90 h-full flex flex-col">
         <CardContent className="p-0">
           <Image
-            src={playlist.coverArt}
+            src={playlist.coverArt || "https://placehold.co/300x300.png"}
             alt={playlist.name}
             width={300}
             height={300}
@@ -31,9 +31,9 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
           <CardTitle className="text-base font-semibold truncate group-hover:text-primary">
             {playlist.name}
           </CardTitle>
-          <CardDescription className="text-xs truncate">
+          {playlist.owner && <CardDescription className="text-xs truncate">
             By {playlist.owner}
-          </CardDescription>
+          </CardDescription>}
         </CardHeader>
       </Card>
     </Link>
