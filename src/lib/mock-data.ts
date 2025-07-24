@@ -33,7 +33,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
       "playlists": [
         {
           "id": "PL9bw4S5ePsEEqCMJSiYZ-KTtEjzVy0YvK",
-          "name": "Trending Songs",
+          "name": "Best of Bollywood Hindi Love Songs ",
           "description": "Listen to all the trending songs of the week in this playlist!",
           "coverArt": "https://i.ytimg.com/vi/l1EssSA_G9I/hqdefault.jpg",
           "trackIds": [],
@@ -42,8 +42,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLO7-VO1D0_6NmK47v6tpOcxurcxdW-hZa",
-          "name": "Trending Songs",
-          "description": "Trending songs are the most popular songs that are being listened to by a large number of people. These songs often have a catchy beat and a memorable melody. Many trending songs are also accompanied by a music video that helps to promote the song.",
+          "name": "Latest Bollywood Songs 2025",
+          "description": "Trending songs are the most popular songs that are being listened to by a large number of people.",
           "coverArt": "https://i.ytimg.com/vi/D16c02aG6v8/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -52,7 +52,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         {
           "id": "PL9bw4S5ePsEGrOA88bJtxgfKaN2HPhkNS",
           "name": "Bollywood Top 50",
-          "description": "Presenting the Top 50 songs of the week for all the Bollywood fans. Hit the play button and enjoy these superhit tracks of the week.",
+          "description": "Presenting the Top 50 songs of the week for all the Bollywood fans.",
           "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -61,21 +61,21 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
       ]
     },
     {
-      "title": "Devotional",
+      "title": "New Songs",
       "playlists": [
         {
           "id": "PLO7-VO1D0_6MnOoKQGmYNY2OoCOP3GRfm",
-          "name": "Ram Bhajans",
-          "description": "Ram is a major deity in Hinduism. He is the seventh avatar of the god Vishnu, one of his most popular incarnations along with Krishna, Parshurama, and Gautama Buddha. In Rama-centric traditions of Hinduism, he is considered the Supreme Being.",
+          "name": "Hindi New Song 2025",
+          "description": "Hindi New Song 2025.",
           "coverArt": "https://i.ytimg.com/vi/M36y8-k32vA/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "JioSaavn"
+          "owner": "OM RSIHI"
         },
         {
           "id": "PL9bw4S5ePsEF-J_tIORZ6xE_OXkGuKjjY",
-          "name": "Hanuman Bhajans",
-          "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama. Hanuman is one of the central characters of the Hindu epic Ramayana. He is an ardent devotee of Rama and one of the chiranjivis. ",
+          "name": "Party Songs",
+          "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
           "coverArt": "https://i.ytimg.com/vi/G84_-P4O0vE/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -83,8 +83,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLO7-VO1D0_6M1xUjj8HxTxskouWx48SNw",
-          "name": "Shiv Bhajans",
-          "description": "Shiva is one of the principal deities of Hinduism. He is the Supreme Being in Shaivism, one of the major traditions within Hinduism. Shiva is known as the 'destroyer' within the Trimurti, the Hindu trinity that includes Brahma and Vishnu.",
+          "name": "Bollywood Songs ",
+          "description": "Shiva is one of the principal deities of Hinduism.",
           "coverArt": "https://i.ytimg.com/vi/Q23ANvH_C7k/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -106,7 +106,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PL1gfuz7ZYcaM2Z7sCGOWORCF0CGmonzOv",
-          "name": "Bollywood Unforgettable Love Songs",
+          "name": "Spotify Playlist",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
           "trackIds": [],
@@ -115,8 +115,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLO7-VO1D0_6NYoMAN0XncJu4tvibirSmN",
-          "name": "Bollywood Sad Songs",
-          "description": "Sad songs are songs that make you feel sad. They can be about anything from a break-up to the death of a loved one. Sad songs can be a great way to deal with your emotions and can help you to feel better.",
+          "name": "Punjabi Song Playlist",
+          "description": "Sad songs are songs that make you feel sad.",
           "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -129,7 +129,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
       "playlists": [
         {
           "id": "PLEK4199_zBwCqNxwJygffUonzfROKn0Kh",
-          "name": "Lofi Flip",
+          "name": "Punjabi Hits",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/cbuZ9S-f_2s/hqdefault.jpg",
           "trackIds": [],
@@ -138,7 +138,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLf0EVMk_zZgYD7bfe6KDmRtf58M9EjOEn",
-          "name": "Bhojpuri Songs",
+          "name": "Punjabi Hits SPOTIFY",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/6nQNIyK2b8I/hqdefault.jpg",
           "trackIds": [],
@@ -148,7 +148,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         {
           "id": "PLNCA1T91UH31M7mN8iKSxMwwWB_mkzwT6",
           "name": "Punjabi Songs",
-          "description": "Punjabi songs are the most popular songs in India. They are known for their catchy beats and memorable melodies. Punjabi songs are also popular in other countries, such as the United States, Canada, and the United Kingdom.",
+          "description": "Punjabi songs are the most popular songs in India.",
           "coverArt": "https://i.ytimg.com/vi/ebrAk0hEk24/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -156,7 +156,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLmfcCDSUSykbw9ewtVgSDKazPDwoTBm8E",
-          "name": "Marathi Songs",
+          "name": "Punjabi Hits",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/B49m8dfroME/hqdefault.jpg",
           "trackIds": [],
@@ -165,7 +165,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLdYKFelfD72exdwCQ6XzPzJDvc91tCpKm",
-          "name": "Romantic Songs",
+          "name": "Romantic Songs PUNJABI",
           "description": "A playlist of romantic songs from Bollywood.",
           "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
           "trackIds": [],
@@ -175,7 +175,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         {
           "id": "PLyORnIW1xT6xk8134gbFnvDrD6mXiIlrF",
           "name": "Pop",
-          "description": "Pop music is a genre of popular music that originated in its modern form during the mid-1950s in the United States and the United Kingdom. During the 1950s and 1960s, pop music encompassed rock and roll and the youth-oriented styles it influenced. ",
+          "description": "Pop music is a genre of popular music that originated in its modern form during the mid-1950s in the United States and the United Kingdom.",
           "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -188,8 +188,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
       "playlists": [
         {
           "id": "PL-oM5qTjmK2vxdTsj2Xghu5fjxhtuMaxo",
-          "name": "Arijit Singh",
-          "description": "Arijit Singh is an Indian singer and music composer. He sings predominantly in Hindi and Bengali but has also performed in various other Indian languages. He is the recipient of a National Award and six Filmfare Awards.",
+          "name": "punjabi songs 2025",
+          "description": "Arijit Singh is an Indian singer and music composer.",
           "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -197,8 +197,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLFFyMei_d85XaYHYUy8gFt_TQ7LqBNgEv",
-          "name": "Neha Kakkar",
-          "description": "Neha Kakkar Singh is an Indian singer. She is the younger sister of playback singer Sonu Kakkar. She began performing at a very early age at religious events. In 2005, she participated in the second season of the singing reality show, Indian Idol.",
+          "name": " Punjabi Songs 2025 ",
+          "description": "Neha Kakkar Singh is an Indian singer.",
           "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -206,8 +206,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLFFyMei_d85X5UuHRCJ63jcl84x--WGLu",
-          "name": "Jubin Nautiyal",
-          "description": "Jubin Nautiyal is an Indian playback singer and performer. In June 2022, he won the IIFA award for “Playback Singer (Male)” for the song 'Raataan Lambiyan'. He was awarded Upcoming Male Vocalist of the Year at 8th Mirchi Music Awards for his song 'Zindagi Kuch Toh Bata (Reprise)' from Bajrangi Bhaijaan.",
+          "name": "PUNJABI HITS",
+          "description": "Jubin Nautiyal is an Indian playback singer and performer.",
           "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -215,8 +215,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLO7-VO1D0_6N2ePPlPE9NKCgUBA15aOk2",
-          "name": "Sonu Nigam",
-          "description": "Sonu Nigam is an Indian singer, music director and actor. He has been described in the media as one of the most popular and successful playback singers of Hindi Cinema. He sings predominantly in Hindi and Kannada language films but has also sung in English, Bengali, Manipuri, Gujarati, Tamil, Telugu, Marathi, Tulu, Assamese, Odia, Nepali, Maithili, Malayalam and various other Indian languages.",
+          "name": "English Songs",
+          "description": "Sonu Nigam is an Indian singer, music director and actor.",
           "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -224,8 +224,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLDIoUOhQQPlXzhp-83rECoLaV6BwFtNC4",
-          "name": "Lata Mangeshkar",
-          "description": "Lata Mangeshkar was an Indian playback singer and occasional music composer. She is widely considered to have been one of the greatest and most influential singers in India. Her contribution to the Indian music industry in a career spanning eight decades gained her honorific titles such as the 'Queen of Melody', 'Nightingale of India', and 'Voice of the Millennium'.",
+          "name": "English Songs",
+          "description": "Lata Mangeshkar was an Indian playback singer and occasional music composer.",
           "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -233,8 +233,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLTo6svdhIL1cxS4ffGueFpVCF756ip-ab",
-          "name": "Kishore Kumar",
-          "description": "Kishore Kumar was an Indian playback singer and actor. He is widely regarded as one of the greatest and most dynamic singers in the history of Indian music. He was one of the most popular singers in the Indian subcontinent, notable for his yodeling and ability to sing songs in different voices. ",
+          "name": "TikTok Songs 2025",
+          "description": "Kishore Kumar was an Indian playback singer and actor.",
           "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
@@ -247,7 +247,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
       "playlists": [
         {
           "id": "PLNCA1T91UH313UXRVbc-kgLul6PG6qjEJ",
-          "name": "Sad songs",
+          "name": "Bhojpuri Songs 2025",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/ebrAk0hEk24/hqdefault.jpg",
           "trackIds": [],
@@ -256,7 +256,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLWJCstrm0l02WSdUBNcwAR6fJWQIqr5OE",
-          "name": "Party songs",
+          "name": "Bhojpuri Songs 2025 songs",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/6nQNIyK2b8I/hqdefault.jpg",
           "trackIds": [],
@@ -265,7 +265,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLJ3M6AoVR-gYDJqZoVGvLfY8Fd3gBaZW9",
-          "name": "Old Songs",
+          "name": "Worldwide Records Bhojpuri",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
           "trackIds": [],
@@ -274,7 +274,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLJ3M6AoVR-gZMysByi-wXsMGNCefYqI1_",
-          "name": "Workout",
+          "name": "Worldwide Records Bhojpuri ",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/U66H-T2t2aM/hqdefault.jpg",
           "trackIds": [],
@@ -283,7 +283,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLJ3M6AoVR-gbI0Y8WWkIZFq2WLt1uj-nd",
-          "name": "Shree Krishna",
+          "name": "Bhojpuri ",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/Q23ANvH_C7k/hqdefault.jpg",
           "trackIds": [],
@@ -292,7 +292,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLY5D8wTRCsJdrvZb8H48QPKbSvPmrnO_B",
-          "name": "Ghazal",
+          "name": "Mix Bhojpuri Dj",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/G84_-P4O0vE/hqdefault.jpg",
           "trackIds": [],
@@ -301,8 +301,8 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLqqxLEV7gl8VN3h_RFZEe82AyNgKS_FSB",
-          "name": "Romantic",
-          "description": "Romantic songs are songs with lyrics about love and romance. They are often slow and emotional, and they can be about any aspect of love, from the first flush of infatuation to the pain of a broken heart.",
+          "name": "Old Teth Nagpuri",
+          "description": "Romantic songs are songs with lyrics about love and romance.",
           "coverArt": "https://i.ytimg.com/vi/k3g_WjLCsXM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
