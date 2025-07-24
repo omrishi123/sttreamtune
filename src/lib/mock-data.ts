@@ -1,3 +1,4 @@
+
 import type { Track, Playlist } from './types';
 
 export const tracks: Track[] = [
@@ -105,7 +106,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PL1gfuz7ZYcaM2Z7sCGOWORCF0CGmonzOv",
-          "name": "Bollywood Unforgettable Love Songs ",
+          "name": "Bollywood Unforgettable Love Songs",
           "description": "",
           "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
           "trackIds": [],
@@ -164,7 +165,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
         },
         {
           "id": "PLdYKFelfD72exdwCQ6XzPzJDvc91tCpKm",
-          "name": "Romentic Songs",
+          "name": "Romantic Songs",
           "description": "A playlist of romantic songs from Bollywood.",
           "coverArt": "https://i.ytimg.com/vi/AEIVhbfka_s/hqdefault.jpg",
           "trackIds": [],
