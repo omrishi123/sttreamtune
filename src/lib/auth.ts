@@ -5,6 +5,8 @@ import {
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from './firebase';
 import type { User } from '@/lib/types';
@@ -52,3 +54,8 @@ export const login = (email, password) => {
 export const logout = () => {
   return signOut(auth);
 };
+
+export const signInWithGoogle = () => {
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(auth, provider);
+}
