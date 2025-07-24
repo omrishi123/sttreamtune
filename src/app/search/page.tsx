@@ -45,15 +45,9 @@ export default function SearchPage() {
   };
 
   const handlePlayTrack = (trackId: string) => {
-    if (currentTrack?.id === trackId) {
-      if (isPlaying) {
-        pause();
-      } else {
-        play();
-      }
-    } else {
-      setQueueAndPlay(results, trackId);
-    }
+    // This ensures the queue is always set with the current search results
+    // and the correct track starts playing.
+    setQueueAndPlay(results, trackId);
   };
 
   return (
