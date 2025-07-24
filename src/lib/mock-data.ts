@@ -42,7 +42,8 @@ export const getPlaylistById = async (id: string): Promise<Playlist | undefined>
 }
 
 export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]> => {
-    if (!process.env.YOUTUBE_API_KEY) {
+    const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+    if (!apiKey) {
         console.error("YOUTUBE_API_KEY is not set.");
         return [];
     }
@@ -50,7 +51,7 @@ export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]>
     const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
     url.searchParams.append('part', 'snippet,contentDetails');
     url.searchParams.append('playlistId', playlistId);
-    url.searchParams.append('key', process.env.YOUTUBE_API_KEY);
+    url.searchParams.append('key', apiKey);
     url.searchParams.append('maxResults', '20');
 
     try {
@@ -85,13 +86,14 @@ export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]>
 }
 
 async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
-    if (!process.env.YOUTUBE_API_KEY) {
+    const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+    if (!apiKey) {
         throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
     const url = new URL('https://www.googleapis.com/youtube/v3/videos');
     url.searchParams.append('part', 'contentDetails');
     url.searchParams.append('id', videoIds.join(','));
-    url.searchParams.append('key', process.env.YOUTUBE_API_KEY);
+    url.searchParams.append('key', apiKey);
   
     const response = await fetch(url);
     const data = await response.json();
