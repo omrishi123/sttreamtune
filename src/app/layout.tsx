@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="https://i.ibb.co/jDDgN4r/logo.png" type="image/png" />
+        <link rel="icon" href="https://i.ibb.co/jDDgN4r/logo.png?v=2" type="image/png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
