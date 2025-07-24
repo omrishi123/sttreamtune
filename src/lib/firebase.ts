@@ -5,14 +5,13 @@ import { getAuth } from "firebase/auth";
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-// IMPORTANT: Replace this with your own Firebase project's configuration.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBH1y490Wh0rzyS5S_YRIjgeEzJ4k7ulhw",
+  authDomain: "tunestream-m2c5m.firebaseapp.com",
+  projectId: "tunestream-m2c5m",
+  storageBucket: "tunestream-m2c5m.appspot.com",
+  messagingSenderId: "896788610817",
+  appId: "1:896788610817:web:403ce218eb75cf904ba500"
 };
 
 // Initialize Firebase
