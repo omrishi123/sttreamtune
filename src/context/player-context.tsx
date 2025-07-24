@@ -53,6 +53,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (currentTrack && userData) {
       userData.addRecentlyPlayed(currentTrack.id);
+      userData.addTrackToCache(currentTrack);
     }
   }, [currentTrack?.id]);
 
@@ -117,6 +118,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
     const newQueue = [...tracks];
+    userData.addTracksToCache(newQueue);
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     

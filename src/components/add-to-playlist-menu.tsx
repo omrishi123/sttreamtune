@@ -13,20 +13,21 @@ import { PlusCircle } from 'lucide-react';
 import { useUserData } from '@/context/user-data-context';
 import { useToast } from '@/hooks/use-toast';
 import { AddPlaylistDialog } from './add-playlist-dialog';
+import { Track } from '@/lib/types';
 
 export function AddToPlaylistMenu({
-  trackId,
+  track,
   children,
 }: {
-  trackId: string;
+  track: Track;
   children?: React.ReactNode;
 }) {
-  const { playlists, addTrackToPlaylist, getTrackById } = useUserData();
+  const { playlists, addTrackToPlaylist, addTrackToCache } = useUserData();
   const { toast } = useToast();
-  const track = getTrackById(trackId);
 
   const handleAdd = (playlistId: string) => {
-    addTrackToPlaylist(playlistId, trackId);
+    addTrackToCache(track);
+    addTrackToPlaylist(playlistId, track.id);
     toast({
       title: 'Added to playlist',
       description: `"${track?.title}" has been added.`,

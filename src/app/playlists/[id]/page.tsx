@@ -18,7 +18,7 @@ const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hi
 
 export default function PlaylistPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { getPlaylistById, getTrackById } = useUserData();
+  const { getPlaylistById, getTrackById, addTracksToCache } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   
   const [playlist, setPlaylist] = useState<Playlist | undefined | null>(undefined);
@@ -54,6 +54,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
         } else {
             // It's a youtube playlist, fetch tracks for it from the API
             const youtubeTracks = await getTracksForPlaylist(id);
+            addTracksToCache(youtubeTracks);
             setTracks(youtubeTracks);
         }
 
@@ -92,7 +93,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
     notFound();
   }
   
-  const totalDuration = tracks.reduce((acc, track) => acc + track.duration, 0);
+  const totalDuration = tracks.reduce((acc, track) => acc + (track?.duration || 0), 0);
   const totalMinutes = Math.floor(totalDuration / 60);
 
   const handlePlayPlaylist = () => {

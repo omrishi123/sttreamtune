@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { searchYoutube, YoutubeSearchOutput } from "@/ai/flows/search-youtube-flow";
 import { usePlayer } from "@/context/player-context";
-import { Track } from "@/lib/types";
+import { useUserData } from "@/context/user-data-context";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SearchPage() {
@@ -16,6 +16,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<YoutubeSearchOutput>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { setQueueAndPlay } = usePlayer();
+  const { addTracksToCache } = useUserData();
   const { toast } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -26,6 +27,7 @@ export default function SearchPage() {
     setResults([]);
     try {
       const searchResults = await searchYoutube({ query });
+      addTracksToCache(searchResults);
       setResults(searchResults);
        if (searchResults.length === 0) {
         toast({

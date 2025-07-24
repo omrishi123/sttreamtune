@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Play, Music, Heart, PlusCircle } from "lucide-react";
@@ -24,20 +25,26 @@ interface TrackListProps {
 
 export function TrackList({ tracks, playlist }: TrackListProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
-  const { isLiked, toggleLike } = useUserData();
+  const { isLiked, toggleLike, addTrackToCache } = useUserData();
 
-  const handlePlayTrack = (trackId: string) => {
-    if (currentTrack?.id === trackId && isPlaying) {
+  const handlePlayTrack = (track: Track) => {
+    if (currentTrack?.id === track.id && isPlaying) {
       pause();
-    } else if (currentTrack?.id === trackId && !isPlaying) {
+    } else if (currentTrack?.id === track.id && !isPlaying) {
       play();
     }
     else {
-      setQueueAndPlay(tracks, trackId, playlist);
+      setQueueAndPlay(tracks, track.id, playlist);
     }
   };
 
+  const handleToggleLike = (track: Track) => {
+    addTrackToCache(track);
+    toggleLike(track.id);
+  }
+
   const formatDuration = (seconds: number) => {
+    if (isNaN(seconds)) return '0:00';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -58,6 +65,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
       </TableHeader>
       <TableBody>
         {tracks.map((track, index) => {
+          if (!track) return null;
           const isActive = currentTrack?.id === track.id;
           const isTrackLiked = isLiked(track.id);
 
@@ -65,13 +73,13 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
             <TableRow
               key={`${track.id}-${index}`}
               className="group"
-              onDoubleClick={() => handlePlayTrack(track.id)}
+              onDoubleClick={() => handlePlayTrack(track)}
               data-state={isActive ? "selected" : undefined}
             >
               <TableCell className="text-center text-muted-foreground">
                 <div 
                   className="relative h-5 flex items-center justify-center cursor-pointer"
-                  onClick={() => handlePlayTrack(track.id)}
+                  onClick={() => handlePlayTrack(track)}
                 >
                   <span className="group-hover:hidden">{isActive && isPlaying ? <Music className="h-4 w-4 text-primary animate-pulse" /> : index + 1}</span>
                    <Button variant="ghost" size="icon" className="absolute inset-0 h-full w-full hidden group-hover:flex items-center justify-center">
@@ -93,11 +101,11 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
-                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100", isTrackLiked && "opacity-100")} onClick={() => toggleLike(track.id)}>
+                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100", isTrackLiked && "opacity-100")} onClick={() => handleToggleLike(track)}>
                       <Heart className={cn("h-4 w-4", isTrackLiked && "fill-primary text-primary")} />
                    </Button>
                    <span className="text-muted-foreground w-8">{formatDuration(track.duration)}</span>
-                   <AddToPlaylistMenu trackId={track.id}>
+                   <AddToPlaylistMenu track={track}>
                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
                         <PlusCircle className="h-4 w-4" />
                      </Button>

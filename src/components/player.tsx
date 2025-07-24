@@ -35,13 +35,18 @@ export function Player() {
     progress,
     handleSeek
   } = usePlayer();
-  const { isLiked, toggleLike } = useUserData();
+  const { isLiked, toggleLike, addTrackToCache } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
   const [volume, setVolume] = React.useState(50);
   const isMobile = useIsMobile();
 
   if (!currentTrack) {
     return null; 
+  }
+
+  const handleToggleLike = () => {
+    addTrackToCache(currentTrack);
+    toggleLike(currentTrack.id);
   }
 
   const handlePlayPause = () => {
@@ -64,12 +69,12 @@ export function Player() {
 
   if (isMobile) {
     return (
-      <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-40">
+       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-3 text-card-foreground shadow-md z-40">
         <div className="w-full">
            <Slider
               value={[progress]}
               onValueChange={handleSeek}
-              className="w-full h-1 absolute -top-1 left-0 right-0 p-0 m-0 [&>span:last-child]:hidden [&>div:first-child>span]:h-1"
+              className="w-full h-1 absolute -top-[5px] left-0 right-0 p-0 m-0 [&>span:last-child]:hidden [&>div:first-child>span]:h-1"
             />
           <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-3 overflow-hidden">
@@ -88,7 +93,7 @@ export function Player() {
             </div>
 
             <div className="flex items-center">
-               <Button variant="ghost" size="icon" onClick={() => toggleLike(currentTrack.id)}>
+               <Button variant="ghost" size="icon" onClick={handleToggleLike}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
               <Button
@@ -97,9 +102,6 @@ export function Player() {
                 onClick={handlePlayPause}
               >
                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              </Button>
-              <Button variant="ghost" size="icon" onClick={playNext}>
-                <SkipForward className="h-5 w-5" />
               </Button>
                <QueueSheet />
             </div>
@@ -112,8 +114,7 @@ export function Player() {
   return (
     <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
       <div className="grid grid-cols-[1fr_2fr_1fr] items-center w-full">
-        {/* Left Section: Track Info */}
-        <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex items-center gap-3 overflow-hidden min-w-0">
           <Image
             src={currentTrack.artwork}
             alt={currentTrack.title}
@@ -126,10 +127,10 @@ export function Player() {
             <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
-           <Button variant="ghost" size="icon" className="ml-2" onClick={() => toggleLike(currentTrack.id)}>
+           <Button variant="ghost" size="icon" className="ml-2" onClick={handleToggleLike}>
               <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
             </Button>
-            <AddToPlaylistMenu trackId={currentTrack.id} />
+            <AddToPlaylistMenu track={currentTrack} />
         </div>
 
         {/* Center Section: Player Controls */}
