@@ -9,12 +9,14 @@ import { Play } from "lucide-react";
 import { searchYoutube, YoutubeSearchOutput } from "@/ai/flows/search-youtube-flow";
 import { usePlayer } from "@/context/player-context";
 import { Track } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<YoutubeSearchOutput>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { setQueue, currentTrack, isPlaying, play, pause } = usePlayer();
+  const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
+  const { toast } = useToast();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,9 +26,19 @@ export default function SearchPage() {
     try {
       const searchResults = await searchYoutube({ query });
       setResults(searchResults);
+       if (searchResults.length === 0) {
+        toast({
+          title: "No results found",
+          description: "Try a different search term.",
+        });
+      }
     } catch (error) {
       console.error("Search failed:", error);
-      // You might want to show an error message to the user
+      toast({
+        variant: "destructive",
+        title: "Search Failed",
+        description: "Could not connect to YouTube. Please check your API key and try again.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -37,7 +49,7 @@ export default function SearchPage() {
         if(isPlaying) pause();
         else play();
     } else {
-        setQueue([track], track.id);
+        setQueueAndPlay([track], track.id);
     }
   }
 
@@ -63,7 +75,7 @@ export default function SearchPage() {
 
       <section>
         <h2 className="text-xl font-semibold font-headline mb-4">Results</h2>
-        {isLoading ? (
+        {isLoading && results.length === 0 ? (
           <p>Loading...</p>
         ) : (
           <div className="space-y-2">
