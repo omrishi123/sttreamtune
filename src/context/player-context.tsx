@@ -54,21 +54,17 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const play = (track?: Track) => {
     if (track) {
-      if(track.id !== currentTrack?.id) {
-        setCurrentTrack(track);
-        setProgress(0);
-      }
+      setCurrentTrack(track);
+      setProgress(0);
     } else if (currentTrack) {
        // just play
-    }
-    else if (!currentTrack && queue.length > 0) {
+    } else if (!currentTrack && queue.length > 0) {
        setCurrentTrack(queue[0]);
        setProgress(0);
     }
     setIsPlaying(true);
     playerRef.current?.getInternalPlayer()?.playVideo();
   };
-  
 
   const pause = () => {
     const player = playerRef.current?.getInternalPlayer();
