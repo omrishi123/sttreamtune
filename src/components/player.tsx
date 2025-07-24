@@ -69,45 +69,64 @@ export function Player() {
 
   if (isMobile) {
     return (
-       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-40">
-        <div className="w-full">
-           <Slider
-              value={[progress]}
-              onValueChange={handleSeek}
-              className="w-full h-1 absolute -top-[5px] left-0 right-0 p-0 m-0 [&>span:last-child]:hidden [&>div:first-child>span]:h-1"
+       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-3 flex flex-col gap-2 text-card-foreground shadow-md z-40">
+        
+        {/* Top Row: Song Info & Like/Queue */}
+        <div className="flex items-center w-full">
+          <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
+            <Image
+              src={currentTrack.artwork}
+              alt={currentTrack.title}
+              width={40}
+              height={40}
+              className="rounded-md"
+              data-ai-hint={currentTrack['data-ai-hint']}
             />
-          <div className="flex flex-col">
-             <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3 overflow-hidden min-w-0">
-                <Image
-                  src={currentTrack.artwork}
-                  alt={currentTrack.title}
-                  width={40}
-                  height={40}
-                  className="rounded-md"
-                  data-ai-hint={currentTrack['data-ai-hint']}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                 <Button variant="ghost" size="icon" onClick={handleToggleLike}>
-                  <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handlePlayPause}
-                >
-                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                </Button>
-                 <QueueSheet />
-              </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
+              <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
             </div>
           </div>
+          <div className="flex items-center">
+              <Button variant="ghost" size="icon" onClick={handleToggleLike}>
+                <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
+              </Button>
+              <AddToPlaylistMenu track={currentTrack} />
+          </div>
+        </div>
+
+        {/* Middle Row: Main Player Controls */}
+         <div className="flex items-center justify-around w-full">
+            <Button variant="ghost" size="icon" className="w-8 h-8">
+              <Shuffle className="h-4 w-4 text-muted-foreground" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8">
+              <SkipBack className="h-5 w-5" />
+            </Button>
+            <Button
+              size="icon"
+              className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10"
+              onClick={handlePlayPause}
+            >
+              {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8">
+              <SkipForward className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="w-8 h-8">
+              <Repeat className="h-4 w-4 text-muted-foreground" />
+            </Button>
+        </div>
+
+        {/* Bottom Row: Progress Bar */}
+         <div className="flex items-center gap-2 w-full">
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentPosition)}</span>
+            <Slider
+              value={[progress]}
+              onValueChange={handleSeek}
+              className="w-full"
+            />
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTrack.duration)}</span>
         </div>
       </footer>
     )
@@ -115,7 +134,8 @@ export function Player() {
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
-      <div className="grid grid-cols-[1fr_2fr_1fr] items-center w-full">
+      <div className="grid grid-cols-[minmax(0,1fr)_2fr_minmax(0,1fr)] items-center w-full">
+        {/* Left Section: Song Info */}
         <div className="flex items-center gap-3 overflow-hidden min-w-0">
           <Image
             src={currentTrack.artwork}
