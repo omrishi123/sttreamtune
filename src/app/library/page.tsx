@@ -24,7 +24,7 @@ export default function LibraryPage() {
     owner: "You",
     public: false,
     trackIds: likedSongs,
-    coverArt: "https://placehold.co/300x300.png",
+    coverArt: "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg",
     'data-ai-hint': 'glowing heart',
     isLikedSongs: true,
   };
@@ -36,7 +36,7 @@ export default function LibraryPage() {
     owner: "You",
     public: false,
     trackIds: [],
-    coverArt: "https://placehold.co/300x300.png",
+    coverArt: "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg",
     'data-ai-hint': 'time clock',
   }
 
