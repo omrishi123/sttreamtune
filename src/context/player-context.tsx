@@ -40,7 +40,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (isPlaying && isReady && playerRef.current) {
       playerRef.current.getInternalPlayer()?.playVideo();
       startProgressInterval();
-    } else if (!isPlaying) {
+    } else if (!isPlaying && isReady && playerRef.current) {
       playerRef.current?.getInternalPlayer()?.pauseVideo();
       stopProgressInterval();
     }
@@ -78,16 +78,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const play = (track?: Track) => {
-    let trackToPlay = track;
+    let trackToPlay = track || currentTrack || queue[0];
   
-    if (!trackToPlay) {
-      if(currentTrack) {
-        trackToPlay = currentTrack;
-      } else if (queue.length > 0) {
-        trackToPlay = queue[0];
-      }
-    }
-
     if (trackToPlay) {
        if (currentTrack?.id !== trackToPlay.id) {
         setIsReady(false);
@@ -140,12 +132,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const handleStateChange = (event: any) => {
     if (event.data === YouTube.PlayerState.PLAYING) {
       startProgressInterval();
-      // This is a backup check to ensure our state is in sync
       if(!isPlaying) setIsPlaying(true);
     } else if (event.data === YouTube.PlayerState.PAUSED || event.data === YouTube.PlayerState.BUFFERING) {
       stopProgressInterval();
-       // This is a backup check to ensure our state is in sync
-      if(isPlaying) setIsPlaying(false);
     } else if (event.data === YouTube.PlayerState.ENDED) {
         playNext();
     }

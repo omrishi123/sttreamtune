@@ -3,7 +3,7 @@
 "use client";
 
 import Image from "next/image";
-import { getPlaylistById as getMockPlaylist, getTracksForPlaylist as getMockTracks } from "@/lib/mock-data";
+import { getTracksForPlaylist } from "@/lib/mock-data";
 import { getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
 import { notFound } from "next/navigation";
 import { TrackList } from "@/components/track-list";
@@ -42,13 +42,13 @@ export default function PlaylistPage({ params: { id } }: { params: { id: string 
       
       if (foundPlaylist) {
         setPlaylist(foundPlaylist);
-        // If it's a special playlist like 'Liked Songs'
+        // If it's a special playlist like 'Liked Songs' or a user-created one
         if (foundPlaylist.isLikedSongs || foundPlaylist.id === 'recently-played' || foundPlaylist.id.startsWith('playlist-')) {
             const playlistTracks = foundPlaylist.trackIds.map(id => getTrackById(id)).filter(Boolean) as Track[];
             setTracks(playlistTracks);
         } else {
             // It's a youtube playlist, fetch tracks for it
-            const youtubeTracks = await getMockTracks(id);
+            const youtubeTracks = await getTracksForPlaylist(id);
             setTracks(youtubeTracks);
         }
 
