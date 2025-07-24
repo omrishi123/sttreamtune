@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useRef } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
 import type { Track } from '@/lib/types';
 import YouTube from 'react-youtube';
 
@@ -57,12 +57,17 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         setCurrentTrack(track);
         setProgress(0);
       }
-    } else if (!currentTrack && queue.length > 0) {
+    } else if (currentTrack) {
+       // just play
+    }
+    else if (!currentTrack && queue.length > 0) {
        setCurrentTrack(queue[0]);
        setProgress(0);
     }
     setIsPlaying(true);
+    playerRef.current?.getInternalPlayer()?.playVideo();
   };
+  
 
   const pause = () => {
     const player = playerRef.current?.getInternalPlayer();
@@ -94,15 +99,18 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string) => {
-    setQueue(tracks);
+    const newQueue = [...tracks];
+    setQueue(newQueue);
+    
     const trackToPlay = startTrackId 
-        ? tracks.find(t => t.id === startTrackId) 
-        : tracks[0];
+        ? newQueue.find(t => t.id === startTrackId) 
+        : newQueue[0];
 
     if (trackToPlay) {
       play(trackToPlay);
     }
   };
+  
 
   const handleStateChange = (event: any) => {
     if (event.data === YouTube.PlayerState.PLAYING) {
@@ -144,6 +152,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         {children}
          {currentTrack && (
             <YouTube
+                key={currentTrack.id}
                 ref={playerRef}
                 videoId={currentTrack.youtubeVideoId}
                 opts={{
