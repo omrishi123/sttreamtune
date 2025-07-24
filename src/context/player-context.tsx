@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useRef } from 'react';
 import type { Track } from '@/lib/types';
 import YouTube from 'react-youtube';
 
@@ -12,7 +12,6 @@ interface PlayerContextType {
   pause: () => void;
   playNext: () => void;
   playPrev: () => void;
-  setQueueState: (tracks: Track[], startTrackId?: string) => void;
   setQueueAndPlay: (tracks: Track[], startTrackId?: string) => void;
   playerRef: React.RefObject<YouTube | null>;
   progress: number;
@@ -53,22 +52,27 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const play = (track?: Track) => {
-    if (track) {
-      setCurrentTrack(track);
-      setProgress(0);
-    } else if (currentTrack) {
-       // just play
+    let trackToPlay = track;
+  
+    if (trackToPlay) {
+      // If a specific track is provided, play it.
+      setCurrentTrack(trackToPlay);
     } else if (!currentTrack && queue.length > 0) {
-       setCurrentTrack(queue[0]);
-       setProgress(0);
+      // If no track is playing and the queue is not empty, play the first track.
+      trackToPlay = queue[0];
+      setCurrentTrack(trackToPlay);
     }
-    setIsPlaying(true);
-    playerRef.current?.getInternalPlayer()?.playVideo();
+  
+    // If there's a track to play, start playback.
+    if (trackToPlay) {
+      setProgress(0);
+      setIsPlaying(true);
+      // The onReady handler will call playVideo if isPlaying is true.
+    }
   };
 
   const pause = () => {
-    const player = playerRef.current?.getInternalPlayer();
-    if(player) player.pauseVideo();
+    playerRef.current?.getInternalPlayer()?.pauseVideo();
     setIsPlaying(false);
   };
 
@@ -77,11 +81,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > -1 && currentIndex < queue.length - 1) {
       const nextTrack = queue[currentIndex + 1];
-      setCurrentTrack(nextTrack);
-      setProgress(0);
-      setIsPlaying(true);
+      play(nextTrack);
     } else {
-      setIsPlaying(false); // End of queue
+      setIsPlaying(false);
       stopProgressInterval();
     }
   };
@@ -91,27 +93,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > 0) {
       const prevTrack = queue[currentIndex - 1];
-      setCurrentTrack(prevTrack);
-       setProgress(0);
-      setIsPlaying(true);
+      play(prevTrack);
     }
   };
   
-  const setQueueStateAndTrack = (tracks: Track[], startTrackId?: string) => {
-    const newQueue = [...tracks];
-    setQueueState(newQueue);
-    
-    const trackToPlay = startTrackId 
-        ? newQueue.find(t => t.id === startTrackId) 
-        : newQueue[0];
-
-    if (trackToPlay && trackToPlay.id !== currentTrack?.id) {
-      setCurrentTrack(trackToPlay);
-      setProgress(0);
-      setIsPlaying(false);
-    }
-  }
-
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string) => {
     const newQueue = [...tracks];
     setQueueState(newQueue);
@@ -148,7 +133,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const handleReady = (event: any) => {
-    // When the player is ready, and we want it to be playing, play the video.
     if (isPlaying) {
       event.target.playVideo();
     }
@@ -162,7 +146,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     pause,
     playNext,
     playPrev,
-    setQueueState: setQueueStateAndTrack,
     setQueueAndPlay,
     playerRef,
     progress,
