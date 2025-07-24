@@ -4,7 +4,7 @@
 
 import Image from "next/image";
 import { getTracksForPlaylist, getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
@@ -16,8 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
-export default function PlaylistPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function PlaylistPage() {
+  const params = useParams();
+  const id = params.id as string;
   const { getPlaylistById, getTrackById, addTracksToCache } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   
@@ -28,6 +29,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchPlaylistData = async () => {
+      if (!id) return;
       setIsLoading(true);
       let foundPlaylist: Playlist | undefined | null;
 
@@ -65,7 +67,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
     };
 
     fetchPlaylistData();
-  }, [id, getPlaylistById, getTrackById]);
+  }, [id, getPlaylistById, getTrackById, addTracksToCache]);
 
   if (isLoading) {
     return (
