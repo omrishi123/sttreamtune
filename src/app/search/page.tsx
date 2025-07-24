@@ -44,14 +44,17 @@ export default function SearchPage() {
     }
   };
 
-  const handlePlayTrack = (track: Track) => {
-    if (currentTrack?.id === track.id) {
-        if(isPlaying) pause();
-        else play();
+  const handlePlayTrack = (trackId: string) => {
+    if (currentTrack?.id === trackId) {
+      if (isPlaying) {
+        pause();
+      } else {
+        play();
+      }
     } else {
-        setQueueAndPlay([track], track.id);
+      setQueueAndPlay(results, trackId);
     }
-  }
+  };
 
   return (
     <div className="space-y-8">
@@ -82,8 +85,8 @@ export default function SearchPage() {
             {results.map((track) => (
               <div
                 key={track.id}
-                className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50 transition-colors group"
-                onClick={() => handlePlayTrack(track)}
+                className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50 transition-colors group cursor-pointer"
+                onClick={() => handlePlayTrack(track.id)}
               >
                 <Image
                   src={track.artwork}
