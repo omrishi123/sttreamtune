@@ -18,8 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
 export default function PlaylistPage({ params }: { params: { id: string } }) {
-  const resolvedParams = React.use(Promise.resolve(params));
-  const id = resolvedParams.id;
+  const { id } = params;
   const { getPlaylistById, getTrackById } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   
