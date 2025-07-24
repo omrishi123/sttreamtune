@@ -2,7 +2,6 @@
 
 import React from "react";
 import Image from "next/image";
-import YouTube from "react-youtube";
 import {
   Play,
   Pause,
@@ -13,7 +12,6 @@ import {
   Volume2,
   VolumeX,
   Heart,
-  ListMusic,
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -60,14 +58,14 @@ export function Player() {
 
   if (isMobile) {
     return (
-      <footer className="bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
+      <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-40">
         <div className="w-full">
            <Slider
               value={[progress]}
               onValueChange={handleSeek}
-              className="w-full h-1 [&>span:last-child]:hidden [&>div:first-child>span]:h-1"
+              className="w-full h-1 absolute -top-1 left-0 right-0 p-0 m-0 [&>span:last-child]:hidden [&>div:first-child>span]:h-1"
             />
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-3 overflow-hidden">
               <Image
                 src={currentTrack.artwork}
@@ -103,7 +101,7 @@ export function Player() {
   }
 
   return (
-    <footer className="bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
+    <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
       <div className="flex items-center justify-between w-full">
         <div className="w-1/4 flex items-center gap-3">
           <Image

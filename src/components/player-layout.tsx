@@ -83,7 +83,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-screen flex-col">
+      <div className="relative flex h-screen flex-col">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar
             side="left"
@@ -185,7 +185,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
               </DropdownMenu>
             </SidebarFooter>
           </Sidebar>
-          <SidebarInset className="overflow-y-auto bg-background pb-24 md:pb-0">
+          <SidebarInset className="overflow-y-auto bg-background pb-32 md:pb-24">
             <header className="p-4 md:hidden flex items-center justify-between">
                  <Link
                     href="/"
