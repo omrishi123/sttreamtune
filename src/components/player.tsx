@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -96,6 +97,9 @@ export function Player() {
                 onClick={handlePlayPause}
               >
                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+              </Button>
+              <Button variant="ghost" size="icon" onClick={playNext}>
+                <SkipForward className="h-5 w-5" />
               </Button>
                <QueueSheet />
             </div>
