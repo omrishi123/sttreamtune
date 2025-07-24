@@ -20,6 +20,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { QueueSheet } from "./queue-sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Player() {
   const { 
@@ -34,6 +35,7 @@ export function Player() {
   } = usePlayer();
   const [isMuted, setIsMuted] = React.useState(false);
   const [volume, setVolume] = React.useState(50);
+  const isMobile = useIsMobile();
 
   if (!currentTrack) {
     return null; 
@@ -48,12 +50,57 @@ export function Player() {
   };
   
   const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return '0:00';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
   
   const currentPosition = currentTrack ? (progress / 100) * currentTrack.duration : 0;
+
+  if (isMobile) {
+    return (
+      <footer className="bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
+        <div className="w-full">
+           <Slider
+              value={[progress]}
+              onValueChange={handleSeek}
+              className="w-full h-1 [&>span:last-child]:hidden [&>div:first-child>span]:h-1"
+            />
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <Image
+                src={currentTrack.artwork}
+                alt={currentTrack.title}
+                width={40}
+                height={40}
+                className="rounded-md"
+                data-ai-hint={currentTrack['data-ai-hint']}
+              />
+              <div className="truncate">
+                <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
+                <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+               <Button variant="ghost" size="icon">
+                <Heart className="h-5 w-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handlePlayPause}
+              >
+                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+              </Button>
+               <QueueSheet />
+            </div>
+          </div>
+        </div>
+      </footer>
+    )
+  }
 
   return (
     <footer className="bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
