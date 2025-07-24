@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Image from "next/image";
@@ -14,7 +15,7 @@ import { useEffect, useState } from "react";
 import { usePlayer } from "@/context/player-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function PlaylistPage({ params }: { params: { id: string } }) {
+export default function PlaylistPage({ params: { id } }: { params: { id: string } }) {
   const { getPlaylistById, getTrackById } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   
@@ -28,12 +29,12 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
       let foundPlaylist: Playlist | undefined;
 
       // Check user-created playlists first
-      foundPlaylist = getPlaylistById(params.id);
+      foundPlaylist = getPlaylistById(id);
 
       // If not a user playlist, it might be a YouTube playlist
       if (!foundPlaylist) {
         try {
-          foundPlaylist = await getYoutubePlaylistDetails({ playlistId: params.id });
+          foundPlaylist = await getYoutubePlaylistDetails({ playlistId: id });
         } catch (error) {
            console.error("Failed to fetch from youtube", error)
         }
@@ -47,7 +48,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
             setTracks(playlistTracks);
         } else {
             // It's a youtube playlist, fetch tracks for it
-            const youtubeTracks = await getMockTracks(params.id);
+            const youtubeTracks = await getMockTracks(id);
             setTracks(youtubeTracks);
         }
 
@@ -58,7 +59,7 @@ export default function PlaylistPage({ params }: { params: { id: string } }) {
     };
 
     fetchPlaylistData();
-  }, [params.id, getPlaylistById, getTrackById]);
+  }, [id, getPlaylistById, getTrackById]);
 
   if (isLoading) {
     return (
