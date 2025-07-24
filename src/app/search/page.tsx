@@ -83,6 +83,7 @@ export default function SearchPage() {
               <div
                 key={track.id}
                 className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50 transition-colors group"
+                onClick={() => handlePlayTrack(track)}
               >
                 <Image
                   src={track.artwork}
@@ -96,7 +97,7 @@ export default function SearchPage() {
                   <p className="font-semibold">{track.title}</p>
                   <p className="text-sm text-muted-foreground">{track.artist}</p>
                 </div>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => handlePlayTrack(track)}>
+                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
                   <Play className="h-5 w-5" />
                 </Button>
               </div>
