@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { getPlaylistById } from "@/lib/mock-data";
 import { logout } from "@/lib/auth";
 import { Icons } from "@/components/icons";
 import { Player } from "@/components/player";
@@ -41,7 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { User as AppUser } from "@/lib/types";
+import type { User as AppUser, Playlist } from "@/lib/types";
 
 interface PlayerLayoutProps {
   children: React.ReactNode;
@@ -64,12 +63,15 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     { href: "/library", label: "Your Library", icon: Library },
   ];
   
-  const currentUserPlaylists = user?.playlists?.map((id: any) => getPlaylistById(id)).filter(Boolean) as any[] || [];
+  const currentUserPlaylists: Playlist[] = [];
 
   if (!user) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+       <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <Icons.logo className="h-12 w-12 animate-pulse" />
+          <p className="text-muted-foreground">Loading your experience...</p>
+        </div>
       </div>
     );
   }
@@ -114,7 +116,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
-              {!isGuest && (
+              {!isGuest && currentUserPlaylists && currentUserPlaylists.length > 0 && (
                 <>
                   <SidebarSeparator />
                   <SidebarGroup>
@@ -151,7 +153,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                       <div>
                         <Avatar className="h-7 w-7">
                           <AvatarImage src="https://placehold.co/100x100.png" alt={user.name} data-ai-hint="user avatar" />
-                          <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{user.name}</span>
                       </div>

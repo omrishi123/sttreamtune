@@ -1,18 +1,23 @@
 import Image from "next/image";
 import { getPlaylistById, getTracksForPlaylist } from "@/lib/mock-data";
+import { getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
 import { notFound } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
+import type { Playlist } from "@/lib/types";
 
-export default function PlaylistPage({ params }: { params: { id: string } }) {
-  const playlist = getPlaylistById(params.id);
+export default async function PlaylistPage({ params }: { params: { id: string } }) {
+  let playlist: Playlist | undefined;
+
+  // Fetch playlist details from our new YouTube flow
+  playlist = await getYoutubePlaylistDetails({ playlistId: params.id });
   
   if (!playlist) {
     notFound();
   }
 
-  const tracks = getTracksForPlaylist(params.id);
+  const tracks = await getTracksForPlaylist(params.id);
   const totalDuration = tracks.reduce((acc, track) => acc + track.duration, 0);
   const totalMinutes = Math.floor(totalDuration / 60);
 

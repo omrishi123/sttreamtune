@@ -24,13 +24,89 @@ export const playlists: Playlist[] = [
   { id: 'pl-8', name: 'Morning Coffee', description: 'Acoustic and mellow tunes.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['4', '10'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'morning coffee' },
 ];
 
-export const featuredPlaylists = playlists.filter(p => p.public && ['pl-1', 'pl-2', 'pl-3', 'pl-4'].includes(p.id));
-export const newReleases = playlists.filter(p => p.public && ['pl-5'].includes(p.id));
 export const userPlaylists = playlists.filter(p => !p.public);
 
-export const getPlaylistById = (id: string) => playlists.find(p => p.id === id);
-export const getTracksForPlaylist = (playlistId: string) => {
-  const playlist = getPlaylistById(playlistId);
-  if (!playlist) return [];
-  return tracks.filter(t => playlist.trackIds.includes(t.id));
-};
+export const getPlaylistById = async (id: string): Promise<Playlist | undefined> => {
+    // In a real app, you'd fetch this from your DB or the YouTube API.
+    // For now, we'll check our mock data, but this might not be sufficient
+    // if the playlist is coming directly from the new YouTube playlist flow.
+    const mockPlaylist = playlists.find(p => p.id === id);
+    if(mockPlaylist) return mockPlaylist;
+    
+    // This part is tricky because we don't have a direct way to fetch a single
+    // playlist from youtube by its ID without a new flow. 
+    // For the scope of this change, we'll assume the playlist details are passed
+    // or we can make a new call if necessary.
+    // Placeholder for fetching from YouTube API by ID if needed.
+    return undefined;
+}
+
+export const getTracksForPlaylist = async (playlistId: string): Promise<Track[]> => {
+    if (!process.env.YOUTUBE_API_KEY) {
+        console.error("YOUTUBE_API_KEY is not set.");
+        return [];
+    }
+
+    const url = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
+    url.searchParams.append('part', 'snippet,contentDetails');
+    url.searchParams.append('playlistId', playlistId);
+    url.searchParams.append('key', process.env.YOUTUBE_API_KEY);
+    url.searchParams.append('maxResults', '20');
+
+    try {
+        const response = await fetch(url.toString());
+        const data = await response.json();
+
+        if (data.error || !data.items) {
+            console.error('YouTube API Error fetching playlist items:', data.error);
+            return [];
+        }
+
+        const videoIds = data.items.map((item: any) => item.contentDetails.videoId).filter(Boolean);
+        const durations = await getVideosDurations(videoIds);
+        
+        const tracks: Track[] = data.items.map((item: any): Track => ({
+            id: item.contentDetails.videoId,
+            youtubeVideoId: item.contentDetails.videoId,
+            title: item.snippet.title,
+            artist: item.snippet.videoOwnerChannelTitle || 'Unknown Artist',
+            album: 'YouTube Playlist',
+            artwork: item.snippet.thumbnails?.high?.url || 'https://placehold.co/300x300.png',
+            duration: durations.get(item.contentDetails.videoId) || 0,
+            'data-ai-hint': 'youtube video'
+        }));
+
+        return tracks;
+
+    } catch (error) {
+        console.error('Failed to fetch playlist tracks:', error);
+        return [];
+    }
+}
+
+async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
+    if (!process.env.YOUTUBE_API_KEY) {
+        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
+    }
+    const url = new URL('https://www.googleapis.com/youtube/v3/videos');
+    url.searchParams.append('part', 'contentDetails');
+    url.searchParams.append('id', videoIds.join(','));
+    url.searchParams.append('key', process.env.YOUTUBE_API_KEY);
+  
+    const response = await fetch(url);
+    const data = await response.json();
+  
+    const durations = new Map<string, number>();
+    if (data.items) {
+      for (const item of data.items) {
+        const durationISO = item.contentDetails.duration;
+        const match = durationISO.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+        const hours = (parseInt(match?.[1] ?? '0') || 0);
+        const minutes = (parseInt(match?.[2] ?? '0') || 0);
+        const seconds = (parseInt(match?.[3] ?? '0') || 0);
+        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+        durations.set(item.id, totalSeconds);
+      }
+    }
+    return durations;
+}
