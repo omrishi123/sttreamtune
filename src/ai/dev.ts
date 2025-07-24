@@ -1,3 +1,2 @@
-// Flows will be imported for their side effects in this file.
-import './flows/search-youtube-flow';
-import './flows/get-youtube-playlists-flow';
+// This file is no longer used for Genkit initialization for YouTube flows.
+// It can be used in the future if Genkit features are added.

@@ -1,14 +1,13 @@
 'use server';
 /**
- * @fileOverview A YouTube playlist search flow.
+ * @fileOverview A YouTube playlist search utility.
  * 
  * - getYoutubePlaylists - A function that handles searching for playlists on YouTube.
  * - YoutubePlaylistsInput - The input type for the getYoutubePlaylists function.
  * - YoutubePlaylistsOutput - The return type for the getYoutubePlaylists function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { Playlist } from '@/lib/types';
 import 'dotenv/config';
 
@@ -42,60 +41,43 @@ const YoutubePlaylistsOutputSchema = z.array(
 );
 export type YoutubePlaylistsOutput = z.infer<typeof YoutubePlaylistsOutputSchema>;
 
-const getYoutubePlaylistsFlow = ai.defineFlow(
-  {
-    name: 'getYoutubePlaylistsFlow',
-    inputSchema: YoutubePlaylistsInputSchema,
-    outputSchema: YoutubePlaylistsOutputSchema,
-  },
-  async (input) => {
-    if (!YOUTUBE_API_KEY) {
-      throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
-    }
-    const url = new URL(YOUTUBE_SEARCH_API_URL);
-    url.searchParams.append('part', 'snippet');
-    url.searchParams.append('q', input.query);
-    url.searchParams.append('key', YOUTUBE_API_KEY);
-    url.searchParams.append('type', 'playlist');
-    url.searchParams.append('maxResults', '6');
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.error || !data.items) {
-      console.error('YouTube API Playlist Search Error:', data.error);
-      return [];
-    }
-
-    const playlists: Playlist[] = data.items
-      .filter((item: any) => item.id && item.id.playlistId)
-      .map((item: any): Playlist => ({
-        id: item.id.playlistId,
-        name: item.snippet.title,
-        description: item.snippet.description,
-        coverArt: item.snippet.thumbnails.high.url,
-        trackIds: [], // We'll fetch these on demand
-        public: true,
-        owner: item.snippet.channelTitle,
-        'data-ai-hint': 'youtube playlist'
-      }));
-
-    return playlists;
-  }
-);
 
 export async function getYoutubePlaylists(input: YoutubePlaylistsInput): Promise<YoutubePlaylistsOutput> {
-  return getYoutubePlaylistsFlow(input);
+  if (!YOUTUBE_API_KEY) {
+    throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
+  }
+  const url = new URL(YOUTUBE_SEARCH_API_URL);
+  url.searchParams.append('part', 'snippet');
+  url.searchParams.append('q', input.query);
+  url.searchParams.append('key', YOUTUBE_API_KEY);
+  url.searchParams.append('type', 'playlist');
+  url.searchParams.append('maxResults', '6');
+
+  const response = await fetch(url.toString());
+  const data = await response.json();
+
+  if (data.error || !data.items) {
+    console.error('YouTube API Playlist Search Error:', data.error);
+    return [];
+  }
+
+  const playlists: Playlist[] = data.items
+    .filter((item: any) => item.id && item.id.playlistId)
+    .map((item: any): Playlist => ({
+      id: item.id.playlistId,
+      name: item.snippet.title,
+      description: item.snippet.description,
+      coverArt: item.snippet.thumbnails.high.url,
+      trackIds: [], // We'll fetch these on demand
+      public: true,
+      owner: item.snippet.channelTitle,
+      'data-ai-hint': 'youtube playlist'
+    }));
+
+  return playlists;
 }
 
-
-const getYoutubePlaylistDetailsFlow = ai.defineFlow(
-  {
-    name: 'getYoutubePlaylistDetailsFlow',
-    inputSchema: YoutubePlaylistDetailsInputSchema,
-    outputSchema: z.custom<Playlist>(),
-  },
-  async ({ playlistId }) => {
+export async function getYoutubePlaylistDetails({ playlistId }: YoutubePlaylistDetailsInput): Promise<Playlist | undefined> {
     if (!YOUTUBE_API_KEY) {
       throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
@@ -104,33 +86,28 @@ const getYoutubePlaylistDetailsFlow = ai.defineFlow(
     url.searchParams.append('id', playlistId);
     url.searchParams.append('key', YOUTUBE_API_KEY);
 
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.error || !data.items || data.items.length === 0) {
-      console.error('YouTube API Playlist Details Error:', data.error);
-      throw new Error('Playlist not found');
-    }
-
-    const item = data.items[0];
-    const playlist: Playlist = {
-      id: item.id,
-      name: item.snippet.title,
-      description: item.snippet.description,
-      coverArt: item.snippet.thumbnails.high.url,
-      trackIds: [], // Placeholder
-      public: true,
-      owner: item.snippet.channelTitle,
-      'data-ai-hint': 'youtube playlist'
-    };
-
-    return playlist;
-  }
-);
-
-export async function getYoutubePlaylistDetails(input: YoutubePlaylistDetailsInput): Promise<Playlist | undefined> {
     try {
-        return await getYoutubePlaylistDetailsFlow(input);
+        const response = await fetch(url.toString());
+        const data = await response.json();
+
+        if (data.error || !data.items || data.items.length === 0) {
+            console.error('YouTube API Playlist Details Error:', data.error);
+            return undefined;
+        }
+
+        const item = data.items[0];
+        const playlist: Playlist = {
+            id: item.id,
+            name: item.snippet.title,
+            description: item.snippet.description,
+            coverArt: item.snippet.thumbnails.high.url,
+            trackIds: [], // Placeholder
+            public: true,
+            owner: item.snippet.channelTitle,
+            'data-ai-hint': 'youtube playlist'
+        };
+
+        return playlist;
     } catch (error) {
         console.error("Failed to get playlist details:", error);
         return undefined;

@@ -1,14 +1,13 @@
 'use server';
 /**
- * @fileOverview A YouTube search flow.
+ * @fileOverview A YouTube search utility.
  * 
  * - searchYoutube - A function that handles searching for videos on YouTube.
  * - YoutubeSearchInput - The input type for the searchYoutube function.
  * - YoutubeSearchOutput - The return type for the searchYoutube function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { Track } from '@/lib/types';
 import 'dotenv/config';
 
@@ -44,7 +43,7 @@ async function getVideosDurations(videoIds: string[]): Promise<Map<string, numbe
     url.searchParams.append('id', videoIds.join(','));
     url.searchParams.append('key', YOUTUBE_API_KEY);
   
-    const response = await fetch(url);
+    const response = await fetch(url.toString());
     const data = await response.json();
   
     const durations = new Map<string, number>();
@@ -63,56 +62,45 @@ async function getVideosDurations(videoIds: string[]): Promise<Map<string, numbe
     return durations;
   }
 
-const searchYoutubeFlow = ai.defineFlow(
-  {
-    name: 'searchYoutubeFlow',
-    inputSchema: YoutubeSearchInputSchema,
-    outputSchema: YoutubeSearchOutputSchema,
-  },
-  async (input) => {
-    if (!YOUTUBE_API_KEY) {
-        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
-    }
-    const url = new URL(YOUTUBE_API_URL);
-    url.searchParams.append('part', 'snippet');
-    url.searchParams.append('q', `${input.query} official audio`);
-    url.searchParams.append('key', YOUTUBE_API_KEY);
-    url.searchParams.append('type', 'video');
-    url.searchParams.append('maxResults', '10');
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("YouTube API Error:", errorText);
-        throw new Error(`YouTube API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.error || !data.items) {
-      console.error('YouTube API Search Error:', data.error);
-      return [];
-    }
-
-    const videoIds = data.items.map((item: any) => item.id.videoId).filter(Boolean);
-    const durations = await getVideosDurations(videoIds);
-
-    const tracks: Track[] = data.items.map((item: any) => ({
-      id: item.id.videoId,
-      youtubeVideoId: item.id.videoId,
-      title: item.snippet.title,
-      artist: item.snippet.channelTitle,
-      album: 'YouTube',
-      artwork: item.snippet.thumbnails.high.url,
-      duration: durations.get(item.id.videoId) || 0,
-      'data-ai-hint': 'youtube video'
-    }));
-    
-    return tracks;
-  }
-);
-
 export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeSearchOutput> {
-  return searchYoutubeFlow(input);
+  if (!YOUTUBE_API_KEY) {
+      throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
+  }
+  const url = new URL(YOUTUBE_API_URL);
+  url.searchParams.append('part', 'snippet');
+  url.searchParams.append('q', `${input.query} official audio`);
+  url.searchParams.append('key', YOUTUBE_API_KEY);
+  url.searchParams.append('type', 'video');
+  url.searchParams.append('maxResults', '10');
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+      const errorText = await response.text();
+      console.error("YouTube API Error:", errorText);
+      throw new Error(`YouTube API request failed with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  
+  if (data.error || !data.items) {
+    console.error('YouTube API Search Error:', data.error);
+    return [];
+  }
+
+  const videoIds = data.items.map((item: any) => item.id.videoId).filter(Boolean);
+  const durations = await getVideosDurations(videoIds);
+
+  const tracks: Track[] = data.items.map((item: any) => ({
+    id: item.id.videoId,
+    youtubeVideoId: item.id.videoId,
+    title: item.snippet.title,
+    artist: item.snippet.channelTitle,
+    album: 'YouTube',
+    artwork: item.snippet.thumbnails.high.url,
+    duration: durations.get(item.id.videoId) || 0,
+    'data-ai-hint': 'youtube video'
+  }));
+  
+  return tracks;
 }
