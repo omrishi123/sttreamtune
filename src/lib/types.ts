@@ -18,6 +18,7 @@ export interface Playlist {
   public: boolean;
   owner: string; // user display name
   'data-ai-hint'?: string;
+  isLikedSongs?: boolean;
 }
 
 export interface User {
@@ -25,6 +26,10 @@ export interface User {
   name: string;
   email: string;
   photoURL?: string;
+}
+
+export interface UserData {
   likedSongs: string[];
-  playlists: string[];
+  playlists: Playlist[];
+  recentlyPlayed: string[];
 }

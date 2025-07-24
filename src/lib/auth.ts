@@ -17,21 +17,15 @@ const GUEST_USER: User = {
   name: 'Guest',
   email: '',
   photoURL: 'https://placehold.co/100x100.png',
-  likedSongs: [],
-  playlists: [],
 };
 
 // This function adapts a Firebase user to our application's User type.
 const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
-  // In a real app, you might fetch additional user data from Firestore here.
-  // For now, we'll use some mock data for playlists and liked songs for logged-in users.
   return {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || 'User',
     email: firebaseUser.email || '',
     photoURL: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
-    likedSongs: ['1', '5', '9'], // Mock data
-    playlists: userPlaylists.map(p => p.id), // Mock data
   };
 };
 

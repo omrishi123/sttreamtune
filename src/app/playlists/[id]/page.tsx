@@ -1,25 +1,99 @@
+
+"use client";
+
 import Image from "next/image";
-import { getPlaylistById, getTracksForPlaylist } from "@/lib/mock-data";
+import { getPlaylistById as getMockPlaylist, getTracksForPlaylist as getMockTracks } from "@/lib/mock-data";
 import { getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
 import { notFound } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
-import type { Playlist } from "@/lib/types";
+import type { Playlist, Track } from "@/lib/types";
+import { useUserData } from "@/context/user-data-context";
+import { useEffect, useState } from "react";
+import { usePlayer } from "@/context/player-context";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function PlaylistPage({ params }: { params: { id: string } }) {
-  let playlist: Playlist | undefined;
-
-  // Fetch playlist details from our new YouTube flow
-  playlist = await getYoutubePlaylistDetails({ playlistId: params.id });
+export default function PlaylistPage({ params }: { params: { id: string } }) {
+  const { getPlaylistById, getTrackById } = useUserData();
+  const { setQueueAndPlay } = usePlayer();
   
+  const [playlist, setPlaylist] = useState<Playlist | undefined | null>(undefined);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPlaylistData = async () => {
+      setIsLoading(true);
+      let foundPlaylist: Playlist | undefined;
+
+      // Check user-created playlists first
+      foundPlaylist = getPlaylistById(params.id);
+
+      // If not a user playlist, it might be a YouTube playlist
+      if (!foundPlaylist) {
+        try {
+          foundPlaylist = await getYoutubePlaylistDetails({ playlistId: params.id });
+        } catch (error) {
+           console.error("Failed to fetch from youtube", error)
+        }
+      }
+      
+      if (foundPlaylist) {
+        setPlaylist(foundPlaylist);
+        // If it's a special playlist like 'Liked Songs'
+        if (foundPlaylist.isLikedSongs || foundPlaylist.id === 'recently-played' || foundPlaylist.id.startsWith('playlist-')) {
+            const playlistTracks = foundPlaylist.trackIds.map(id => getTrackById(id)).filter(Boolean) as Track[];
+            setTracks(playlistTracks);
+        } else {
+            // It's a youtube playlist, fetch tracks for it
+            const youtubeTracks = await getMockTracks(params.id);
+            setTracks(youtubeTracks);
+        }
+
+      } else {
+        setPlaylist(null); // Not found
+      }
+      setIsLoading(false);
+    };
+
+    fetchPlaylistData();
+  }, [params.id, getPlaylistById, getTrackById]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <header className="flex flex-col md:flex-row items-center gap-8">
+          <Skeleton className="w-[200px] h-[200px] rounded-lg shadow-lg" />
+          <div className="space-y-3 text-center md:text-left">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-14 w-80" />
+            <Skeleton className="h-4 w-full max-w-lg" />
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-12 w-32 mt-4" />
+          </div>
+        </header>
+        <section>
+          <div className="space-y-2">
+            {Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (!playlist) {
     notFound();
   }
-
-  const tracks = await getTracksForPlaylist(params.id);
+  
   const totalDuration = tracks.reduce((acc, track) => acc + track.duration, 0);
   const totalMinutes = Math.floor(totalDuration / 60);
+
+  const handlePlayPlaylist = () => {
+    if(tracks.length > 0) {
+      setQueueAndPlay(tracks, tracks[0].id, playlist);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -45,7 +119,7 @@ export default async function PlaylistPage({ params }: { params: { id: string } 
             {" \u2022 "}
             {tracks.length} songs, about {totalMinutes} min
           </p>
-          <Button size="lg" className="mt-4">
+          <Button size="lg" className="mt-4" onClick={handlePlayPlaylist}>
             <Play className="mr-2 h-5 w-5"/>
             Play
           </Button>

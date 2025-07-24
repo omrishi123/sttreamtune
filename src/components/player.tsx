@@ -19,6 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { QueueSheet } from "./queue-sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserData } from "@/context/user-data-context";
+import { cn } from "@/lib/utils";
+import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 
 export function Player() {
   const { 
@@ -31,6 +34,7 @@ export function Player() {
     progress,
     handleSeek
   } = usePlayer();
+  const { isLiked, toggleLike } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
   const [volume, setVolume] = React.useState(50);
   const isMobile = useIsMobile();
@@ -55,6 +59,7 @@ export function Player() {
   }
   
   const currentPosition = currentTrack ? (progress / 100) * currentTrack.duration : 0;
+  const isCurrentTrackLiked = isLiked(currentTrack.id);
 
   if (isMobile) {
     return (
@@ -82,8 +87,8 @@ export function Player() {
             </div>
 
             <div className="flex items-center">
-               <Button variant="ghost" size="icon">
-                <Heart className="h-5 w-5" />
+               <Button variant="ghost" size="icon" onClick={() => toggleLike(currentTrack.id)}>
+                <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
               <Button
                 size="icon"
@@ -116,9 +121,10 @@ export function Player() {
             <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
-           <Button variant="ghost" size="icon" className="ml-2">
-              <Heart className="h-5 w-5" />
+           <Button variant="ghost" size="icon" className="ml-2" onClick={() => toggleLike(currentTrack.id)}>
+              <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
             </Button>
+            <AddToPlaylistMenu trackId={currentTrack.id} />
         </div>
 
         <div className="w-1/2 flex flex-col items-center justify-center gap-2">

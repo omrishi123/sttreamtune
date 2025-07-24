@@ -1,8 +1,10 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { PlayerProvider } from '@/context/player-context';
 import { LayoutProvider } from '@/components/layout-provider';
+import { UserDataProvider } from '@/context/user-data-context';
 
 export const metadata: Metadata = {
   title: 'StreamTune',
@@ -29,9 +31,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased dark">
-        <PlayerProvider>
-          <LayoutProvider>{children}</LayoutProvider>
-        </PlayerProvider>
+        <LayoutProvider>{children}</LayoutProvider>
         <Toaster />
       </body>
     </html>

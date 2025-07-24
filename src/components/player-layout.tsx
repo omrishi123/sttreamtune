@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { User as AppUser, Playlist } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserData } from "@/context/user-data-context";
+import { AddPlaylistDialog } from "./add-playlist-dialog";
 
 interface PlayerLayoutProps {
   children: React.ReactNode;
@@ -53,6 +55,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isMobile = useIsMobile();
+  const { playlists: userPlaylists } = useUserData();
 
   const handleLogout = async () => {
     await logout();
@@ -66,7 +69,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     { href: "/library", label: "Your Library", icon: Library },
   ];
   
-  const currentUserPlaylists: Playlist[] = [];
+  const currentUserPlaylists = userPlaylists;
 
   if (!user) {
     return (
@@ -126,9 +129,11 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                   <SidebarGroup>
                     <SidebarGroupLabel className="flex items-center justify-between">
                       <span>Playlists</span>
-                      <button className="p-1 hover:text-sidebar-foreground transition-colors">
-                        <PlusCircle className="h-4 w-4" />
-                      </button>
+                      <AddPlaylistDialog>
+                        <button className="p-1 hover:text-sidebar-foreground transition-colors">
+                          <PlusCircle className="h-4 w-4" />
+                        </button>
+                      </AddPlaylistDialog>
                     </SidebarGroupLabel>
                     <SidebarMenu>
                       {currentUserPlaylists.map((playlist) => (
@@ -234,9 +239,9 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
           <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden">
             <div className="flex justify-around items-center h-16">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
+                <Link key={item.href} href={item.href} className="flex-1">
                   <div className={cn(
-                    "flex flex-col items-center justify-center gap-1 w-20 transition-colors",
+                    "flex flex-col items-center justify-center gap-1 h-full transition-colors",
                     pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   )}>
                     <item.icon className="h-6 w-6" />
