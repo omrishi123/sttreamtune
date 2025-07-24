@@ -316,7 +316,8 @@ export const getPlaylistById = async (id: string): Promise<Playlist | undefined>
     // In a real app, you'd fetch this from your DB or the YouTube API.
     // For now, we'll check our mock data, but this might not be sufficient
     // if the playlist is coming directly from the new YouTube playlist flow.
-    const mockPlaylist = playlists.find(p => p.id === id);
+    const allPlaylists = homePagePlaylists.flatMap(section => section.playlists);
+    const mockPlaylist = allPlaylists.find(p => p.id === id);
     if(mockPlaylist) return mockPlaylist;
     
     // This part is tricky because we don't have a direct way to fetch a single
