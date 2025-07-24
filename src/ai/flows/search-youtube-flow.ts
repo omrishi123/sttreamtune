@@ -76,7 +76,7 @@ const searchYoutubeFlow = ai.defineFlow(
     const url = new URL(YOUTUBE_API_URL);
     url.searchParams.append('part', 'snippet');
     url.searchParams.append('q', `${input.query} official audio`);
-    url.search_params.append('key', YOUTUBE_API_KEY);
+    url.searchParams.append('key', YOUTUBE_API_KEY);
     url.searchParams.append('type', 'video');
     url.searchParams.append('maxResults', '10');
 
