@@ -90,7 +90,8 @@ const searchYoutubeFlow = ai.defineFlow(
 
     const data = await response.json();
     
-    if (!data.items) {
+    if (data.error || !data.items) {
+      console.error('YouTube API Search Error:', data.error);
       return [];
     }
 

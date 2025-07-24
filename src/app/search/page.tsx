@@ -30,7 +30,7 @@ export default function SearchPage() {
         toast({
           title: "No results found",
           description: "Try a different search term.",
-        });
+        });5
       }
     } catch (error) {
       console.error("Search failed:", error);

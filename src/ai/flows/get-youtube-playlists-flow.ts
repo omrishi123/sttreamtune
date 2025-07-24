@@ -62,7 +62,8 @@ const getYoutubePlaylistsFlow = ai.defineFlow(
     const response = await fetch(url);
     const data = await response.json();
 
-    if (!data.items) {
+    if (data.error || !data.items) {
+      console.error('YouTube API Playlist Search Error:', data.error);
       return [];
     }
 
@@ -106,7 +107,8 @@ const getYoutubePlaylistDetailsFlow = ai.defineFlow(
     const response = await fetch(url);
     const data = await response.json();
 
-    if (!data.items || data.items.length === 0) {
+    if (data.error || !data.items || data.items.length === 0) {
+      console.error('YouTube API Playlist Details Error:', data.error);
       throw new Error('Playlist not found');
     }
 
