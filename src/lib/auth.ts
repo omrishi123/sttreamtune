@@ -16,6 +16,7 @@ const GUEST_USER: User = {
   id: 'guest',
   name: 'Guest',
   email: '',
+  photoURL: 'https://placehold.co/100x100.png',
   likedSongs: [],
   playlists: [],
 };
@@ -28,6 +29,7 @@ const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || 'User',
     email: firebaseUser.email || '',
+    photoURL: firebaseUser.photoURL || 'https://placehold.co/100x100.png',
     likedSongs: ['1', '5', '9'], // Mock data
     playlists: userPlaylists.map(p => p.id), // Mock data
   };

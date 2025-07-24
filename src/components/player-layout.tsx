@@ -80,6 +80,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   }
   
   const isGuest = user.id === 'guest';
+  const userAvatar = user.photoURL || "https://placehold.co/100x100.png";
 
   return (
     <SidebarProvider defaultOpen>
@@ -155,7 +156,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                    <SidebarMenuButton asChild tooltip="Profile" className="w-full justify-start">
                       <div>
                         <Avatar className="h-7 w-7">
-                          <AvatarImage src="https://placehold.co/100x100.png" alt={user.name} data-ai-hint="user avatar" />
+                          <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
                           <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{user.name}</span>
@@ -199,7 +200,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Avatar className="h-8 w-8 cursor-pointer">
-                        <AvatarImage src="https://placehold.co/100x100.png" alt={user.name} data-ai-hint="user avatar" />
+                        <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
                         <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                       </Avatar>
                     </DropdownMenuTrigger>
