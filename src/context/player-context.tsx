@@ -51,21 +51,51 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsMounted(true);
   }, []);
 
+  const updateMediaSession = () => {
+    if ('mediaSession' in navigator && currentTrack) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.title,
+        artist: currentTrack.artist,
+        album: currentTrack.album,
+        artwork: [
+          { src: currentTrack.artwork, sizes: '96x96', type: 'image/png' },
+          { src: currentTrack.artwork, sizes: '128x128', type: 'image/png' },
+          { src: currentTrack.artwork, sizes: '192x192', type: 'image/png' },
+          { src: currentTrack.artwork, sizes: '256x256', type: 'image/png' },
+          { src: currentTrack.artwork, sizes: '384x384', type: 'image/png' },
+          { src: currentTrack.artwork, sizes: '512x512', type: 'image/png' },
+        ],
+      });
+
+      navigator.mediaSession.setActionHandler('play', () => play());
+      navigator.mediaSession.setActionHandler('pause', () => pause());
+      navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
+      navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+    }
+  };
+
   useEffect(() => {
     if (!isMounted) return;
 
     if (!isNativeMode.current && isPlaying && isReady && playerRef.current) {
       playerRef.current.getInternalPlayer()?.playVideo();
       startProgressInterval();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     } else if (!isNativeMode.current && !isPlaying && isReady && playerRef.current) {
       playerRef.current?.getInternalPlayer()?.pauseVideo();
       stopProgressInterval();
+       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     }
     
     return () => {
       stopProgressInterval();
     }
   }, [isMounted, isReady, isPlaying]);
+  
+  useEffect(() => {
+    updateMediaSession();
+  }, [currentTrack]);
+
 
   const startProgressInterval = () => {
     if (isNativeMode.current) return;
