@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { Playlist, Track } from '@/lib/types';
 import 'dotenv/config';
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
 const YOUTUBE_SEARCH_API_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_PLAYLISTS_API_URL = 'https://www.googleapis.com/youtube/v3/playlists';
 
@@ -115,7 +115,7 @@ export async function getYoutubePlaylistDetails({ playlistId }: YoutubePlaylistD
 }
 
 export async function getTracksForPlaylist(playlistId: string): Promise<Track[]> {
-    const apiKey = process.env.YOUTUBE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
     if (!apiKey) {
         console.error("YOUTUBE_API_KEY is not set.");
         return [];
@@ -181,7 +181,7 @@ export async function getTracksForPlaylist(playlistId: string): Promise<Track[]>
 }
 
 async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
-    const apiKey = process.env.YOUTUBE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
     if (!apiKey) {
         throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
     }
