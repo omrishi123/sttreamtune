@@ -1,22 +1,23 @@
-
 {
+  "theme_color": "#29ABE2",
+  "background_color": "#F0F2F5",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
   "name": "StreamTune",
   "short_name": "StreamTune",
+  "description": "A modern, responsive music streaming application built with Next.js and Firebase.",
   "id": "/?source=pwa",
-  "start_url": "/?source=pwa",
-  "display": "standalone",
-  "display_override": [
-    "window-controls-overlay"
-  ],
-  "background_color": "#000",
-  "theme_color": "#0096ff",
-  "description": "A modern, responsive music streaming application.",
   "lang": "en-US",
   "dir": "ltr",
   "orientation": "portrait-primary",
+  "display_override": [
+    "window-controls-overlay"
+  ],
   "categories": [
     "music"
   ],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "https://i.postimg.cc/SswWC87w/streamtune.png",
@@ -31,56 +32,47 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot1.jpg",
+      "type": "image/jpeg",
+      "sizes": "1080x1920",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/screenshot2.jpg",
+      "type": "image/jpeg",
+      "sizes": "1920x1080",
+      "form_factor": "wide"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Search",
       "short_name": "Search",
-      "description": "Find your favorite music",
-      "url": "/search?source=pwa",
-      "icons": [
-        {
-          "src": "/icons/search.png",
-          "sizes": "192x192"
-        }
-      ]
+      "description": "Search for songs, artists, and playlists",
+      "url": "/search"
     },
     {
       "name": "Your Library",
       "short_name": "Library",
       "description": "Access your playlists and liked songs",
-      "url": "/library?source=pwa",
-      "icons": [
-        {
-          "src": "/icons/library.png",
-          "sizes": "192x192"
-        }
-      ]
+      "url": "/library"
     }
   ],
+  "launch_handler": {
+    "client_mode": [
+      "navigate-existing",
+      "auto"
+    ]
+  },
   "share_target": {
-    "action": "/share-target",
+    "action": "/share-target/",
     "method": "GET",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url"
     }
-  },
-  "screenshots": [
-    {
-      "src": "https://placehold.co/1080x1920.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "App Home Screen"
-    },
-    {
-      "src": "https://placehold.co/1280x800.png",
-      "sizes": "1280x800",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "App Home Screen"
-    }
-  ],
-  "prefer_related_applications": false
+  }
 }
