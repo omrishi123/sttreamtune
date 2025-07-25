@@ -25,54 +25,88 @@ interface UserDataContextType extends UserData {
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
 
 const getInitialUserData = (userId: string): UserData => {
-  if (typeof window === 'undefined') {
-    return { likedSongs: [], playlists: [], recentlyPlayed: [] };
+  const defaults = { likedSongs: [], playlists: [], recentlyPlayed: [] };
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return defaults;
   }
-  const storedData = window.localStorage.getItem(`userData-${userId}`);
-  if (storedData) {
-    return JSON.parse(storedData);
+  try {
+    const storedData = window.localStorage.getItem(`userData-${userId}`);
+    if (storedData) {
+      return JSON.parse(storedData);
+    }
+  } catch (error) {
+    console.error("Error reading user data from localStorage:", error);
   }
-  return { likedSongs: [], playlists: [], recentlyPlayed: [] };
+  return defaults;
 };
 
-const getInitialTrackCache = (userId: string): CachedTracks => {
+const getInitialTrackCache = (): CachedTracks => {
     const initialMockTracks = mockTracks.reduce((acc, track) => {
         acc[track.id] = track;
         return acc;
     }, {} as CachedTracks);
 
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !window.localStorage) {
         return initialMockTracks;
     }
-    const storedTracks = window.localStorage.getItem(`trackCache-${userId}`);
-    const parsedTracks = storedTracks ? JSON.parse(storedTracks) : {};
-    return { ...initialMockTracks, ...parsedTracks };
+    try {
+      const storedTracks = window.localStorage.getItem('trackCache'); // Simplified to a single cache
+      const parsedTracks = storedTracks ? JSON.parse(storedTracks) : {};
+      return { ...initialMockTracks, ...parsedTracks };
+    } catch (error) {
+      console.error("Error reading track cache from localStorage:", error);
+      return initialMockTracks;
+    }
 }
 
 
 export const UserDataProvider = ({ children, user }: { children: ReactNode, user: User }) => {
-  const [userData, setUserData] = useState<UserData>(getInitialUserData(user.id));
-  const [trackCache, setTrackCache] = useState<CachedTracks>(getInitialTrackCache(user.id));
+  const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
+  const [trackCache, setTrackCache] = useState<CachedTracks>({});
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // On mount, and when user changes, initialize data from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      setUserData(getInitialUserData(user.id));
+      setTrackCache(getInitialTrackCache());
+    } else {
+      // Fallback for environments without localStorage
+      const initialMockTracks = mockTracks.reduce((acc, track) => {
+        acc[track.id] = track;
+        return acc;
+      }, {} as CachedTracks);
+      setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [] });
+      setTrackCache(initialMockTracks);
+    }
+    setIsInitialized(true);
+  }, [user.id]);
+
 
   // Persist user data to local storage
   useEffect(() => {
-     if (user.id !== 'guest') {
-      window.localStorage.setItem(`userData-${user.id}`, JSON.stringify(userData));
+    if (!isInitialized) return;
+    if (user.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.setItem(`userData-${user.id}`, JSON.stringify(userData));
+      } catch(error) {
+        console.error("Error writing user data to localStorage:", error);
+      }
     }
-  }, [userData, user.id]);
+  }, [userData, user.id, isInitialized]);
 
   // Persist track cache to local storage
   useEffect(() => {
-    if (user.id !== 'guest') {
-      window.localStorage.setItem(`trackCache-${user.id}`, JSON.stringify(trackCache));
+    if (!isInitialized) return;
+    if (user.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
+       try {
+        window.localStorage.setItem('trackCache', JSON.stringify(trackCache));
+      } catch(error) {
+        console.error("Error writing track cache to localStorage:", error);
+      }
     }
-  }, [trackCache, user.id]);
+  }, [trackCache, user.id, isInitialized]);
 
-  // Reload data when user changes
-  useEffect(() => {
-    setUserData(getInitialUserData(user.id));
-    setTrackCache(getInitialTrackCache(user.id));
-  }, [user.id])
 
   const addTrackToCache = (track: Track) => {
     if (!trackCache[track.id]) {
