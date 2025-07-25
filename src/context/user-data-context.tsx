@@ -158,7 +158,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
       trackIds: [],
       public: false,
       owner: user.name,
-      coverArt: 'https://i.ibb.co/R4m2S1z/logo.png',
+      coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
       'data-ai-hint': 'playlist cover',
     };
     setUserData(prev => ({

@@ -15,7 +15,7 @@ const GUEST_USER: User = {
   id: 'guest',
   name: 'Guest',
   email: '',
-  photoURL: 'https://i.ibb.co/R4m2S1z/logo.png',
+  photoURL: 'https://i.postimg.cc/SswWC87w/streamtune.png',
 };
 
 // This function adapts a Firebase user to our application's User type.
@@ -24,7 +24,7 @@ const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || 'User',
     email: firebaseUser.email || '',
-    photoURL: firebaseUser.photoURL || 'https://i.ibb.co/R4m2S1z/logo.png',
+    photoURL: firebaseUser.photoURL || 'https://i.postimg.cc/SswWC87w/streamtune.png',
   };
 };
 
