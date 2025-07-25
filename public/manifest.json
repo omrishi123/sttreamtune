@@ -1,32 +1,61 @@
 {
-  "theme_color": "#0096ff",
-  "background_color": "#24292e",
+  "theme_color": "#29ABE2",
+  "background_color": "#F0F2F5",
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
   "name": "StreamTune",
   "short_name": "StreamTune",
   "description": "A modern, responsive music streaming application.",
+  "id": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "orientation": "portrait-primary",
+  "categories": ["music", "entertainment"],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "screenshots": [
+    {
+      "src": "https://placehold.co/1080x1920.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home Screen"
+    },
+    {
+      "src": "https://placehold.co/1080x1920.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Player View"
+    }
+  ],
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icon-256x256.png",
+      "src": "/icons/icon-256x256.png",
       "sizes": "256x256",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icon-384x384.png",
+      "src": "/icons/icon-384x384.png",
       "sizes": "384x384",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
