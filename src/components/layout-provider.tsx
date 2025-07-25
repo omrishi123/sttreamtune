@@ -47,12 +47,25 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     return <AuthLayout>{children}</AuthLayout>;
   }
 
-  if (loading || !user) {
+  if (loading) {
      return (
        <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
           <Icons.logo className="h-12 w-12 animate-pulse" />
           <p className="text-muted-foreground">Loading your experience...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    // This case handles the moment after loading but before the user object is set,
+    // or if auth fails to produce a user/guest object. It prevents rendering the app in a broken state.
+    return (
+       <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <Icons.logo className="h-12 w-12 animate-pulse" />
+          <p className="text-muted-foreground">Authenticating...</p>
         </div>
       </div>
     );
