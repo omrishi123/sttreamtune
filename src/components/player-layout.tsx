@@ -71,6 +71,17 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   
   const currentUserPlaylists = userPlaylists;
 
+  if (isMobile === undefined) {
+    return (
+       <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <Icons.logo className="h-12 w-12 animate-pulse" />
+          <p className="text-muted-foreground">Loading your experience...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
        <div className="flex h-screen items-center justify-center bg-background">
