@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A YouTube playlist search utility.
@@ -53,28 +54,33 @@ export async function getYoutubePlaylists(input: YoutubePlaylistsInput): Promise
   url.searchParams.append('type', 'playlist');
   url.searchParams.append('maxResults', '6');
 
-  const response = await fetch(url.toString());
-  const data = await response.json();
+  try {
+    const response = await fetch(url.toString());
+    const data = await response.json();
 
-  if (data.error || !data.items) {
-    console.error('YouTube API Playlist Search Error:', data.error);
-    return [];
+    if (data.error || !data.items || !Array.isArray(data.items)) {
+      console.error('YouTube API Playlist Search Error or invalid data format:', data.error || 'No items in response');
+      return [];
+    }
+
+    const playlists: Playlist[] = data.items
+      .filter((item: any) => item.id && item.id.playlistId)
+      .map((item: any): Playlist => ({
+        id: item.id.playlistId,
+        name: item.snippet.title,
+        description: item.snippet.description,
+        coverArt: item.snippet.thumbnails.high.url,
+        trackIds: [], // We'll fetch these on demand
+        public: true,
+        owner: item.snippet.channelTitle,
+        'data-ai-hint': 'youtube playlist'
+      }));
+
+    return playlists;
+  } catch (error) {
+    console.error("Failed to fetch or parse YouTube playlists:", error);
+    return []; // Return an empty array on any failure
   }
-
-  const playlists: Playlist[] = data.items
-    .filter((item: any) => item.id && item.id.playlistId)
-    .map((item: any): Playlist => ({
-      id: item.id.playlistId,
-      name: item.snippet.title,
-      description: item.snippet.description,
-      coverArt: item.snippet.thumbnails.high.url,
-      trackIds: [], // We'll fetch these on demand
-      public: true,
-      owner: item.snippet.channelTitle,
-      'data-ai-hint': 'youtube playlist'
-    }));
-
-  return playlists;
 }
 
 export async function getYoutubePlaylistDetails({ playlistId }: YoutubePlaylistDetailsInput): Promise<Playlist | undefined> {
