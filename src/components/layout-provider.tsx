@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { AuthLayout } from "@/components/auth-layout";
 import { PlayerLayout } from "@/components/player-layout";
 import { onAuthChange } from "@/lib/auth";
-import type { User, Track } from "@/lib/types";
+import type { User } from "@/lib/types";
 import { UserDataProvider, useUserData } from "@/context/user-data-context";
 import { PlayerProvider, usePlayer } from "@/context/player-context";
 import { Icons } from "./icons";
@@ -47,7 +47,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     return <AuthLayout>{children}</AuthLayout>;
   }
 
-  if (loading) {
+  if (loading || !user) {
      return (
        <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
@@ -59,10 +59,10 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <UserDataProvider user={user!}>
+    <UserDataProvider user={user}>
       <PlayerProvider>
         <AppInitializer>
-          <PlayerLayout user={user!}>{children}</PlayerLayout>
+          <PlayerLayout user={user}>{children}</PlayerLayout>
         </AppInitializer>
       </PlayerProvider>
     </UserDataProvider>
