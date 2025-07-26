@@ -4,13 +4,6 @@ import React from 'react';
 import type { YoutubePlaylistsOutput } from '@/ai/flows/get-youtube-playlists-flow';
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 
 interface PlaylistSectionProps {
   title: string;
@@ -20,23 +13,11 @@ interface PlaylistSectionProps {
 const PlaylistSection: React.FC<PlaylistSectionProps> = ({ title, playlists }) => (
   <section>
     <h2 className="text-2xl font-bold font-headline mb-4">{title}</h2>
-    <Carousel
-      opts={{
-        align: "start",
-        dragFree: true,
-      }}
-      className="w-full"
-    >
-      <CarouselContent>
-        {playlists?.map((playlist) => (
-          <CarouselItem key={playlist.id} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
-            <div className="h-full">
-              <PlaylistCard playlist={playlist} />
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-    </Carousel>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {playlists?.map((playlist) => (
+        <PlaylistCard key={playlist.id} playlist={playlist} />
+      ))}
+    </div>
   </section>
 );
 
