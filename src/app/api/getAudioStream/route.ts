@@ -14,7 +14,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const info = await ytdl.getInfo(videoId);
+    // Adding request options to mimic a browser request
+    const requestOptions = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.101 Safari/537.36',
+      },
+    };
+
+    const info = await ytdl.getInfo(videoId, { requestOptions });
     const audioFormat = ytdl.chooseFormat(info.formats, {
       quality: 'highestaudio',
       filter: 'audioonly',
