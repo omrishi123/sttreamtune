@@ -42,6 +42,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [isNativePlayback, setIsNativePlayback] = useState(false);
   
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,7 +75,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || isNativePlayback) return;
 
     if (isPlaying && isReady && playerRef.current) {
       playerRef.current.getInternalPlayer()?.playVideo();
@@ -89,7 +90,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       stopProgressInterval();
     }
-  }, [isMounted, isReady, isPlaying]);
+  }, [isMounted, isReady, isPlaying, isNativePlayback]);
   
   useEffect(() => {
     updateMediaSession();
@@ -121,12 +122,31 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
 
-    if (currentTrack?.id !== trackToPlay.id) {
-      setProgress(0);
-      setCurrentTrack(trackToPlay);
-      setIsReady(false); // Force the player to re-evaluate readiness for the new track
+    if (window.Android && typeof window.Android.playAudio === 'function') {
+        setIsNativePlayback(true);
+        setCurrentTrack(trackToPlay);
+        setIsPlaying(true); // Set optimistic state
+        try {
+            const response = await fetch(`/api/getAudioStream?videoId=${trackToPlay.youtubeVideoId}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to get audio stream');
+            }
+            const { audioUrl, title, artist } = await response.json();
+            window.Android.playAudio(audioUrl, title, artist);
+        } catch (error) {
+            console.error("Failed to get audio stream: ", error);
+            setIsPlaying(false); // Revert state on failure
+        }
+    } else {
+        setIsNativePlayback(false);
+        if (currentTrack?.id !== trackToPlay.id) {
+          setProgress(0);
+          setCurrentTrack(trackToPlay);
+          setIsReady(false); // Force the player to re-evaluate readiness for the new track
+        }
+        setIsPlaying(true);
     }
-    setIsPlaying(true);
   };
 
   const pause = () => {
@@ -226,7 +246,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlayerContext.Provider value={value}>
         {children}
-         {currentTrack && (
+         {currentTrack && !isNativePlayback && (
             <YouTube
                 key={currentTrack.id}
                 ref={playerRef}
