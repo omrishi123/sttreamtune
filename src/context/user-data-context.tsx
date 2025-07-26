@@ -165,7 +165,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
       description,
       trackIds: [],
       public: false,
-      owner: user.name,
+      owner: user.name || 'You',
       coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
       'data-ai-hint': 'playlist cover',
     };
@@ -197,7 +197,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
         'data-ai-hint': 'glowing heart',
         trackIds: userData.likedSongs,
         public: false,
-        owner: user.name,
+        owner: user.name || 'You',
         isLikedSongs: true,
       };
     }
@@ -209,7 +209,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
         coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
         trackIds: userData.recentlyPlayed,
         public: false,
-        owner: user.name,
+        owner: user.name || 'You',
         'data-ai-hint': 'time clock',
       };
     }
