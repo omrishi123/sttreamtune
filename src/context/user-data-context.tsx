@@ -153,16 +153,20 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addPlaylist = (playlist: Playlist) => {
+    const playlistToAdd = { ...playlist };
+    if (typeof playlist.owner === 'object' && playlist.owner !== null) {
+      // This handles cases where the full user object might be passed
+      playlistToAdd.owner = (playlist.owner as User).name || 'Unknown';
+    }
+
     setUserData(prev => ({
       ...prev,
-      playlists: [playlist, ...prev.playlists],
+      playlists: [playlistToAdd, ...prev.playlists],
     }));
   };
   
   const createPlaylist = (name: string, description: string = '') => {
     if (!currentUser) {
-      // This should ideally not happen if create playlist UI is hidden for logged-out users,
-      // but it's a safe guard.
       console.error("Cannot create playlist: no user is logged in.");
       return;
     }
@@ -172,7 +176,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       description,
       trackIds: [],
       public: false,
-      owner: currentUser.name, // Now this is safe
+      owner: currentUser.name, 
       coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
       'data-ai-hint': 'playlist cover',
     };
@@ -206,7 +210,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         'data-ai-hint': 'glowing heart',
         trackIds: userData.likedSongs,
         public: false,
-        owner: currentUser.name,
+        owner: currentUser.name || "You",
         isLikedSongs: true,
       };
     }
@@ -218,7 +222,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
         trackIds: userData.recentlyPlayed,
         public: false,
-        owner: currentUser.name,
+        owner: currentUser.name || "You",
         'data-ai-hint': 'time clock',
       };
     }
