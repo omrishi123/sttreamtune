@@ -114,7 +114,7 @@ export default function PlaylistPage() {
     });
   }
 
-  const ownerName = typeof playlist.owner === 'string' ? playlist.owner : playlist.owner?.name;
+  const ownerName = playlist.owner;
 
   return (
     <div className="space-y-8">
