@@ -9,12 +9,7 @@ import YouTube from 'react-youtube';
 declare global {
   interface Window {
     Android?: {
-      playAudio: (youtubeVideoId: string, title: string, artist: string) => void;
-    };
-    AndroidBridge?: {
-      playSong: (trackInfoJson: string) => void;
-      pause: () => void;
-      // Add other methods you might need, e.g., resume, seekTo, etc.
+      playAudio: (audioUrl: string, title: string, artist: string) => void;
     };
   }
 }
@@ -46,20 +41,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [progress, setProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
   
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const isNativeMode = useRef(false);
+  const isNativePlayback = useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
-    // Add a check for guest users and save their data.
-    const guestData = localStorage.getItem('guest-music-data');
-    if (guestData) {
-        // You would parse and set the guest data to your state here.
-        // For example: const { likedSongs, recentlyPlayed } = JSON.parse(guestData);
-    }
   }, []);
 
   const updateMediaSession = () => {
@@ -84,15 +73,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
     }
   };
-
+  
   useEffect(() => {
+    if (isNativePlayback.current) return;
     if (!isMounted) return;
 
-    if (!isNativeMode.current && isPlaying && isReady && playerRef.current) {
+    if (isPlaying && isReady && playerRef.current) {
       playerRef.current.getInternalPlayer()?.playVideo();
       startProgressInterval();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-    } else if (!isNativeMode.current && !isPlaying && isReady && playerRef.current) {
+    } else if (!isPlaying && isReady && playerRef.current) {
       playerRef.current?.getInternalPlayer()?.pauseVideo();
       stopProgressInterval();
        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -109,9 +99,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
 
   const startProgressInterval = () => {
-    if (isNativeMode.current) return;
+    if (isNativePlayback.current) return;
     stopProgressInterval(); 
     progressIntervalRef.current = setInterval(async () => {
+      if (isSeeking) return; // Don't update progress while user is seeking
       const player = playerRef.current?.getInternalPlayer();
       if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
         const currentTime = await player.getCurrentTime();
@@ -129,39 +120,46 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const play = (track?: Track) => {
-    let trackToPlay = track || currentTrack || queue[0];
-  
-    if (trackToPlay) {
-      // Check for the native Android interface
-      if (window.Android && typeof window.Android.playAudio === 'function') {
-        // If it exists, call the native Android function to enable background play.
-        // We pass the YouTube Video ID instead of a direct audio URL.
-        isNativeMode.current = true;
-        setCurrentTrack(trackToPlay);
-        setIsPlaying(true);
-        window.Android.playAudio(trackToPlay.youtubeVideoId, trackToPlay.title, trackToPlay.artist);
-        return; // Stop execution to prevent web player from starting
+  const play = async (track?: Track) => {
+    const trackToPlay = track || currentTrack || queue[0];
+    if (!trackToPlay) return;
+
+    // Check if we are inside the Android App
+    if (window.Android && typeof window.Android.playAudio === 'function') {
+      isNativePlayback.current = true;
+      setIsPlaying(true);
+      setCurrentTrack(trackToPlay);
+      
+      try {
+        const response = await fetch(`/api/getAudioStream?videoId=${trackToPlay.youtubeVideoId}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get audio stream from backend.');
+        }
+        const audioDetails = await response.json();
+        // Hand off to native Android player
+        window.Android.playAudio(audioDetails.audioUrl, audioDetails.title, audioDetails.artist);
+      } catch (error) {
+        console.error("Playback Error:", error);
+        // Optionally, show a toast to the user
+        setIsPlaying(false);
       }
 
-      // If we are here, it means we are in a regular browser.
-      isNativeMode.current = false;
+    } else {
+      // Standard web browser playback
+      isNativePlayback.current = false;
       if (currentTrack?.id !== trackToPlay.id) {
-          setProgress(0);
-          setCurrentTrack(trackToPlay);
+        setProgress(0);
+        setCurrentTrack(trackToPlay);
+        setIsReady(false); // Force the player to re-evaluate readiness for the new track
       }
       setIsPlaying(true);
-      if (currentTrack?.id !== trackToPlay.id) {
-          setIsReady(false);
-      }
     }
   };
 
   const pause = () => {
     setIsPlaying(false);
-    if (isNativeMode.current && window.AndroidBridge && typeof window.AndroidBridge.pause === 'function') {
-        window.AndroidBridge.pause();
-    }
+    // You might need to add a pause function to your Android bridge as well
   };
 
   const playNext = () => {
@@ -208,7 +206,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleStateChange = (event: any) => {
-    if (isNativeMode.current) return;
+    if (isNativePlayback.current) return;
 
     if (event.data === YouTube.PlayerState.PLAYING) {
       startProgressInterval();
@@ -219,23 +217,19 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         playNext();
     }
   };
-
+  
   const handleSeek = (value: number[]) => {
       const newProgress = value[0];
       setProgress(newProgress);
       
-      if (isNativeMode.current) {
-        // window.AndroidBridge.seekTo(newProgress);
-      } else {
-        const player = playerRef.current?.getInternalPlayer();
-        if(player && currentTrack) {
-            player.seekTo((newProgress / 100) * currentTrack.duration, true);
-        }
+      const player = playerRef.current?.getInternalPlayer();
+      if(player && currentTrack) {
+          player.seekTo((newProgress / 100) * currentTrack.duration, true);
       }
   }
   
   const handleReady = (event: any) => {
-    if (!isNativeMode.current) {
+    if (!isNativePlayback.current) {
         setIsReady(true);
     }
   }
@@ -264,7 +258,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlayerContext.Provider value={value}>
         {children}
-         {currentTrack && !isNativeMode.current && (
+         {currentTrack && !isNativePlayback.current && (
             <YouTube
                 key={currentTrack.id}
                 ref={playerRef}
