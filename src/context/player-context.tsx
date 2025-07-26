@@ -9,11 +9,17 @@ import YouTube from 'react-youtube';
 declare global {
   interface Window {
     Android?: {
-      playSong: (videoId: string, title: string, artist: string, artworkUrl: string, playlistVideoIds: string[], currentIndex: number) => void;
+      startPlayback: (
+        videoId: string,
+        title: string,
+        artist: string,
+        thumbnailUrl: string,
+        playlistVideoIds: string[],
+        currentIndex: number
+      ) => void;
     };
-    updatePlaybackState?: (isPlaying: boolean) => void;
-    updatePlaybackTime?: (currentTime: number, duration: number) => void;
-    playNextSongFromNative?: () => void;
+    updatePlaybackState: (isPlaying: boolean, trackId: string) => void;
+    updatePlaybackTime: (currentTime: number, duration: number) => void;
   }
 }
 
@@ -56,27 +62,26 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to attach JS functions to the window object for Android to call
   useEffect(() => {
-    window.updatePlaybackState = (playing: boolean) => {
+    window.updatePlaybackState = (playing: boolean, trackId: string) => {
         setIsPlaying(playing);
-    };
-    
-    window.updatePlaybackTime = (currentTime: number, duration: number) => {
-        if (duration > 0) {
-           setProgress((currentTime / duration) * 100);
+        const track = queue.find(t => t.youtubeVideoId === trackId);
+        if (track && track.id !== currentTrack?.id) {
+          setCurrentTrack(track);
         }
     };
-    
-    window.playNextSongFromNative = () => {
-        playNext();
-    };
 
+    window.updatePlaybackTime = (currentTime: number, duration: number) => {
+      if (duration > 0) {
+        setProgress((currentTime / duration) * 100);
+      }
+    };
+    
     // Cleanup function
     return () => {
-      delete window.updatePlaybackState;
-      delete window.updatePlaybackTime;
-      delete window.playNextSongFromNative;
+      delete (window as any).updatePlaybackState;
+      delete (window as any).updatePlaybackTime;
     };
-  }, [queue]);
+  }, [queue, currentTrack]);
 
 
   const updateMediaSession = () => {
@@ -147,22 +152,21 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const playSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
-      const playlistVideoIds = currentQueue.map(t => t.youtubeVideoId);
-      const currentIndex = currentQueue.findIndex(t => t.id === trackToPlay.id);
+  const playSongInApp = (track: Track, currentQueue: Track[]) => {
+    const currentIndex = currentQueue.findIndex(t => t.id === track.id);
+    const playlistVideoIds = currentQueue.map(t => t.youtubeVideoId);
 
-      if (window.Android && typeof window.Android.playSong === 'function') {
-          console.log("Environment: Android App. Calling native playback service.");
-          setIsNativePlayback(true);
-          window.Android.playSong(
-              trackToPlay.youtubeVideoId,
-              trackToPlay.title,
-              trackToPlay.artist,
-              trackToPlay.artwork,
-              playlistVideoIds,
-              currentIndex
-          );
-      }
+    if (window.Android && typeof window.Android.startPlayback === 'function') {
+      setIsNativePlayback(true);
+      window.Android.startPlayback(
+        track.youtubeVideoId,
+        track.title,
+        track.artist,
+        `https://img.youtube.com/vi/${track.youtubeVideoId}/mqdefault.jpg`,
+        playlistVideoIds,
+        currentIndex
+      );
+    }
   };
 
   const play = (track?: Track) => {
@@ -170,7 +174,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (!trackToPlay) return;
 
     // PATH 1: RUNNING INSIDE THE ANDROID APP
-    if (window.Android && typeof window.Android.playSong === 'function') {
+    if (window.Android && typeof window.Android.startPlayback === 'function') {
       playSongInApp(trackToPlay, queue);
       
       // Update UI state but don't trigger web playback
@@ -201,6 +205,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playNext = () => {
     if (isNativePlayback) {
        // The native app should handle this and call back to update the UI
+       // This function is now more of a fallback
        const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
        if (currentIndex > -1 && currentIndex < queue.length - 1) {
          const nextTrack = queue[currentIndex + 1];
@@ -349,4 +354,3 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
-
