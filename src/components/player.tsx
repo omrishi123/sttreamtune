@@ -13,16 +13,26 @@ import {
   Volume2,
   VolumeX,
   Heart,
+  Timer,
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { QueueSheet } from "./queue-sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserData } from "@/context/user-data-context";
 import { cn } from "@/lib/utils";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
+import { useToast } from "@/hooks/use-toast";
 
 export function Player() {
   const { 
@@ -39,6 +49,7 @@ export function Player() {
   const [isMuted, setIsMuted] = React.useState(false);
   const [volume, setVolume] = React.useState(50);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   if (!currentTrack) {
     return null; 
@@ -55,6 +66,18 @@ export function Player() {
     } else {
       play();
     }
+  };
+
+  const handleSetSleepTimer = (duration: number, label: string) => {
+    console.log(`Sleep timer set for: ${label} (${duration}ms)`);
+    // TODO: Connect to native app
+    // if (window.Android) {
+    //   window.Android.setSleepTimer(duration);
+    // }
+    toast({
+      title: "Sleep Timer Set",
+      description: `Playback will stop in ${label}.`,
+    });
   };
   
   const formatTime = (seconds: number) => {
@@ -97,9 +120,30 @@ export function Player() {
 
         {/* Middle Row: Main Player Controls */}
          <div className="flex items-center justify-around w-full">
-            <Button variant="ghost" size="icon" className="w-8 h-8">
-              <Shuffle className="h-4 w-4 text-muted-foreground" />
-            </Button>
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="w-8 h-8">
+                  <Timer className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mb-2" side="top" align="center">
+                <DropdownMenuLabel>Sleep Timer</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(15 * 60 * 1000, "15 minutes")}>15 minutes</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => {
+                  const remainingTime = (currentTrack.duration - currentPosition) * 1000;
+                  handleSetSleepTimer(remainingTime, "end of song");
+                }}>
+                  End of song
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(0, "Off")} className="text-destructive">
+                  Turn off timer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8">
               <SkipBack className="h-5 w-5" />
             </Button>
@@ -113,9 +157,7 @@ export function Player() {
             <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8">
               <SkipForward className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8">
-              <Repeat className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            <QueueSheet />
         </div>
 
         {/* Bottom Row: Progress Bar */}
@@ -191,6 +233,30 @@ export function Player() {
 
         {/* Right Section: Volume and Queue */}
         <div className="flex items-center justify-end gap-2">
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Timer className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mb-2" side="top" align="end">
+                <DropdownMenuLabel>Sleep Timer</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(15 * 60 * 1000, "15 minutes")}>15 minutes</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => {
+                  const remainingTime = (currentTrack.duration - currentPosition) * 1000;
+                  handleSetSleepTimer(remainingTime, "end of song");
+                }}>
+                  End of song
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(0, "Off")} className="text-destructive">
+                  Turn off timer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
            <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon">
