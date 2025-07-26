@@ -131,7 +131,7 @@ export default function PlaylistPage() {
         />
         <div className="space-y-2 min-w-0">
           <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter break-words">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter break-words">
             {playlist.name}
           </h1>
           {playlist.description && <p className="text-muted-foreground text-sm">{playlist.description}</p>}
@@ -141,7 +141,7 @@ export default function PlaylistPage() {
             {" \u2022 "}
             {tracks.length} songs, about {totalMinutes} min
           </p>
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center justify-center sm:justify-start gap-2 pt-2">
              <Button size="lg" onClick={handlePlayPlaylist}>
                 <Play className="mr-2 h-5 w-5"/>
                 Play
