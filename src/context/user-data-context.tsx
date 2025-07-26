@@ -62,7 +62,7 @@ const getInitialTrackCache = (): CachedTracks => {
 }
 
 
-export const UserDataProvider = ({ children }: { children: ReactNode }) => {
+export const UserDataProvider = ({ children }: { children: React.Node }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
