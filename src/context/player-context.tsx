@@ -10,16 +10,11 @@ declare global {
   interface Window {
     Android?: {
       startPlayback: (
-        videoId: string,
-        title: string,
-        artist: string,
-        thumbnailUrl: string,
-        playlistVideoIds: string[],
+        playlistJson: string,
         currentIndex: number
       ) => void;
     };
-    updatePlaybackState: (isPlaying: boolean, trackId: string) => void;
-    updatePlaybackTime: (currentTime: number, duration: number) => void;
+    updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => void;
   }
 }
 
@@ -62,24 +57,25 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to attach JS functions to the window object for Android to call
   useEffect(() => {
-    window.updatePlaybackState = (playing: boolean, trackId: string) => {
-        setIsPlaying(playing);
-        const track = queue.find(t => t.youtubeVideoId === trackId);
-        if (track && track.id !== currentTrack?.id) {
-          setCurrentTrack(track);
+    window.updateFromNative = (state) => {
+        console.log("Received update from native:", state);
+        if (typeof state.isPlaying === 'boolean') {
+            setIsPlaying(state.isPlaying);
         }
-    };
-
-    window.updatePlaybackTime = (currentTime: number, duration: number) => {
-      if (duration > 0) {
-        setProgress((currentTime / duration) * 100);
-      }
+        if (typeof state.duration === 'number' && state.duration > 0 && typeof state.currentTime === 'number') {
+           setProgress((state.currentTime / state.duration) * 100);
+        }
+         if (typeof state.newSongIndex === 'number' && queue[state.newSongIndex]) {
+            const newTrack = queue[state.newSongIndex];
+            if (currentTrack?.id !== newTrack.id) {
+                setCurrentTrack(newTrack);
+            }
+        }
     };
     
     // Cleanup function
     return () => {
-      delete (window as any).updatePlaybackState;
-      delete (window as any).updatePlaybackTime;
+      delete (window as any).updateFromNative;
     };
   }, [queue, currentTrack]);
 
@@ -152,21 +148,27 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const playSongInApp = (track: Track, currentQueue: Track[]) => {
-    const currentIndex = currentQueue.findIndex(t => t.id === track.id);
-    const playlistVideoIds = currentQueue.map(t => t.youtubeVideoId);
+  const playSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
+      const currentIndex = currentQueue.findIndex(t => t.id === trackToPlay.id);
+      if (currentIndex === -1) return;
 
-    if (window.Android && typeof window.Android.startPlayback === 'function') {
-      setIsNativePlayback(true);
-      window.Android.startPlayback(
-        track.youtubeVideoId,
-        track.title,
-        track.artist,
-        `https://img.youtube.com/vi/${track.youtubeVideoId}/mqdefault.jpg`,
-        playlistVideoIds,
-        currentIndex
-      );
-    }
+      const playlistForNative = currentQueue.map(t => ({
+          videoId: t.youtubeVideoId,
+          title: t.title,
+          artist: t.artist,
+          thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
+      }));
+
+      const playlistJson = JSON.stringify(playlistForNative);
+
+      if (window.Android && typeof window.Android.startPlayback === 'function') {
+          console.log("Environment: Android App. Calling native playback service with playlist.");
+          setIsNativePlayback(true);
+          window.Android.startPlayback(
+              playlistJson,
+              currentIndex
+          );
+      }
   };
 
   const play = (track?: Track) => {
@@ -205,7 +207,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playNext = () => {
     if (isNativePlayback) {
        // The native app should handle this and call back to update the UI
-       // This function is now more of a fallback
        const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
        if (currentIndex > -1 && currentIndex < queue.length - 1) {
          const nextTrack = queue[currentIndex + 1];
