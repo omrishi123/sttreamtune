@@ -1,3 +1,5 @@
+import {z} from 'zod';
+
 export interface Track {
   id: string;
   youtubeVideoId: string;
@@ -33,3 +35,32 @@ export interface UserData {
   playlists: Playlist[];
   recentlyPlayed: string[];
 }
+
+export const GeneratePlaylistResponseSchema = z.object({
+  playlist: z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    coverArt: z.string(),
+    trackIds: z.array(z.string()),
+    public: z.boolean(),
+    owner: z.string(),
+    'data-ai-hint': z.optional(z.string()),
+    isLikedSongs: z.optional(z.boolean()),
+  }),
+  tracks: z.array(
+    z.object({
+      id: z.string(),
+      youtubeVideoId: z.string(),
+      title: z.string(),
+      artist: z.string(),
+      album: z.string(),
+      artwork: z.string(),
+      duration: z.number(),
+      'data-ai-hint': z.optional(z.string()),
+    })
+  ),
+});
+export type GeneratePlaylistResponse = z.infer<
+  typeof GeneratePlaylistResponseSchema
+>;

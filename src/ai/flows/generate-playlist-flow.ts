@@ -12,6 +12,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import {searchYoutube} from './search-youtube-flow';
 import type {Track, Playlist} from '@/lib/types';
+import {
+  GeneratePlaylistResponseSchema,
+  type GeneratePlaylistResponse,
+} from '@/lib/types';
 import {nanoid} from 'nanoid';
 
 // 1. Define Input and Output Schemas with Zod and TypeScript
@@ -38,35 +42,6 @@ const GeneratePlaylistOutputSchema = z.object({
     )
     .describe('A list of 5 songs that match the prompt.'),
 });
-
-export const GeneratePlaylistResponseSchema = z.object({
-  playlist: z.object({
-    id: z.string(),
-    name: z.string(),
-    description: z.string(),
-    coverArt: z.string(),
-    trackIds: z.array(z.string()),
-    public: z.boolean(),
-    owner: z.string(),
-    'data-ai-hint': z.optional(z.string()),
-    isLikedSongs: z.optional(z.boolean()),
-  }),
-  tracks: z.array(
-    z.object({
-      id: z.string(),
-      youtubeVideoId: z.string(),
-      title: z.string(),
-      artist: z.string(),
-      album: z.string(),
-      artwork: z.string(),
-      duration: z.number(),
-      'data-ai-hint': z.optional(z.string()),
-    })
-  ),
-});
-export type GeneratePlaylistResponse = z.infer<
-  typeof GeneratePlaylistResponseSchema
->;
 
 // 2. Define the Genkit Prompt
 const playlistPrompt = ai.definePrompt({
