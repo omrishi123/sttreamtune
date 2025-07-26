@@ -8,10 +8,11 @@ import YouTube from 'react-youtube';
 // Extend the window type to include our optional AndroidBridge
 declare global {
   interface Window {
-    Android?: {
-      playAudio: (audioUrl: string, title: string, artist: string) => void;
+    AndroidBridge?: {
+      playSong: (trackInfoJson: string) => void;
       pause: () => void;
-    }
+      // Add other methods you might need, e.g., resume, seekTo, etc.
+    };
   }
 }
 
@@ -135,12 +136,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
        }
        setIsPlaying(true);
 
-       if (window.Android && typeof window.Android.playAudio === 'function') {
+       if (window.AndroidBridge && typeof window.AndroidBridge.playSong === 'function') {
             isNativeMode.current = true;
             console.log("Running in Android App. Delegating playback.");
-            // The audio URL would ideally come from a stream, but we use the video ID for now
-            const audioUrl = `https://www.youtube.com/watch?v=${trackToPlay.youtubeVideoId}`;
-            window.Android.playAudio(audioUrl, trackToPlay.title, trackToPlay.artist);
+            const trackInfoJson = JSON.stringify(trackToPlay);
+            window.AndroidBridge.playSong(trackInfoJson);
        } else {
             isNativeMode.current = false;
             console.log("Running in a standard browser. Playing audio directly.");
@@ -153,8 +153,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const pause = () => {
     setIsPlaying(false);
-    if (isNativeMode.current && window.Android && typeof window.Android.pause === 'function') {
-        window.Android.pause();
+    if (isNativeMode.current && window.AndroidBridge && typeof window.AndroidBridge.pause === 'function') {
+        window.AndroidBridge.pause();
     }
   };
 
@@ -231,9 +231,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const handleReady = (event: any) => {
     if (!isNativeMode.current) {
         setIsReady(true);
-        if (isPlaying) {
-          event.target.playVideo();
-        }
     }
   }
 
@@ -290,3 +287,4 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
+
