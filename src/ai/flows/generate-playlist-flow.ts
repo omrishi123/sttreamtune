@@ -95,7 +95,7 @@ const generatePlaylistFlow = ai.defineFlow(
       name: playlistData.name,
       description: playlistData.description,
       owner: 'AI Curator',
-      public: false,
+      public: true,
       trackIds: uniqueTracks.map(t => t.id),
       coverArt:
         uniqueTracks[0].artwork || 'https://placehold.co/300x300.png',
