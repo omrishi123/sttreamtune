@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useRef, useEffec
 import type { Track, Playlist } from '@/lib/types';
 import YouTube from 'react-youtube';
 
-// Extend the window type to include our optional AndroidBridge
+// Extend the window type to include our optional AndroidBridge and callbacks
 declare global {
   interface Window {
     Android?: {
@@ -14,10 +14,12 @@ declare global {
         title: string,
         artist: string,
         thumbnailUrl: string,
-        playlistVideoIds: string, // Changed to string for JSON
+        playlistVideoIds: string[],
         currentIndex: number
       ) => void;
     };
+    updatePlaybackState: (isPlaying: boolean, trackId: string) => void;
+    updatePlaybackTime: (currentTime: number, duration: number) => void;
   }
 }
 
@@ -57,6 +59,30 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Effect to attach JS functions to the window object for Android to call
+  useEffect(() => {
+    window.updatePlaybackState = (playing: boolean, trackId: string) => {
+        setIsPlaying(playing);
+        const track = queue.find(t => t.youtubeVideoId === trackId);
+        if (track && track.id !== currentTrack?.id) {
+          setCurrentTrack(track);
+        }
+    };
+
+    window.updatePlaybackTime = (currentTime: number, duration: number) => {
+      if (duration > 0) {
+        setProgress((currentTime / duration) * 100);
+      }
+    };
+    
+    // Cleanup function
+    return () => {
+      delete (window as any).updatePlaybackState;
+      delete (window as any).updatePlaybackTime;
+    };
+  }, [queue, currentTrack]);
+
 
   const updateMediaSession = () => {
     if ('mediaSession' in navigator && currentTrack && !isNativePlayback) {
@@ -126,26 +152,29 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const playSongInApp = (track: Track, queue: Track[]) => {
-    const currentIndex = queue.findIndex(t => t.id === track.id);
-    const playlistVideoIds = queue.map(t => t.youtubeVideoId);
+  const playSongInApp = (track: Track, currentQueue: Track[]) => {
+    const currentIndex = currentQueue.findIndex(t => t.id === track.id);
+    const playlistVideoIds = currentQueue.map(t => t.youtubeVideoId);
 
-    window.Android!.startPlayback(
-      track.youtubeVideoId,
-      track.title,
-      track.artist,
-      `https://img.youtube.com/vi/${track.youtubeVideoId}/mqdefault.jpg`,
-      JSON.stringify(playlistVideoIds), // Convert array to JSON string
-      currentIndex
-    );
+    if (window.Android && typeof window.Android.startPlayback === 'function') {
+      setIsNativePlayback(true);
+      window.Android.startPlayback(
+        track.youtubeVideoId,
+        track.title,
+        track.artist,
+        `https://img.youtube.com/vi/${track.youtubeVideoId}/mqdefault.jpg`,
+        playlistVideoIds,
+        currentIndex
+      );
+    }
   };
 
   const play = (track?: Track) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
 
+    // PATH 1: RUNNING INSIDE THE ANDROID APP
     if (window.Android && typeof window.Android.startPlayback === 'function') {
-      setIsNativePlayback(true);
       playSongInApp(trackToPlay, queue);
       
       // Update UI state but don't trigger web playback
@@ -155,7 +184,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       return; 
     }
     
-    // Fallback for regular web browsers
+    // PATH 2: RUNNING IN A REGULAR WEB BROWSER
     setIsNativePlayback(false);
     if (currentTrack?.id !== trackToPlay.id) {
       setProgress(0);
@@ -175,10 +204,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playNext = () => {
     if (isNativePlayback) {
+       // The native app should handle this and call back to update the UI
+       // This function is now more of a fallback
        const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
        if (currentIndex > -1 && currentIndex < queue.length - 1) {
          const nextTrack = queue[currentIndex + 1];
-         playSongInApp(nextTrack, queue);
+         // We don't call playSongInApp here, native player does it.
+         // We just update the web UI optimistically.
          setCurrentTrack(nextTrack);
        } else {
          setIsPlaying(false);
@@ -198,10 +230,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playPrev = () => {
     if (isNativePlayback) {
+       // The native app should handle this and call back to update the UI
        const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
        if (currentIndex > 0) {
          const prevTrack = queue[currentIndex - 1];
-         playSongInApp(prevTrack, queue);
          setCurrentTrack(prevTrack);
        }
        return;
@@ -251,7 +283,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const handleSeek = (value: number[]) => {
       if (isNativePlayback) {
-          setProgress(value[0]);
+          // Native seeking is not handled here. Android app should handle it.
+          // This function now only handles web seeking.
           return;
       }
       const newProgress = value[0];
