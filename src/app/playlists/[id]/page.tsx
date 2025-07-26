@@ -114,6 +114,8 @@ export default function PlaylistPage() {
     });
   }
 
+  const ownerName = typeof playlist.owner === 'string' ? playlist.owner : playlist.owner?.name;
+
   return (
     <div className="space-y-8">
        <header className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
@@ -129,13 +131,13 @@ export default function PlaylistPage() {
         />
         <div className="space-y-2 min-w-0">
           <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter break-words">
+          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter break-words">
             {playlist.name}
           </h1>
           {playlist.description && <p className="text-muted-foreground text-sm">{playlist.description}</p>}
           <p className="text-sm text-muted-foreground">
             Created by{" "}
-            <span className="text-foreground font-medium">{playlist.owner}</span>
+            <span className="text-foreground font-medium">{ownerName}</span>
             {" \u2022 "}
             {tracks.length} songs, about {totalMinutes} min
           </p>
