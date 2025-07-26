@@ -88,12 +88,12 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
                 </div>
               </TableCell>
               <TableCell>
-                <div className="font-medium">{track.title}</div>
-                <div className="text-sm text-muted-foreground">
+                <div className="font-medium break-words">{track.title}</div>
+                <div className="text-sm text-muted-foreground break-words">
                   {track.artist}
                 </div>
               </TableCell>
-              <TableCell className="hidden md:table-cell">
+              <TableCell className="hidden md:table-cell break-words">
                 {track.album}
               </TableCell>
               <TableCell className="hidden sm:table-cell text-muted-foreground">

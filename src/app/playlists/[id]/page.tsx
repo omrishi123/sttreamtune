@@ -129,10 +129,10 @@ export default function PlaylistPage() {
         />
         <div className="space-y-2 min-w-0">
           <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter truncate">
+          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter break-words">
             {playlist.name}
           </h1>
-          {playlist.description && <p className="text-muted-foreground text-sm truncate">{playlist.description}</p>}
+          {playlist.description && <p className="text-muted-foreground text-sm break-words">{playlist.description}</p>}
           <p className="text-sm text-muted-foreground">
             Created by{" "}
             <span className="text-foreground font-medium">{playlist.owner}</span>
