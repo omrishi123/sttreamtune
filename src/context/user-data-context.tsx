@@ -62,15 +62,22 @@ const getInitialTrackCache = (): CachedTracks => {
 }
 
 
-export const UserDataProvider = ({ children, user }: { children: ReactNode, user: User }) => {
+export const UserDataProvider = ({ children, user: userProp }: { children: ReactNode, user: User }) => {
+  const [currentUser, setCurrentUser] = useState(userProp);
   const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Update internal user state when prop changes
+  useEffect(() => {
+    setCurrentUser(userProp);
+  }, [userProp]);
+
+
   // On mount, and when user changes, initialize data from localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      setUserData(getInitialUserData(user.id));
+    if (typeof window !== 'undefined' && window.localStorage && currentUser) {
+      setUserData(getInitialUserData(currentUser.id));
       setTrackCache(getInitialTrackCache());
     } else {
       // Fallback for environments without localStorage
@@ -82,32 +89,32 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
       setTrackCache(initialMockTracks);
     }
     setIsInitialized(true);
-  }, [user.id]);
+  }, [currentUser?.id]);
 
 
   // Persist user data to local storage
   useEffect(() => {
-    if (!isInitialized) return;
-    if (user.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
+    if (!isInitialized || !currentUser) return;
+    if (currentUser.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
       try {
-        window.localStorage.setItem(`userData-${user.id}`, JSON.stringify(userData));
+        window.localStorage.setItem(`userData-${currentUser.id}`, JSON.stringify(userData));
       } catch(error) {
         console.error("Error writing user data to localStorage:", error);
       }
     }
-  }, [userData, user.id, isInitialized]);
+  }, [userData, currentUser, isInitialized]);
 
   // Persist track cache to local storage
   useEffect(() => {
-    if (!isInitialized) return;
-    if (user.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
+    if (!isInitialized || !currentUser) return;
+    if (currentUser.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
        try {
         window.localStorage.setItem('trackCache', JSON.stringify(trackCache));
       } catch(error) {
         console.error("Error writing track cache to localStorage:", error);
       }
     }
-  }, [trackCache, user.id, isInitialized]);
+  }, [trackCache, currentUser, isInitialized]);
 
 
   const addTrackToCache = (track: Track) => {
@@ -166,7 +173,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
       description,
       trackIds: [],
       public: false,
-      owner: user?.name || 'You',
+      owner: currentUser?.name || 'You',
       coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
       'data-ai-hint': 'playlist cover',
     };
@@ -198,7 +205,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
         'data-ai-hint': 'glowing heart',
         trackIds: userData.likedSongs,
         public: false,
-        owner: user?.name || 'You',
+        owner: currentUser?.name || 'You',
         isLikedSongs: true,
       };
     }
@@ -210,7 +217,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
         coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
         trackIds: userData.recentlyPlayed,
         public: false,
-        owner: user?.name || 'You',
+        owner: currentUser?.name || 'You',
         'data-ai-hint': 'time clock',
       };
     }
