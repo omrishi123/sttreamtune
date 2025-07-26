@@ -9,12 +9,11 @@ import YouTube from 'react-youtube';
 declare global {
   interface Window {
     Android?: {
-      startPlayback: (
-        playlistJson: string,
-        currentIndex: number
-      ) => void;
+      playSong: (videoId: string, title: string, artist: string, artworkUrl: string, playlistVideoIds: string[], currentIndex: number) => void;
     };
-    updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => void;
+    updatePlaybackState?: (isPlaying: boolean) => void;
+    updatePlaybackTime?: (currentTime: number, duration: number) => void;
+    playNextSongFromNative?: () => void;
   }
 }
 
@@ -57,27 +56,27 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   // Effect to attach JS functions to the window object for Android to call
   useEffect(() => {
-    window.updateFromNative = (state) => {
-        console.log("Received update from native:", state);
-        if (typeof state.isPlaying === 'boolean') {
-            setIsPlaying(state.isPlaying);
-        }
-        if (typeof state.duration === 'number' && state.duration > 0 && typeof state.currentTime === 'number') {
-           setProgress((state.currentTime / state.duration) * 100);
-        }
-         if (typeof state.newSongIndex === 'number' && queue[state.newSongIndex]) {
-            const newTrack = queue[state.newSongIndex];
-            if (currentTrack?.id !== newTrack.id) {
-                setCurrentTrack(newTrack);
-            }
+    window.updatePlaybackState = (playing: boolean) => {
+        setIsPlaying(playing);
+    };
+    
+    window.updatePlaybackTime = (currentTime: number, duration: number) => {
+        if (duration > 0) {
+           setProgress((currentTime / duration) * 100);
         }
     };
     
+    window.playNextSongFromNative = () => {
+        playNext();
+    };
+
     // Cleanup function
     return () => {
-      delete (window as any).updateFromNative;
+      delete window.updatePlaybackState;
+      delete window.updatePlaybackTime;
+      delete window.playNextSongFromNative;
     };
-  }, [queue, currentTrack]);
+  }, [queue]);
 
 
   const updateMediaSession = () => {
@@ -149,23 +148,18 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const playSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
+      const playlistVideoIds = currentQueue.map(t => t.youtubeVideoId);
       const currentIndex = currentQueue.findIndex(t => t.id === trackToPlay.id);
-      if (currentIndex === -1) return;
 
-      const playlistForNative = currentQueue.map(t => ({
-          videoId: t.youtubeVideoId,
-          title: t.title,
-          artist: t.artist,
-          thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
-      }));
-
-      const playlistJson = JSON.stringify(playlistForNative);
-
-      if (window.Android && typeof window.Android.startPlayback === 'function') {
-          console.log("Environment: Android App. Calling native playback service with playlist.");
+      if (window.Android && typeof window.Android.playSong === 'function') {
+          console.log("Environment: Android App. Calling native playback service.");
           setIsNativePlayback(true);
-          window.Android.startPlayback(
-              playlistJson,
+          window.Android.playSong(
+              trackToPlay.youtubeVideoId,
+              trackToPlay.title,
+              trackToPlay.artist,
+              trackToPlay.artwork,
+              playlistVideoIds,
               currentIndex
           );
       }
@@ -176,7 +170,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (!trackToPlay) return;
 
     // PATH 1: RUNNING INSIDE THE ANDROID APP
-    if (window.Android && typeof window.Android.startPlayback === 'function') {
+    if (window.Android && typeof window.Android.playSong === 'function') {
       playSongInApp(trackToPlay, queue);
       
       // Update UI state but don't trigger web playback
@@ -355,3 +349,4 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
+
