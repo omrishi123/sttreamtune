@@ -42,7 +42,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
-  const [isNativePlayback, setIsNativePlayback] = useState(false);
   
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,7 +74,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    if (isNativePlayback) return;
     if (!isMounted) return;
 
     if (isPlaying && isReady && playerRef.current) {
@@ -91,7 +89,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       stopProgressInterval();
     }
-  }, [isMounted, isReady, isPlaying, isNativePlayback]);
+  }, [isMounted, isReady, isPlaying]);
   
   useEffect(() => {
     updateMediaSession();
@@ -99,7 +97,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
 
   const startProgressInterval = () => {
-    if (isNativePlayback) return;
     stopProgressInterval(); 
     progressIntervalRef.current = setInterval(async () => {
       if (isSeeking) return; // Don't update progress while user is seeking
@@ -124,42 +121,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
 
-    // Check if we are inside the Android App
-    if (window.Android && typeof window.Android.playAudio === 'function') {
-      setIsNativePlayback(true);
+    if (currentTrack?.id !== trackToPlay.id) {
+      setProgress(0);
       setCurrentTrack(trackToPlay);
-      setIsPlaying(true);
-      
-      try {
-        const response = await fetch(`/api/getAudioStream?videoId=${trackToPlay.youtubeVideoId}`);
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to get audio stream from backend.');
-        }
-        const audioDetails = await response.json();
-        // Hand off to native Android player
-        window.Android.playAudio(audioDetails.audioUrl, audioDetails.title, audioDetails.artist);
-      } catch (error) {
-        console.error("Playback Error:", error);
-        // Optionally, show a toast to the user
-        setIsPlaying(false);
-      }
-
-    } else {
-      // Standard web browser playback
-      setIsNativePlayback(false);
-      if (currentTrack?.id !== trackToPlay.id) {
-        setProgress(0);
-        setCurrentTrack(trackToPlay);
-        setIsReady(false); // Force the player to re-evaluate readiness for the new track
-      }
-      setIsPlaying(true);
+      setIsReady(false); // Force the player to re-evaluate readiness for the new track
     }
+    setIsPlaying(true);
   };
 
   const pause = () => {
     setIsPlaying(false);
-    // You might need to add a pause function to your Android bridge as well
   };
 
   const playNext = () => {
@@ -206,7 +177,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleStateChange = (event: any) => {
-    if (isNativePlayback) return;
 
     if (event.data === YouTube.PlayerState.PLAYING) {
       startProgressInterval();
@@ -229,9 +199,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const handleReady = (event: any) => {
-    if (!isNativePlayback) {
-        setIsReady(true);
-    }
+    setIsReady(true);
   }
 
   const value = {
@@ -258,7 +226,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlayerContext.Provider value={value}>
         {children}
-         {currentTrack && !isNativePlayback && (
+         {currentTrack && (
             <YouTube
                 key={currentTrack.id}
                 ref={playerRef}
