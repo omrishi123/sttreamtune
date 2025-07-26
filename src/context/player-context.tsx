@@ -9,7 +9,14 @@ import YouTube from 'react-youtube';
 declare global {
   interface Window {
     Android?: {
-      startPlayback: (videoId: string, title: string, artist: string) => void;
+      startPlayback: (
+        videoId: string,
+        title: string,
+        artist: string,
+        thumbnailUrl: string,
+        playlistVideoIds: string[],
+        currentIndex: number
+      ) => void;
     };
   }
 }
@@ -42,6 +49,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [isNativePlayback, setIsNativePlayback] = useState(false);
   
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,7 +59,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateMediaSession = () => {
-    if ('mediaSession' in navigator && currentTrack) {
+    if ('mediaSession' in navigator && currentTrack && !isNativePlayback) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack.title,
         artist: currentTrack.artist,
@@ -74,7 +82,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || isNativePlayback) return;
 
     if (isPlaying && isReady && playerRef.current) {
       playerRef.current.getInternalPlayer()?.playVideo();
@@ -89,14 +97,15 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       stopProgressInterval();
     }
-  }, [isMounted, isReady, isPlaying]);
+  }, [isMounted, isReady, isPlaying, isNativePlayback]);
   
   useEffect(() => {
     updateMediaSession();
-  }, [currentTrack]);
+  }, [currentTrack, isNativePlayback]);
 
 
   const startProgressInterval = () => {
+    if (isNativePlayback) return;
     stopProgressInterval(); 
     progressIntervalRef.current = setInterval(async () => {
       if (isSeeking) return; // Don't update progress while user is seeking
@@ -121,17 +130,29 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
 
-    // Check if the native Android interface exists
     if (window.Android && typeof window.Android.startPlayback === 'function') {
-      // If it exists, call the native Android function to enable background play.
-      window.Android.startPlayback(trackToPlay.youtubeVideoId, trackToPlay.title, trackToPlay.artist);
-      // We also update the web UI to reflect the currently playing track.
+      setIsNativePlayback(true);
+      const currentIndex = queue.findIndex(t => t.id === trackToPlay.id);
+      const playlistVideoIds = queue.map(t => t.youtubeVideoId);
+      
+      window.Android.startPlayback(
+        trackToPlay.youtubeVideoId,
+        trackToPlay.title,
+        trackToPlay.artist,
+        `https://img.youtube.com/vi/${trackToPlay.youtubeVideoId}/mqdefault.jpg`,
+        playlistVideoIds,
+        currentIndex
+      );
+      
+      // Update UI state but don't trigger web playback
       setCurrentTrack(trackToPlay);
       setIsPlaying(true);
-      return; // Stop execution here to let the native app handle playback.
+      stopProgressInterval();
+      return; 
     }
     
     // Fallback for regular web browsers
+    setIsNativePlayback(false);
     if (currentTrack?.id !== trackToPlay.id) {
       setProgress(0);
       setCurrentTrack(trackToPlay);
@@ -141,10 +162,26 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const pause = () => {
-    setIsPlaying(false);
+    if (isNativePlayback) {
+        // Here you could call a pause function on the Android bridge if it exists
+        // window.Android.pausePlayback(); 
+        setIsPlaying(false); // Update UI state
+    } else {
+        setIsPlaying(false);
+    }
   };
 
   const playNext = () => {
+    if (isNativePlayback) {
+       // Android app handles this natively, but we can update the UI
+       const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
+       if (currentIndex > -1 && currentIndex < queue.length - 1) {
+         setCurrentTrack(queue[currentIndex + 1]);
+       } else {
+         setIsPlaying(false);
+       }
+       return;
+    }
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > -1 && currentIndex < queue.length - 1) {
@@ -157,6 +194,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const playPrev = () => {
+    if (isNativePlayback) {
+       // Android app handles this natively, but we can update the UI
+       const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
+       if (currentIndex > 0) {
+         setCurrentTrack(queue[currentIndex - 1]);
+       }
+       return;
+    }
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > 0) {
@@ -188,6 +233,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleStateChange = (event: any) => {
+    if (isNativePlayback) return;
 
     if (event.data === YouTube.PlayerState.PLAYING) {
       startProgressInterval();
@@ -200,6 +246,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleSeek = (value: number[]) => {
+      if (isNativePlayback) {
+          // If seeking needs to be controlled from web, a new bridge function is needed.
+          // e.g. window.Android.seekTo(percentage);
+          // For now, we just update the UI optimistically.
+          setProgress(value[0]);
+          return;
+      }
       const newProgress = value[0];
       setProgress(newProgress);
       
@@ -210,6 +263,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const handleReady = (event: any) => {
+    if (isNativePlayback) return;
     setIsReady(true);
   }
 
@@ -233,8 +287,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   if (!isMounted) {
     return null;
   }
-
-  const isNativePlayback = !!(window.Android && typeof window.Android.startPlayback === 'function');
 
   return (
     <PlayerContext.Provider value={value}>
