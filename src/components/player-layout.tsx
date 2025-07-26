@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -45,6 +46,7 @@ import type { User as AppUser, Playlist } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserData } from "@/context/user-data-context";
 import { AddPlaylistDialog } from "./add-playlist-dialog";
+import { AppInitializer } from "./app-initializer";
 
 interface PlayerLayoutProps {
   children: React.ReactNode;
@@ -83,11 +85,12 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   }
 
   if (!user) {
+    // This case should not be hit if LayoutProvider logic is correct, but as a fallback
     return (
        <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
           <Icons.logo className="h-12 w-12 animate-pulse" />
-          <p className="text-muted-foreground">Loading your experience...</p>
+          <p className="text-muted-foreground">Authenticating...</p>
         </div>
       </div>
     );
@@ -98,6 +101,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen>
+      <AppInitializer />
       <div className="relative flex h-screen flex-col">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar

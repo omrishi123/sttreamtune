@@ -1,9 +1,9 @@
 
-
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User, UserData, Playlist, Track } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
+import { onAuthChange } from '@/lib/auth';
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
 
@@ -62,34 +62,27 @@ const getInitialTrackCache = (): CachedTracks => {
 }
 
 
-export const UserDataProvider = ({ children, user: userProp }: { children: ReactNode, user: User }) => {
-  const [currentUser, setCurrentUser] = useState(userProp);
+export const UserDataProvider = ({ children }: { children: ReactNode }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Update internal user state when prop changes
+  // Subscribe to auth changes directly in this provider
   useEffect(() => {
-    setCurrentUser(userProp);
-  }, [userProp]);
-
-
-  // On mount, and when user changes, initialize data from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage && currentUser) {
-      setUserData(getInitialUserData(currentUser.id));
-      setTrackCache(getInitialTrackCache());
-    } else {
-      // Fallback for environments without localStorage
-      const initialMockTracks = mockTracks.reduce((acc, track) => {
-        acc[track.id] = track;
-        return acc;
-      }, {} as CachedTracks);
-      setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [] });
-      setTrackCache(initialMockTracks);
-    }
-    setIsInitialized(true);
-  }, [currentUser?.id]);
+    const unsubscribe = onAuthChange((user) => {
+      setCurrentUser(user);
+      if (user) {
+        setUserData(getInitialUserData(user.id));
+        setTrackCache(getInitialTrackCache());
+      } else {
+        // Handle logout case
+        setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [] });
+      }
+       setIsInitialized(true);
+    });
+    return () => unsubscribe();
+  }, []);
 
 
   // Persist user data to local storage
@@ -167,13 +160,19 @@ export const UserDataProvider = ({ children, user: userProp }: { children: React
   };
   
   const createPlaylist = (name: string, description: string = '') => {
+    if (!currentUser) {
+      // This should ideally not happen if create playlist UI is hidden for logged-out users,
+      // but it's a safe guard.
+      console.error("Cannot create playlist: no user is logged in.");
+      return;
+    }
     const newPlaylist: Playlist = {
       id: `playlist-${Date.now()}`,
       name,
       description,
       trackIds: [],
       public: false,
-      owner: currentUser?.name || 'You',
+      owner: currentUser.name, // Now this is safe
       coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
       'data-ai-hint': 'playlist cover',
     };
@@ -196,6 +195,8 @@ export const UserDataProvider = ({ children, user: userProp }: { children: React
   };
 
   const getPlaylistById = (playlistId: string): Playlist | undefined => {
+     if (!currentUser) return undefined;
+
     if (playlistId === LIKED_SONGS_PLAYLIST_ID) {
       return {
         id: LIKED_SONGS_PLAYLIST_ID,
@@ -205,7 +206,7 @@ export const UserDataProvider = ({ children, user: userProp }: { children: React
         'data-ai-hint': 'glowing heart',
         trackIds: userData.likedSongs,
         public: false,
-        owner: currentUser?.name || 'You',
+        owner: currentUser.name,
         isLikedSongs: true,
       };
     }
@@ -217,7 +218,7 @@ export const UserDataProvider = ({ children, user: userProp }: { children: React
         coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
         trackIds: userData.recentlyPlayed,
         public: false,
-        owner: currentUser?.name || 'You',
+        owner: currentUser.name,
         'data-ai-hint': 'time clock',
       };
     }
@@ -238,6 +239,11 @@ export const UserDataProvider = ({ children, user: userProp }: { children: React
     addTracksToCache,
     addPlaylist,
   };
+
+  // Prevent rendering children until the auth state is resolved and data is loaded.
+  if (!isInitialized) {
+    return null;
+  }
 
   return (
     <UserDataContext.Provider value={value}>
