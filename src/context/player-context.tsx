@@ -51,6 +51,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsMounted(true);
+    // Add a check for guest users and save their data.
+    const guestData = localStorage.getItem('guest-music-data');
+    if (guestData) {
+        // You would parse and set the guest data to your state here.
+        // For example: const { likedSongs, recentlyPlayed } = JSON.parse(guestData);
+    }
   }, []);
 
   const updateMediaSession = () => {
