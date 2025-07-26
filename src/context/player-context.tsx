@@ -53,10 +53,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
 
-  // Effect to attach JS functions to the window object for Android to call
-  useEffect(() => {
+    // Attach the update function to the window object for Android to call
     window.updateFromNative = (state) => {
         console.log("Received update from native:", state);
         if (typeof state.isPlaying === 'boolean') {
@@ -77,7 +75,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       delete (window as any).updateFromNative;
     };
-  }, [queue, currentTrack]);
+  }, [queue, currentTrack]); // Rerun if queue changes to ensure newSongIndex is valid
 
 
   const updateMediaSession = () => {
@@ -164,10 +162,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       if (window.Android && typeof window.Android.startPlayback === 'function') {
           console.log("Environment: Android App. Calling native playback service with playlist.");
           setIsNativePlayback(true);
-          window.Android.startPlayback(
+          // Add a small delay to ensure the native side is ready
+          setTimeout(() => {
+            window.Android!.startPlayback(
               playlistJson,
               currentIndex
-          );
+            );
+          }, 100);
       }
   };
 
@@ -198,6 +199,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const pause = () => {
     if (isNativePlayback) {
+        // Native app should handle pause and call back to update UI
+        // For now, we just update the UI optimistically.
         setIsPlaying(false);
     } else {
         setIsPlaying(false);
