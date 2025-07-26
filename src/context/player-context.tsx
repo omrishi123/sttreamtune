@@ -42,10 +42,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [isNativePlayback, setIsNativePlayback] = useState(false);
   
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const isNativePlayback = useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -75,7 +75,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    if (isNativePlayback.current) return;
+    if (isNativePlayback) return;
     if (!isMounted) return;
 
     if (isPlaying && isReady && playerRef.current) {
@@ -91,7 +91,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       stopProgressInterval();
     }
-  }, [isMounted, isReady, isPlaying]);
+  }, [isMounted, isReady, isPlaying, isNativePlayback]);
   
   useEffect(() => {
     updateMediaSession();
@@ -99,7 +99,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
 
   const startProgressInterval = () => {
-    if (isNativePlayback.current) return;
+    if (isNativePlayback) return;
     stopProgressInterval(); 
     progressIntervalRef.current = setInterval(async () => {
       if (isSeeking) return; // Don't update progress while user is seeking
@@ -126,9 +126,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
     // Check if we are inside the Android App
     if (window.Android && typeof window.Android.playAudio === 'function') {
-      isNativePlayback.current = true;
-      setIsPlaying(true);
+      setIsNativePlayback(true);
       setCurrentTrack(trackToPlay);
+      setIsPlaying(true);
       
       try {
         const response = await fetch(`/api/getAudioStream?videoId=${trackToPlay.youtubeVideoId}`);
@@ -147,7 +147,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
     } else {
       // Standard web browser playback
-      isNativePlayback.current = false;
+      setIsNativePlayback(false);
       if (currentTrack?.id !== trackToPlay.id) {
         setProgress(0);
         setCurrentTrack(trackToPlay);
@@ -206,7 +206,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleStateChange = (event: any) => {
-    if (isNativePlayback.current) return;
+    if (isNativePlayback) return;
 
     if (event.data === YouTube.PlayerState.PLAYING) {
       startProgressInterval();
@@ -229,7 +229,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const handleReady = (event: any) => {
-    if (!isNativePlayback.current) {
+    if (!isNativePlayback) {
         setIsReady(true);
     }
   }
@@ -258,7 +258,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlayerContext.Provider value={value}>
         {children}
-         {currentTrack && !isNativePlayback.current && (
+         {currentTrack && !isNativePlayback && (
             <YouTube
                 key={currentTrack.id}
                 ref={playerRef}
@@ -287,4 +287,3 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
-
