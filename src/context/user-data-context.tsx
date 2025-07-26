@@ -88,7 +88,7 @@ export const UserDataProvider = ({ children }: { children: React.Node }) => {
   // Persist user data to local storage
   useEffect(() => {
     if (!isInitialized || !currentUser) return;
-    if (currentUser.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== 'undefined' && window.localStorage) {
       try {
         window.localStorage.setItem(`userData-${currentUser.id}`, JSON.stringify(userData));
       } catch(error) {
@@ -100,7 +100,7 @@ export const UserDataProvider = ({ children }: { children: React.Node }) => {
   // Persist track cache to local storage
   useEffect(() => {
     if (!isInitialized || !currentUser) return;
-    if (currentUser.id !== 'guest' && typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== 'undefined' && window.localStorage) {
        try {
         window.localStorage.setItem('trackCache', JSON.stringify(trackCache));
       } catch(error) {
