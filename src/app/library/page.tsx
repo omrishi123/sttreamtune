@@ -12,7 +12,6 @@ import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Playlist } from "@/lib/types";
-import { AiPlaylistDialog } from "@/components/ai-playlist-dialog";
 
 export default function LibraryPage() {
   const { playlists: userPlaylists, likedSongs } = useUserData();
@@ -47,7 +46,6 @@ export default function LibraryPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold font-headline tracking-tight">Your Library</h1>
         <div className="flex items-center gap-2">
-           <AiPlaylistDialog />
            <AddPlaylistDialog>
              <Button variant="outline">
                 <Plus className="mr-2 h-4 w-4" />
