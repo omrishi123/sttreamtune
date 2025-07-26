@@ -72,14 +72,14 @@ export default function PlaylistPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <header className="flex flex-col md:flex-row items-center gap-8">
-          <Skeleton className="w-[200px] h-[200px] rounded-lg shadow-lg" />
-          <div className="space-y-3 text-center md:text-left">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-14 w-80" />
-            <Skeleton className="h-4 w-full max-w-lg" />
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-12 w-32 mt-4" />
+        <header className="flex flex-col sm:flex-row items-center gap-6">
+          <Skeleton className="w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] rounded-lg shadow-lg flex-shrink-0" />
+          <div className="space-y-3 text-center sm:text-left w-full">
+            <Skeleton className="h-4 w-24 mx-auto sm:mx-0" />
+            <Skeleton className="h-10 w-60 mx-auto sm:mx-0" />
+            <Skeleton className="h-4 w-full max-w-sm mx-auto sm:mx-0" />
+            <Skeleton className="h-4 w-48 mx-auto sm:mx-0" />
+            <Skeleton className="h-12 w-32 mt-4 mx-auto sm:mx-0" />
           </div>
         </header>
         <section>
@@ -106,23 +106,23 @@ export default function PlaylistPage() {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col md:flex-row items-center gap-8">
+       <header className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
         <Image
           src={imgSrc || playlist.coverArt}
           alt={playlist.name}
           width={200}
           height={200}
-          className="rounded-lg shadow-lg aspect-square object-cover"
+          className="rounded-lg shadow-lg aspect-square object-cover w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] flex-shrink-0"
           priority
           data-ai-hint={playlist['data-ai-hint']}
           onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
         />
-        <div className="space-y-3 text-center md:text-left">
-          <p className="text-sm font-semibold">Playlist</p>
-          <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter">
+        <div className="space-y-2 min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
+          <h1 className="text-4xl lg:text-6xl font-bold font-headline tracking-tighter break-words">
             {playlist.name}
           </h1>
-          <p className="text-muted-foreground">{playlist.description}</p>
+          {playlist.description && <p className="text-muted-foreground text-sm">{playlist.description}</p>}
           <p className="text-sm text-muted-foreground">
             Created by{" "}
             <span className="text-foreground font-medium">{playlist.owner}</span>
