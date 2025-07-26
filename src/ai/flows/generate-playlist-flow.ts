@@ -17,6 +17,7 @@ import {
   type GeneratePlaylistResponse,
 } from '@/lib/types';
 import {nanoid} from 'nanoid';
+import { googleAI } from '@genkit-ai/googleai';
 
 // 1. Define Input and Output Schemas with Zod and TypeScript
 const GeneratePlaylistInputSchema = z.object({
@@ -46,6 +47,7 @@ const GeneratePlaylistOutputSchema = z.object({
 // 2. Define the Genkit Prompt
 const playlistPrompt = ai.definePrompt({
   name: 'playlistPrompt',
+  model: googleAI('gemini-1.5-flash-latest'),
   input: {schema: GeneratePlaylistInputSchema},
   output: {schema: GeneratePlaylistOutputSchema},
   prompt: `You are an expert music curator. Based on the user's prompt, create a playlist with a creative name, a short description, and a list of 5 songs.
