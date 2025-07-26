@@ -87,7 +87,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
                   </Button>
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="max-w-[150px] sm:max-w-xs">
                 <div className="font-medium break-words">{track.title}</div>
                 <div className="text-sm text-muted-foreground break-words">
                   {track.artist}
