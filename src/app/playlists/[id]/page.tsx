@@ -129,7 +129,7 @@ export default function PlaylistPage() {
         />
         <div className="space-y-2 min-w-0">
           <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter break-words">
+          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter break-words w-full">
             {playlist.name}
           </h1>
           {playlist.description && <p className="text-muted-foreground text-sm">{playlist.description}</p>}
