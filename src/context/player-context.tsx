@@ -14,7 +14,7 @@ declare global {
         title: string,
         artist: string,
         thumbnailUrl: string,
-        playlistVideoIds: string[],
+        playlistVideoIds: string, // Changed to string for JSON
         currentIndex: number
       ) => void;
     };
@@ -126,28 +126,32 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const playSongInApp = (track: Track, queue: Track[]) => {
+    const currentIndex = queue.findIndex(t => t.id === track.id);
+    const playlistVideoIds = queue.map(t => t.youtubeVideoId);
+
+    window.Android!.startPlayback(
+      track.youtubeVideoId,
+      track.title,
+      track.artist,
+      `https://img.youtube.com/vi/${track.youtubeVideoId}/mqdefault.jpg`,
+      JSON.stringify(playlistVideoIds), // Convert array to JSON string
+      currentIndex
+    );
+  };
+
   const play = (track?: Track) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
 
     if (window.Android && typeof window.Android.startPlayback === 'function') {
       setIsNativePlayback(true);
-      const currentIndex = queue.findIndex(t => t.id === trackToPlay.id);
-      const playlistVideoIds = queue.map(t => t.youtubeVideoId);
-      
-      window.Android.startPlayback(
-        trackToPlay.youtubeVideoId,
-        trackToPlay.title,
-        trackToPlay.artist,
-        `https://img.youtube.com/vi/${trackToPlay.youtubeVideoId}/mqdefault.jpg`,
-        playlistVideoIds,
-        currentIndex
-      );
+      playSongInApp(trackToPlay, queue);
       
       // Update UI state but don't trigger web playback
       setCurrentTrack(trackToPlay);
       setIsPlaying(true);
-      stopProgressInterval();
+      stopProgressInterval(); // Ensure web player doesn't interfere
       return; 
     }
     
@@ -163,9 +167,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const pause = () => {
     if (isNativePlayback) {
-        // Here you could call a pause function on the Android bridge if it exists
-        // window.Android.pausePlayback(); 
-        setIsPlaying(false); // Update UI state
+        setIsPlaying(false);
     } else {
         setIsPlaying(false);
     }
@@ -173,10 +175,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playNext = () => {
     if (isNativePlayback) {
-       // Android app handles this natively, but we can update the UI
        const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
        if (currentIndex > -1 && currentIndex < queue.length - 1) {
-         setCurrentTrack(queue[currentIndex + 1]);
+         const nextTrack = queue[currentIndex + 1];
+         playSongInApp(nextTrack, queue);
+         setCurrentTrack(nextTrack);
        } else {
          setIsPlaying(false);
        }
@@ -195,10 +198,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playPrev = () => {
     if (isNativePlayback) {
-       // Android app handles this natively, but we can update the UI
        const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
        if (currentIndex > 0) {
-         setCurrentTrack(queue[currentIndex - 1]);
+         const prevTrack = queue[currentIndex - 1];
+         playSongInApp(prevTrack, queue);
+         setCurrentTrack(prevTrack);
        }
        return;
     }
@@ -247,9 +251,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const handleSeek = (value: number[]) => {
       if (isNativePlayback) {
-          // If seeking needs to be controlled from web, a new bridge function is needed.
-          // e.g. window.Android.seekTo(percentage);
-          // For now, we just update the UI optimistically.
           setProgress(value[0]);
           return;
       }
