@@ -8,6 +8,9 @@ import YouTube from 'react-youtube';
 // Extend the window type to include our optional AndroidBridge
 declare global {
   interface Window {
+    Android?: {
+      playAudio: (youtubeVideoId: string, title: string, artist: string) => void;
+    };
     AndroidBridge?: {
       playSong: (trackInfoJson: string) => void;
       pause: () => void;
@@ -130,24 +133,27 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     let trackToPlay = track || currentTrack || queue[0];
   
     if (trackToPlay) {
-       if (currentTrack?.id !== trackToPlay.id) {
+      // Check for the native Android interface
+      if (window.Android && typeof window.Android.playAudio === 'function') {
+        // If it exists, call the native Android function to enable background play.
+        // We pass the YouTube Video ID instead of a direct audio URL.
+        isNativeMode.current = true;
+        setCurrentTrack(trackToPlay);
+        setIsPlaying(true);
+        window.Android.playAudio(trackToPlay.youtubeVideoId, trackToPlay.title, trackToPlay.artist);
+        return; // Stop execution to prevent web player from starting
+      }
+
+      // If we are here, it means we are in a regular browser.
+      isNativeMode.current = false;
+      if (currentTrack?.id !== trackToPlay.id) {
           setProgress(0);
           setCurrentTrack(trackToPlay);
-       }
-       setIsPlaying(true);
-
-       if (window.AndroidBridge && typeof window.AndroidBridge.playSong === 'function') {
-            isNativeMode.current = true;
-            console.log("Running in Android App. Delegating playback.");
-            const trackInfoJson = JSON.stringify(trackToPlay);
-            window.AndroidBridge.playSong(trackInfoJson);
-       } else {
-            isNativeMode.current = false;
-            console.log("Running in a standard browser. Playing audio directly.");
-            if (currentTrack?.id !== trackToPlay.id) {
-                setIsReady(false);
-            }
-       }
+      }
+      setIsPlaying(true);
+      if (currentTrack?.id !== trackToPlay.id) {
+          setIsReady(false);
+      }
     }
   };
 
