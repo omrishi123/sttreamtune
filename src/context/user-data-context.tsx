@@ -153,15 +153,9 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addPlaylist = (playlist: Playlist) => {
-    const playlistToAdd = { ...playlist };
-    if (typeof playlist.owner === 'object' && playlist.owner !== null) {
-      // This handles cases where the full user object might be passed
-      playlistToAdd.owner = (playlist.owner as User).name || 'Unknown';
-    }
-
     setUserData(prev => ({
       ...prev,
-      playlists: [playlistToAdd, ...prev.playlists],
+      playlists: [playlist, ...prev.playlists],
     }));
   };
   
@@ -176,7 +170,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       description,
       trackIds: [],
       public: false,
-      owner: currentUser.name, 
+      owner: currentUser.name || 'You', 
       coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
       'data-ai-hint': 'playlist cover',
     };
