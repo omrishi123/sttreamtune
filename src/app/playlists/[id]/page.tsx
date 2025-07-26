@@ -114,8 +114,6 @@ export default function PlaylistPage() {
     });
   }
 
-  const ownerName = playlist.owner;
-
   return (
     <div className="space-y-8">
        <header className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
@@ -137,7 +135,7 @@ export default function PlaylistPage() {
           {playlist.description && <p className="text-muted-foreground text-sm">{playlist.description}</p>}
           <p className="text-sm text-muted-foreground">
             Created by{" "}
-            <span className="text-foreground font-medium">{ownerName}</span>
+            <span className="text-foreground font-medium">{playlist.owner}</span>
             {" \u2022 "}
             {tracks.length} songs, about {totalMinutes} min
           </p>
