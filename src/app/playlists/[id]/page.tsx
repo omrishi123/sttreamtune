@@ -4,15 +4,16 @@
 
 import Image from "next/image";
 import { getTracksForPlaylist, getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Play, Share2 } from "lucide-react";
 import type { Playlist, Track } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState } from "react";
 import { usePlayer } from "@/context/player-context";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
@@ -21,6 +22,7 @@ export default function PlaylistPage() {
   const id = params.id as string;
   const { getPlaylistById, getTrackById, addTracksToCache } = useUserData();
   const { setQueueAndPlay } = usePlayer();
+  const { toast } = useToast();
   
   const [playlist, setPlaylist] = useState<Playlist | undefined | null>(undefined);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -34,7 +36,7 @@ export default function PlaylistPage() {
       let foundPlaylist: Playlist | undefined | null;
 
       // Check user-created playlists, liked songs, or recently played first
-      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played') {
+      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-')) {
         foundPlaylist = getPlaylistById(id);
       } else {
         // Otherwise, assume it's a YouTube playlist
@@ -49,8 +51,8 @@ export default function PlaylistPage() {
       if (foundPlaylist) {
         setPlaylist(foundPlaylist);
         setImgSrc(foundPlaylist.coverArt);
-        // If it's a local playlist (user-created, liked, recently played)
-        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played') {
+        // If it's a local playlist (user-created, liked, recently played, AI)
+        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-')) {
             const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
             setTracks(playlistTracks);
         } else {
@@ -102,6 +104,14 @@ export default function PlaylistPage() {
     if(tracks.length > 0) {
       setQueueAndPlay(tracks, tracks[0].id, playlist);
     }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Link Copied!",
+      description: "Playlist link has been copied to your clipboard.",
+    });
   }
 
   return (
@@ -119,7 +129,7 @@ export default function PlaylistPage() {
         />
         <div className="space-y-2 min-w-0">
           <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-          <h1 className="text-4xl lg:text-6xl font-bold font-headline tracking-tighter break-words">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter break-words">
             {playlist.name}
           </h1>
           {playlist.description && <p className="text-muted-foreground text-sm">{playlist.description}</p>}
@@ -129,10 +139,16 @@ export default function PlaylistPage() {
             {" \u2022 "}
             {tracks.length} songs, about {totalMinutes} min
           </p>
-          <Button size="lg" className="mt-4" onClick={handlePlayPlaylist}>
-            <Play className="mr-2 h-5 w-5"/>
-            Play
-          </Button>
+          <div className="flex items-center gap-2 pt-2">
+             <Button size="lg" onClick={handlePlayPlaylist}>
+                <Play className="mr-2 h-5 w-5"/>
+                Play
+             </Button>
+             <Button size="lg" variant="outline" onClick={handleShare}>
+                <Share2 className="mr-2 h-5 w-5"/>
+                Share
+             </Button>
+          </div>
         </div>
       </header>
 

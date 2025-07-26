@@ -20,6 +20,7 @@ interface UserDataContextType extends UserData {
   getPlaylistById: (playlistId: string) => Playlist | undefined;
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
+  addPlaylist: (playlist: Playlist) => void;
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
@@ -149,6 +150,13 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
   const getTrackById = (trackId: string): Track | undefined => {
     return trackCache[trackId];
   };
+
+  const addPlaylist = (playlist: Playlist) => {
+    setUserData(prev => ({
+      ...prev,
+      playlists: [playlist, ...prev.playlists],
+    }));
+  };
   
   const createPlaylist = (name: string, description: string = '') => {
     const newPlaylist: Playlist = {
@@ -161,10 +169,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
       coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
       'data-ai-hint': 'playlist cover',
     };
-    setUserData(prev => ({
-      ...prev,
-      playlists: [...prev.playlists, newPlaylist]
-    }));
+    addPlaylist(newPlaylist);
   };
   
   const addTrackToPlaylist = (playlistId: string, trackId: string) => {
@@ -223,6 +228,7 @@ export const UserDataProvider = ({ children, user }: { children: ReactNode, user
     getPlaylistById,
     addTrackToCache,
     addTracksToCache,
+    addPlaylist,
   };
 
   return (

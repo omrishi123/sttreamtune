@@ -29,6 +29,8 @@ interface PlayerContextType {
   playerRef: React.RefObject<YouTube | null>;
   progress: number;
   handleSeek: (value: number[]) => void;
+  removeTrackFromQueue: (trackId: string) => void;
+  clearQueue: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -184,6 +186,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       play(trackToPlay);
     }
   };
+
+  const removeTrackFromQueue = (trackId: string) => {
+    setQueueState(prev => prev.filter(track => track.id !== trackId));
+  };
+
+  const clearQueue = () => {
+    setQueueState(currentTrack ? [currentTrack] : []);
+  };
   
   const handleStateChange = (event: any) => {
     if (isNativeMode.current) return;
@@ -230,7 +240,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueAndPlay,
     playerRef,
     progress,
-    handleSeek
+    handleSeek,
+    removeTrackFromQueue,
+    clearQueue,
   };
 
   if (!isMounted) {
