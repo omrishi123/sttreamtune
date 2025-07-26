@@ -19,6 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1"
+        />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0096ff" />
         <link rel="icon" href="https://i.postimg.cc/SswWC87w/streamtune.png" type="image/png" />
