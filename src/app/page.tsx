@@ -30,7 +30,13 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const categories = useMemo(() => {
-    return ['All', ...homePagePlaylists.map(section => section.title)];
+    const allCategories = ['All'];
+    homePagePlaylists.forEach(section => {
+      if (!allCategories.includes(section.title)) {
+        allCategories.push(section.title);
+      }
+    });
+    return allCategories;
   }, []);
 
   const filteredPlaylists = useMemo(() => {
