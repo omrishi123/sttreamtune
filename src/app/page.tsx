@@ -1,9 +1,12 @@
+
 "use client";
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import type { YoutubePlaylistsOutput } from '@/ai/flows/get-youtube-playlists-flow';
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface PlaylistSectionProps {
   title: string;
@@ -23,6 +26,19 @@ const PlaylistSection: React.FC<PlaylistSectionProps> = ({ title, playlists }) =
 
 
 export default function HomePage() {
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = useMemo(() => {
+    return ['All', ...homePagePlaylists.map(section => section.title)];
+  }, []);
+
+  const filteredPlaylists = useMemo(() => {
+    if (selectedCategory === 'All') {
+      return homePagePlaylists;
+    }
+    return homePagePlaylists.filter(section => section.title === selectedCategory);
+  }, [selectedCategory]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -33,8 +49,21 @@ export default function HomePage() {
           Top picks for you. Updated daily.
         </p>
       </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-6 px-6">
+        {categories.map(category => (
+          <Button
+            key={category}
+            variant={selectedCategory === category ? 'default' : 'outline'}
+            onClick={() => setSelectedCategory(category)}
+            className="rounded-full whitespace-nowrap"
+          >
+            {category}
+          </Button>
+        ))}
+      </div>
       
-      {homePagePlaylists.map(section => (
+      {filteredPlaylists.map(section => (
          <PlaylistSection 
             key={section.title}
             title={section.title} 

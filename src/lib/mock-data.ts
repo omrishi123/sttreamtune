@@ -29,120 +29,6 @@ export const userPlaylists = playlists.filter(p => !p.public);
 
 export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
     {
-      "title": "Bhakti Songs",
-      "playlists": [
-        {
-          "id": "PL9bw4S5ePsEE0jGfUgUMvzeWAaMPcqHL9",
-          "name": "Nonstop Ram Bhajans",
-          "description": "Listen to all the trending songs of the week in this playlist!",
-          "coverArt": "https://i.ibb.co/L5Bwz7p/ram-bhajan.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PLFPJRCFRDARRXCaWKpL5tuyWzz_B_ntwE",
-          "name": "Shree Krishna Govind",
-          "description": "Shree Krishna Govind Hare Murari.",
-          "coverArt": "https://i.ibb.co/BGCrRzQ/krishna-bhajan.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PL2iMjy7LPXAGbh13EK99NSka47D4Vu2bt",
-          "name": "Hanuman Chalisa",
-          "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
-          "coverArt": "https://i.ibb.co/hL77sYR/hanuman-chalisa.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PL20B425742CB4BCCD",
-          "name": "Top Krishna Bhajans",
-          "description": "The best bhajans dedicated to Lord Krishna.",
-          "coverArt": "https://i.ibb.co/hZnt1S4/top-krishna-bhajan.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PLyXHXSHxLqKxWA9_JhSjMpXQabvHBvzis",
-          "name": "Sunderkand Path",
-          "description": "Musical rendition of the Sunderkand.",
-          "coverArt": "https://i.ibb.co/mFkY2k2/sunderkand-path.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PL109z4jBDfVksX38sA3le--iT-JzfBNcw",
-          "name": "Shiv Bhajans",
-          "description": "Devotional songs for Lord Shiva.",
-          "coverArt": "https://i.ibb.co/2kM3150/shiv-bhajan.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PLIdZRpy-6dcVeLLaxMkQbvaFXQlKugMhH",
-          "name": "Ganesh Bhajans",
-          "description": "A collection of devotional songs for Lord Ganesha.",
-          "coverArt": "https://i.ibb.co/jGGxW3p/ganesh-bhajan.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-      ]
-    },
-    {
-      "title": "Patriotic Songs of Nation",
-      "playlists": [
-        {
-          "id": "PL0Z67tlyTaWo-c_QyUnhsoa4cUwceCmRu",
-          "name": "Independence Day Special",
-          "description": "Patriotic songs to celebrate the spirit of the nation.",
-          "coverArt": "https://i.ibb.co/P9tG0T5/independence-day.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PLtp23GqaHmiAJgvaHYI3UULaqgcVOKwNd",
-          "name": "Best Patriotic Songs",
-          "description": "A collection of the most popular patriotic songs.",
-          "coverArt": "https://i.ibb.co/ZJp5LgQ/best-patriotic.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        },
-        {
-          "id": "PL9bw4S5ePsEHil8ve8D0fRLf4ewqZ6hNZ",
-          "name": "Top Indian Patriotic Songs",
-          "description": "Feel the pride with these top patriotic songs from India.",
-          "coverArt": "https://i.ibb.co/LQrK1tX/top-indian-patriotic.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        }
-      ]
-    },
-     {
-      "title": "Shri Mad Bhagwat Gita",
-      "playlists": [
-        {
-          "id": "PL5A5QJkW7MkvYslAbg7_rFij8yVEeiEwF",
-          "name": "Shrimad Bhagavad Gita",
-          "description": "Listen to all chapters of the sacred scripture.",
-          "coverArt": "https://i.ibb.co/1KChy0s/bhagavad-gita.jpg",
-          "trackIds": [],
-          "public": true,
-          "owner": "OM RISHI"
-        }
-      ]
-    },
-    {
       "title": "Top Hits",
       "playlists": [
         {
@@ -350,6 +236,120 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "name": "TikTok Songs 2025",
           "description": "Kishore Kumar was an Indian playback singer and actor.",
           "coverArt": "https://i.ytimg.com/vi/--_0A129T34/hqdefault.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        }
+      ]
+    },
+    {
+      "title": "Bhakti Songs",
+      "playlists": [
+        {
+          "id": "PL9bw4S5ePsEE0jGfUgUMvzeWAaMPcqHL9",
+          "name": "Nonstop Ram Bhajans",
+          "description": "Listen to all the trending songs of the week in this playlist!",
+          "coverArt": "https://i.ibb.co/L5Bwz7p/ram-bhajan.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PLFPJRCFRDARRXCaWKpL5tuyWzz_B_ntwE",
+          "name": "Shree Krishna Govind",
+          "description": "Shree Krishna Govind Hare Murari.",
+          "coverArt": "https://i.ibb.co/BGCrRzQ/krishna-bhajan.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PL2iMjy7LPXAGbh13EK99NSka47D4Vu2bt",
+          "name": "Hanuman Chalisa",
+          "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
+          "coverArt": "https://i.ibb.co/hL77sYR/hanuman-chalisa.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PL20B425742CB4BCCD",
+          "name": "Top Krishna Bhajans",
+          "description": "The best bhajans dedicated to Lord Krishna.",
+          "coverArt": "https://i.ibb.co/hZnt1S4/top-krishna-bhajan.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PLyXHXSHxLqKxWA9_JhSjMpXQabvHBvzis",
+          "name": "Sunderkand Path",
+          "description": "Musical rendition of the Sunderkand.",
+          "coverArt": "https://i.ibb.co/mFkY2k2/sunderkand-path.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PL109z4jBDfVksX38sA3le--iT-JzfBNcw",
+          "name": "Shiv Bhajans",
+          "description": "Devotional songs for Lord Shiva.",
+          "coverArt": "https://i.ibb.co/2kM3150/shiv-bhajan.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PLIdZRpy-6dcVeLLaxMkQbvaFXQlKugMhH",
+          "name": "Ganesh Bhajans",
+          "description": "A collection of devotional songs for Lord Ganesha.",
+          "coverArt": "https://i.ibb.co/jGGxW3p/ganesh-bhajan.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+      ]
+    },
+    {
+      "title": "Patriotic Songs of Nation",
+      "playlists": [
+        {
+          "id": "PL0Z67tlyTaWo-c_QyUnhsoa4cUwceCmRu",
+          "name": "Independence Day Special",
+          "description": "Patriotic songs to celebrate the spirit of the nation.",
+          "coverArt": "https://i.ibb.co/P9tG0T5/independence-day.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PLtp23GqaHmiAJgvaHYI3UULaqgcVOKwNd",
+          "name": "Best Patriotic Songs",
+          "description": "A collection of the most popular patriotic songs.",
+          "coverArt": "https://i.ibb.co/ZJp5LgQ/best-patriotic.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        },
+        {
+          "id": "PL9bw4S5ePsEHil8ve8D0fRLf4ewqZ6hNZ",
+          "name": "Top Indian Patriotic Songs",
+          "description": "Feel the pride with these top patriotic songs from India.",
+          "coverArt": "https://i.ibb.co/LQrK1tX/top-indian-patriotic.jpg",
+          "trackIds": [],
+          "public": true,
+          "owner": "OM RISHI"
+        }
+      ]
+    },
+     {
+      "title": "Shri Mad Bhagwat Gita",
+      "playlists": [
+        {
+          "id": "PL5A5QJkW7MkvYslAbg7_rFij8yVEeiEwF",
+          "name": "Shrimad Bhagavad Gita",
+          "description": "Listen to all chapters of the sacred scripture.",
+          "coverArt": "https://i.ibb.co/1KChy0s/bhagavad-gita.jpg",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
