@@ -55,9 +55,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const queueRef = useRef(queue);
   const { toast } = useToast();
   
-  const queueRef = useRef(queue);
   useEffect(() => {
     queueRef.current = queue;
   }, [queue]);
@@ -73,8 +73,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           setProgress(newProgress);
       }
   
-      if (typeof state.newSongIndex === 'number' && state.newSongIndex !== null && state.newSongIndex !== undefined) {
-          const currentQueue = queueRef.current;
+      const currentQueue = queueRef.current;
+      if (typeof state.newSongIndex === 'number' && state.newSongIndex !== null && state.newSongIndex < currentQueue.length) {
           const newTrack = currentQueue[state.newSongIndex];
           if (newTrack) {
               setCurrentTrack(currentTrack => {
@@ -91,6 +91,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsMounted(true);
     window.updateFromNative = handleNativeUpdate;
     return () => {
+      stopProgressInterval();
       delete (window as any).updateFromNative;
     };
   }, [handleNativeUpdate]);
@@ -120,13 +121,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    if (!isMounted || isNativePlayback) return;
+    if (!isMounted) return;
 
-    if (isPlaying && isReady && playerRef.current) {
+    if (isPlaying && isReady && playerRef.current && !isNativePlayback) {
       playerRef.current.getInternalPlayer()?.playVideo();
       startProgressInterval();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-    } else if (!isPlaying && isReady && playerRef.current) {
+    } else if (!isPlaying && isReady && playerRef.current && !isNativePlayback) {
       playerRef.current?.getInternalPlayer()?.pauseVideo();
       stopProgressInterval();
        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -161,6 +162,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const stopProgressInterval = () => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
     }
   };
 
@@ -178,7 +180,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       const playlistJson = JSON.stringify(playlistForNative);
 
       if (window.Android && typeof window.Android.startPlayback === 'function') {
-          console.log("Calling native playback service with playlist:", playlistJson, "and index:", currentIndex);
           setIsNativePlayback(true);
           setTimeout(() => {
             window.Android?.startPlayback(
@@ -280,10 +281,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (isNativePlayback) return;
 
     if (event.data === YouTube.PlayerState.PLAYING) {
-      startProgressInterval();
       if(!isPlaying) setIsPlaying(true);
     } else if (event.data === YouTube.PlayerState.PAUSED || event.data === YouTube.PlayerState.BUFFERING) {
-      stopProgressInterval();
+      if(isPlaying) setIsPlaying(false);
     } else if (event.data === YouTube.PlayerState.ENDED) {
         playNext();
     }
