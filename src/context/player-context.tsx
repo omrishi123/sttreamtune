@@ -211,7 +211,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const nextIndex = currentIndex + 1;
     if (nextIndex < queue.length) {
         const nextTrack = queue[nextIndex];
-        // setCurrentTrack(nextTrack); // This will be handled by updateFromNative
         playSongInApp(nextTrack, queue);
     } else {
         setIsPlaying(false);
@@ -225,7 +224,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       const prevIndex = currentIndex - 1;
       if (prevIndex >= 0) {
           const prevTrack = queue[prevIndex];
-          // setCurrentTrack(prevTrack); // This will be handled by updateFromNative
           playSongInApp(prevTrack, queue);
       }
   };
