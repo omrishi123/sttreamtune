@@ -14,6 +14,8 @@ declare global {
         currentIndex: number
       ) => void;
       setSleepTimer: (durationInMillis: number) => void;
+      playNext: () => void;
+      playPrevious: () => void;
     };
     updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => void;
   }
@@ -163,10 +165,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       if (window.Android && typeof window.Android.startPlayback === 'function') {
           console.log("Calling native playback service with playlist:", playlistJson, "and index:", currentIndex);
           setIsNativePlayback(true);
-          window.Android.startPlayback(
-            playlistJson,
-            currentIndex
-          );
+          setTimeout(() => {
+            window.Android.startPlayback(
+              playlistJson,
+              currentIndex
+            );
+          }, 100); // Small delay to ensure native side is ready
       }
   };
 
@@ -174,7 +178,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
     
-    // PATH 2: RUNNING IN A REGULAR WEB BROWSER
     setIsNativePlayback(false);
     if (currentTrack?.id !== trackToPlay.id) {
       setProgress(0);
@@ -196,18 +199,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playNext = () => {
     if (isNativePlayback) {
-       // The native app should handle this and call back to update the UI
-       const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
-       if (currentIndex > -1 && currentIndex < queue.length - 1) {
-         const nextTrack = queue[currentIndex + 1];
-         // We don't call playSongInApp here, native player does it.
-         // We just update the web UI optimistically.
-         setCurrentTrack(nextTrack);
-       } else {
-         setIsPlaying(false);
+       if (window.Android?.playNext) {
+         window.Android.playNext();
        }
        return;
     }
+
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > -1 && currentIndex < queue.length - 1) {
@@ -221,14 +218,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playPrev = () => {
     if (isNativePlayback) {
-       // The native app should handle this and call back to update the UI
-       const currentIndex = queue.findIndex(t => t.id === currentTrack?.id);
-       if (currentIndex > 0) {
-         const prevTrack = queue[currentIndex - 1];
-         setCurrentTrack(prevTrack);
+       if (window.Android?.playPrevious) {
+         window.Android.playPrevious();
        }
        return;
     }
+
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex > 0) {
