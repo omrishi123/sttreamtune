@@ -36,7 +36,7 @@ export default function PlaylistPage() {
       let foundPlaylist: Playlist | undefined | null;
 
       // Check user-created playlists, liked songs, or recently played first
-      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-')) {
+      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
         foundPlaylist = getPlaylistById(id);
       } else {
         // Otherwise, assume it's a YouTube playlist
@@ -51,8 +51,8 @@ export default function PlaylistPage() {
       if (foundPlaylist) {
         setPlaylist(foundPlaylist);
         setImgSrc(foundPlaylist.coverArt);
-        // If it's a local playlist (user-created, liked, recently played, AI)
-        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-')) {
+        // If it's a local playlist (user-created, liked, recently played, AI, or imported)
+        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
             const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
             setTracks(playlistTracks);
         } else {
