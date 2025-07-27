@@ -6,7 +6,16 @@ import type { YoutubePlaylistsOutput } from '@/ai/flows/get-youtube-playlists-fl
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
 import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Filter } from "lucide-react";
 
 
 interface PlaylistSectionProps {
@@ -48,31 +57,34 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold font-headline tracking-tight">
-          Listen Now
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Top picks for you. Updated daily.
-        </p>
-      </div>
-
-      <div className="relative">
-        <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex items-center gap-2 pb-2">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-bold font-headline tracking-tight">
+            Listen Now
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Top picks for you. Updated daily.
+          </p>
+        </div>
+         <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Filter className="mr-0 sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">{selectedCategory}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={selectedCategory} onValueChange={setSelectedCategory}>
                 {categories.map(category => (
-                <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    onClick={() => setSelectedCategory(category)}
-                    className="rounded-full whitespace-nowrap"
-                >
+                  <DropdownMenuRadioItem key={category} value={category}>
                     {category}
-                </Button>
+                  </DropdownMenuRadioItem>
                 ))}
-            </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
       </div>
       
       {filteredPlaylists.map(section => (
