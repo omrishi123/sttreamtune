@@ -43,7 +43,9 @@ export function Player() {
     playNext, 
     playPrev,
     progress,
-    handleSeek
+    handleSeek,
+    currentTime,
+    duration
   } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
@@ -69,11 +71,9 @@ export function Player() {
   };
 
   const handleSetSleepTimer = (duration: number, label: string) => {
-    console.log(`Sleep timer set for: ${label} (${duration}ms)`);
-    // TODO: Connect to native app
-    // if (window.Android) {
-    //   window.Android.setSleepTimer(duration);
-    // }
+    if (window.Android?.setSleepTimer) {
+      window.Android.setSleepTimer(duration);
+    }
     toast({
       title: "Sleep Timer Set",
       description: `Playback will stop in ${label}.`,
@@ -87,7 +87,6 @@ export function Player() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
   
-  const currentPosition = currentTrack ? (progress / 100) * currentTrack.duration : 0;
   const isCurrentTrackLiked = isLiked(currentTrack.id);
 
   if (isMobile) {
@@ -133,7 +132,7 @@ export function Player() {
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
                  <DropdownMenuItem onClick={() => {
-                  const remainingTime = (currentTrack.duration - currentPosition) * 1000;
+                  const remainingTime = (duration - currentTime) * 1000;
                   handleSetSleepTimer(remainingTime, "end of song");
                 }}>
                   End of song
@@ -162,13 +161,13 @@ export function Player() {
 
         {/* Bottom Row: Progress Bar */}
          <div className="flex items-center gap-2 w-full">
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentPosition)}</span>
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
               onValueChange={handleSeek}
               className="w-full"
             />
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTrack.duration)}</span>
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
         </div>
       </footer>
     )
@@ -221,13 +220,13 @@ export function Player() {
             </Button>
           </div>
           <div className="flex items-center gap-2 w-full max-w-xl">
-            <span className="text-xs text-muted-foreground">{formatTime(currentPosition)}</span>
+            <span className="text-xs text-muted-foreground">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
               onValueChange={handleSeek}
               className="w-full"
             />
-            <span className="text-xs text-muted-foreground">{formatTime(currentTrack.duration)}</span>
+            <span className="text-xs text-muted-foreground">{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -246,7 +245,7 @@ export function Player() {
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
                  <DropdownMenuItem onClick={() => {
-                  const remainingTime = (currentTrack.duration - currentPosition) * 1000;
+                  const remainingTime = (duration - currentTime) * 1000;
                   handleSetSleepTimer(remainingTime, "end of song");
                 }}>
                   End of song

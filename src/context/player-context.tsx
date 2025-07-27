@@ -35,6 +35,8 @@ interface PlayerContextType {
   handleSeek: (value: number[]) => void;
   removeTrackFromQueue: (trackId: string) => void;
   clearQueue: () => void;
+  currentTime: number;
+  duration: number;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -44,20 +46,25 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentPlaylist, setCurrentPlaylist] = useState<Playlist | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [queue, setQueueState] = useState<Track[]>([]);
-  const [progress, setProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isSeeking, setIsSeeking] = useState(false);
   const [isNativePlayback, setIsNativePlayback] = useState(false);
   
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  
   const playerRef = useRef<YouTube | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const queueRef = useRef(queue);
+  const isPlayingRef = useRef(isPlaying);
   const { toast } = useToast();
   
   useEffect(() => {
     queueRef.current = queue;
   }, [queue]);
+  
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
 
   const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => {
@@ -65,21 +72,20 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           setIsPlaying(state.isPlaying);
       }
   
-      if (typeof state.duration === 'number' && state.duration > 0 && typeof state.currentTime === 'number') {
-          const newProgress = (state.currentTime / state.duration) * 100;
-          setProgress(newProgress);
+      if (typeof state.duration === 'number') {
+        setDuration(state.duration);
+      }
+      if (typeof state.currentTime === 'number') {
+        setCurrentTime(state.currentTime);
       }
   
       const currentQueue = queueRef.current;
-      if (typeof state.newSongIndex === 'number' && state.newSongIndex !== null && state.newSongIndex < currentQueue.length) {
+      if (typeof state.newSongIndex === 'number' && state.newSongIndex < currentQueue.length) {
           const newTrack = currentQueue[state.newSongIndex];
           if (newTrack) {
-              setCurrentTrack(currentTrack => {
-                  if (currentTrack?.id !== newTrack.id) {
-                      return newTrack;
-                  }
-                  return currentTrack;
-              });
+              setCurrentTrack(newTrack);
+              setCurrentTime(0);
+              setDuration(newTrack.duration);
           }
       }
   }, []);
@@ -88,10 +94,30 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsMounted(true);
     window.updateFromNative = handleNativeUpdate;
     return () => {
-      stopProgressInterval();
       delete (window as any).updateFromNative;
     };
   }, [handleNativeUpdate]);
+
+  // This effect handles the automatic timeline progress
+  useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
+    if (isPlaying && duration > 0) {
+      timer = setInterval(() => {
+        setCurrentTime((prevTime) => {
+          if (prevTime + 1 >= duration) {
+            clearInterval(timer);
+            return duration;
+          }
+          return prevTime + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [isPlaying, duration]);
 
 
   const updateMediaSession = () => {
@@ -124,53 +150,20 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       if (isReady && playerRef.current) {
         playerRef.current.getInternalPlayer()?.playVideo();
       }
-      startProgressInterval();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     } else if(!isPlaying && !isNativePlayback) {
       if (isReady && playerRef.current) {
         playerRef.current?.getInternalPlayer()?.pauseVideo();
       }
-      stopProgressInterval();
        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     }
     
-    // Clear interval if switching to native playback
-    if (isNativePlayback) {
-      stopProgressInterval();
-    }
-    
-    return () => {
-      stopProgressInterval();
-    }
   }, [isMounted, isReady, isPlaying, isNativePlayback]);
   
   useEffect(() => {
     updateMediaSession();
   }, [currentTrack, isNativePlayback]);
 
-
-  const startProgressInterval = () => {
-    if (isNativePlayback) return;
-    stopProgressInterval(); 
-    progressIntervalRef.current = setInterval(async () => {
-      if (isSeeking) return; 
-      const player = playerRef.current?.getInternalPlayer();
-      if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
-        const currentTime = await player.getCurrentTime();
-        const duration = await player.getDuration();
-        if (duration > 0) {
-          setProgress((currentTime / duration) * 100);
-        }
-      }
-    }, 1000);
-  };
-
-  const stopProgressInterval = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-  };
 
   const playSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
       const currentIndex = currentQueue.findIndex(t => t.id === trackToPlay.id);
@@ -185,7 +178,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
       const playlistJson = JSON.stringify(playlistForNative);
 
-      if (window.Android && typeof window.Android.startPlayback === 'function') {
+      if (window.Android?.startPlayback) {
           setIsNativePlayback(true);
           window.Android.startPlayback(
             playlistJson,
@@ -199,26 +192,29 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (!trackToPlay) return;
     
     if (isNativePlayback) {
-        if(window.Android?.play) {
-            window.Android.play();
-        }
-    } else {
-        if (currentTrack?.id !== trackToPlay.id) {
-          setProgress(0);
-          setCurrentTrack(trackToPlay);
-          setIsReady(false); 
-        }
+      if(window.Android?.play) {
+        window.Android.play();
         setIsPlaying(true);
+      }
+    } else {
+      if (currentTrack?.id !== trackToPlay.id) {
+        setCurrentTime(0);
+        setCurrentTrack(trackToPlay);
+        setIsReady(false);
+      }
+      setIsPlaying(true);
     }
   };
 
   const pause = () => {
-     if (isNativePlayback) {
-        if (window.Android?.pause) {
-            window.Android.pause();
-        }
+    if (isNativePlayback) {
+      if (window.Android?.pause) {
+        window.Android.pause();
+        setIsPlaying(false);
+      }
+    } else {
+      setIsPlaying(false);
     }
-    setIsPlaying(false);
   };
 
   const playNext = () => {
@@ -235,16 +231,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const playPrev = () => {
-      if (!currentTrack) return;
-      const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-      const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
-      const prevTrack = queue[prevIndex];
-      
-      if (isNativePlayback) {
-          playSongInApp(prevTrack, queue);
-      } else {
-          play(prevTrack);
-      }
+    if (!currentTrack) return;
+    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+    const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
+    const prevTrack = queue[prevIndex];
+    
+    if (isNativePlayback) {
+        playSongInApp(prevTrack, queue);
+    } else {
+        play(prevTrack);
+    }
   };
   
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
@@ -257,10 +253,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
-    
     setCurrentTrack(trackToPlay);
+    setDuration(trackToPlay.duration);
+    setCurrentTime(0);
 
-    if (window.Android && typeof window.Android.startPlayback === 'function') {
+    if (window.Android?.startPlayback) {
       playSongInApp(trackToPlay, newQueue);
     } else {
       setIsNativePlayback(false);
@@ -290,11 +287,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const handleSeek = (value: number[]) => {
       const newProgress = value[0];
-      setProgress(newProgress);
+      const seekTimeInSeconds = (newProgress / 100) * duration;
+      setCurrentTime(seekTimeInSeconds);
       
       if (isNativePlayback) {
-          if (currentTrack && window.Android?.seekTo) {
-              const seekTimeInSeconds = (newProgress / 100) * currentTrack.duration;
+          if (window.Android?.seekTo) {
               window.Android.seekTo(Math.round(seekTimeInSeconds));
           }
           return;
@@ -302,7 +299,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       
       const player = playerRef.current?.getInternalPlayer();
       if(player && currentTrack) {
-          player.seekTo((newProgress / 100) * currentTrack.duration, true);
+          player.seekTo(seekTimeInSeconds, true);
       }
   }
   
@@ -313,6 +310,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       event.target.playVideo();
     }
   }
+  
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const value = {
     currentTrack,
@@ -329,6 +328,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     handleSeek,
     removeTrackFromQueue,
     clearQueue,
+    currentTime,
+    duration
   };
 
   if (!isMounted) {
