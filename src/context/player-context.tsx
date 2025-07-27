@@ -13,6 +13,7 @@ declare global {
         playlistJson: string,
         currentIndex: number
       ) => void;
+      setSleepTimer: (durationInMillis: number) => void;
     };
     updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => void;
   }
@@ -160,32 +161,18 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       const playlistJson = JSON.stringify(playlistForNative);
 
       if (window.Android && typeof window.Android.startPlayback === 'function') {
-          console.log("Environment: Android App. Calling native playback service with playlist.");
+          console.log("Calling native playback service with playlist:", playlistJson, "and index:", currentIndex);
           setIsNativePlayback(true);
-          // Add a small delay to ensure the native side is ready
-          setTimeout(() => {
-            window.Android!.startPlayback(
-              playlistJson,
-              currentIndex
-            );
-          }, 100);
+          window.Android.startPlayback(
+            playlistJson,
+            currentIndex
+          );
       }
   };
 
   const play = (track?: Track) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
-
-    // PATH 1: RUNNING INSIDE THE ANDROID APP
-    if (window.Android && typeof window.Android.startPlayback === 'function') {
-      playSongInApp(trackToPlay, queue);
-      
-      // Update UI state but don't trigger web playback
-      setCurrentTrack(trackToPlay);
-      setIsPlaying(true);
-      stopProgressInterval(); // Ensure web player doesn't interfere
-      return; 
-    }
     
     // PATH 2: RUNNING IN A REGULAR WEB BROWSER
     setIsNativePlayback(false);
@@ -252,14 +239,23 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
     const newQueue = [...tracks];
-    setQueueState(newQueue);
-    setCurrentPlaylist(playlist || null);
-    
     const trackToPlay = startTrackId 
         ? newQueue.find(t => t.id === startTrackId) 
         : newQueue[0];
 
-    if (trackToPlay) {
+    if (!trackToPlay) return;
+
+    // Update state for both web and native
+    setQueueState(newQueue);
+    setCurrentPlaylist(playlist || null);
+    setCurrentTrack(trackToPlay);
+    setIsPlaying(true);
+
+    if (window.Android && typeof window.Android.startPlayback === 'function') {
+      // If in native app, call native playback immediately
+      playSongInApp(trackToPlay, newQueue);
+    } else {
+      // Otherwise, use web playback
       play(trackToPlay);
     }
   };
