@@ -1,4 +1,3 @@
-
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User, UserData, Playlist, Track } from '@/lib/types';
@@ -62,7 +61,7 @@ const getInitialTrackCache = (): CachedTracks => {
 }
 
 
-export const UserDataProvider = ({ children }: { children: React.Node }) => {
+export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
