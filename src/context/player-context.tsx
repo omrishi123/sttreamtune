@@ -14,6 +14,9 @@ declare global {
         playlistJson: string,
         currentIndex: number
       ) => void;
+      play: () => void;
+      pause: () => void;
+      seekTo: (positionInSeconds: number) => void;
       setSleepTimer: (durationInMillis: number) => void;
     };
     updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => void;
@@ -176,10 +179,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const trackToPlay = track || currentTrack || queue[0];
     if (!trackToPlay) return;
     
-    if (window.Android && typeof window.Android.startPlayback === 'function') {
-        playSongInApp(trackToPlay, queue);
+    if (isNativePlayback) {
+        if(window.Android && typeof window.Android.play === 'function') {
+            window.Android.play();
+        }
+        setIsPlaying(true); // Optimistic UI update
     } else {
-        setIsNativePlayback(false);
         if (currentTrack?.id !== trackToPlay.id) {
           setProgress(0);
           setCurrentTrack(trackToPlay);
@@ -191,7 +196,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const pause = () => {
      if (isNativePlayback) {
-        setIsPlaying(false);
+        if (window.Android && typeof window.Android.pause === 'function') {
+            window.Android.pause();
+        }
+        setIsPlaying(false); // Optimistic UI update
     } else {
         setIsPlaying(false);
     }
@@ -203,12 +211,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const nextIndex = currentIndex + 1;
     if (nextIndex < queue.length) {
         const nextTrack = queue[nextIndex];
-        setCurrentTrack(nextTrack);
-        if (isNativePlayback) {
-            playSongInApp(nextTrack, queue);
-        } else {
-            play(nextTrack);
-        }
+        // setCurrentTrack(nextTrack); // This will be handled by updateFromNative
+        playSongInApp(nextTrack, queue);
     } else {
         setIsPlaying(false);
         if (!isNativePlayback) stopProgressInterval();
@@ -221,12 +225,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       const prevIndex = currentIndex - 1;
       if (prevIndex >= 0) {
           const prevTrack = queue[prevIndex];
-          setCurrentTrack(prevTrack);
-          if (isNativePlayback) {
-              playSongInApp(prevTrack, queue);
-          } else {
-              play(prevTrack);
-          }
+          // setCurrentTrack(prevTrack); // This will be handled by updateFromNative
+          playSongInApp(prevTrack, queue);
       }
   };
   
@@ -240,12 +240,17 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
+    
+    // Set current track immediately for UI responsiveness
     setCurrentTrack(trackToPlay);
     setIsPlaying(true);
 
     if (window.Android && typeof window.Android.startPlayback === 'function') {
+      setIsNativePlayback(true);
       playSongInApp(trackToPlay, newQueue);
     } else {
+      setIsNativePlayback(false);
+      // For web, play() will handle setting the track and state
       play(trackToPlay);
     }
   };
@@ -272,11 +277,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const handleSeek = (value: number[]) => {
-      if (isNativePlayback) {
-          return;
-      }
       const newProgress = value[0];
       setProgress(newProgress);
+      
+      if (isNativePlayback) {
+          if (currentTrack && window.Android && typeof window.Android.seekTo === 'function') {
+              const seekTimeInSeconds = (newProgress / 100) * currentTrack.duration;
+              window.Android.seekTo(Math.round(seekTimeInSeconds));
+          }
+          return;
+      }
       
       const player = playerRef.current?.getInternalPlayer();
       if(player && currentTrack) {
