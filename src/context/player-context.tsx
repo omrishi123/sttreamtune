@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useRef, useEffect, useCallback } from 'react';
 import type { Track, Playlist } from '@/lib/types';
 import YouTube from 'react-youtube';
 import { useToast } from "@/hooks/use-toast";
@@ -56,44 +56,44 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playerRef = useRef<YouTube | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  
+  const queueRef = useRef(queue);
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
+
+
+  const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => {
+      if (typeof state.isPlaying === 'boolean') {
+          setIsPlaying(state.isPlaying);
+      }
+  
+      if (typeof state.duration === 'number' && state.duration > 0 && typeof state.currentTime === 'number') {
+          const newProgress = (state.currentTime / state.duration) * 100;
+          setProgress(newProgress);
+      }
+  
+      if (typeof state.newSongIndex === 'number' && state.newSongIndex !== null && state.newSongIndex !== undefined) {
+          const currentQueue = queueRef.current;
+          const newTrack = currentQueue[state.newSongIndex];
+          if (newTrack) {
+              setCurrentTrack(currentTrack => {
+                  if (currentTrack?.id !== newTrack.id) {
+                      return newTrack;
+                  }
+                  return currentTrack;
+              });
+          }
+      }
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
-
-    const handleNativeUpdate = (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => {
-        console.log("Received update from native:", state);
-
-        if (typeof state.isPlaying === 'boolean') {
-            setIsPlaying(state.isPlaying);
-        }
-
-        if (typeof state.duration === 'number' && state.duration > 0 && typeof state.currentTime === 'number') {
-           const newProgress = (state.currentTime / state.duration) * 100;
-           setProgress(newProgress);
-        }
-
-        if (typeof state.newSongIndex === 'number') {
-            setQueueState(currentQueue => {
-                const newTrack = currentQueue[state.newSongIndex];
-                if (newTrack) {
-                    setCurrentTrack(currentTrack => {
-                        if (currentTrack?.id !== newTrack.id) {
-                            return newTrack;
-                        }
-                        return currentTrack;
-                    });
-                }
-                return currentQueue;
-            });
-        }
-    };
-    
     window.updateFromNative = handleNativeUpdate;
-    
     return () => {
       delete (window as any).updateFromNative;
     };
-  }, []); 
+  }, [handleNativeUpdate]);
 
 
   const updateMediaSession = () => {
@@ -197,7 +197,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         if(window.Android && typeof window.Android.play === 'function') {
             window.Android.play();
         }
-        setIsPlaying(true); // Optimistic UI update
+        setIsPlaying(true);
     } else {
         if (currentTrack?.id !== trackToPlay.id) {
           setProgress(0);
@@ -213,7 +213,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         if (window.Android && typeof window.Android.pause === 'function') {
             window.Android.pause();
         }
-        setIsPlaying(false); // Optimistic UI update
+        setIsPlaying(false);
     } else {
         setIsPlaying(false);
     }
@@ -222,7 +222,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playNext = () => {
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    const nextIndex = (currentIndex + 1) % queue.length; // Loop back to start
+    const nextIndex = (currentIndex + 1) % queue.length;
     const nextTrack = queue[nextIndex];
 
     if (isNativePlayback) {
@@ -235,7 +235,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playPrev = () => {
       if (!currentTrack) return;
       const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-      const prevIndex = (currentIndex - 1 + queue.length) % queue.length; // Loop to end
+      const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
       const prevTrack = queue[prevIndex];
       
       if (isNativePlayback) {
@@ -256,7 +256,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     
-    // Set current track immediately for UI responsiveness
     setCurrentTrack(trackToPlay);
     setIsPlaying(true);
 
@@ -265,7 +264,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       playSongInApp(trackToPlay, newQueue);
     } else {
       setIsNativePlayback(false);
-      // For web, play() will handle setting the track and state
       play(trackToPlay);
     }
   };
