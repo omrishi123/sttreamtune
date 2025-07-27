@@ -10,10 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 declare global {
   interface Window {
     Android?: {
-      startPlayback: (
-        playlistJson: string,
-        currentIndex: number
-      ) => void;
+      startPlayback: (playlistJson: string, currentIndex: number) => void;
       play: () => void;
       pause: () => void;
       seekTo: (positionInSeconds: number) => void;
@@ -123,14 +120,23 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isMounted) return;
 
-    if (isPlaying && isReady && playerRef.current && !isNativePlayback) {
-      playerRef.current.getInternalPlayer()?.playVideo();
+    if (isPlaying && !isNativePlayback) {
+      if (isReady && playerRef.current) {
+        playerRef.current.getInternalPlayer()?.playVideo();
+      }
       startProgressInterval();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-    } else if (!isPlaying && isReady && playerRef.current && !isNativePlayback) {
-      playerRef.current?.getInternalPlayer()?.pauseVideo();
+    } else if(!isPlaying && !isNativePlayback) {
+      if (isReady && playerRef.current) {
+        playerRef.current?.getInternalPlayer()?.pauseVideo();
+      }
       stopProgressInterval();
        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    }
+    
+    // Clear interval if switching to native playback
+    if (isNativePlayback) {
+      stopProgressInterval();
     }
     
     return () => {
@@ -181,12 +187,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
       if (window.Android && typeof window.Android.startPlayback === 'function') {
           setIsNativePlayback(true);
-          setTimeout(() => {
-            window.Android?.startPlayback(
-              playlistJson,
-              currentIndex
-            );
-          }, 100);
+          window.Android.startPlayback(
+            playlistJson,
+            currentIndex
+          );
       }
   };
 
@@ -195,10 +199,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (!trackToPlay) return;
     
     if (isNativePlayback) {
-        if(window.Android && typeof window.Android.play === 'function') {
+        if(window.Android?.play) {
             window.Android.play();
         }
-        setIsPlaying(true);
     } else {
         if (currentTrack?.id !== trackToPlay.id) {
           setProgress(0);
@@ -211,13 +214,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const pause = () => {
      if (isNativePlayback) {
-        if (window.Android && typeof window.Android.pause === 'function') {
+        if (window.Android?.pause) {
             window.Android.pause();
         }
-        setIsPlaying(false);
-    } else {
-        setIsPlaying(false);
     }
+    setIsPlaying(false);
   };
 
   const playNext = () => {
@@ -258,10 +259,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setCurrentPlaylist(playlist || null);
     
     setCurrentTrack(trackToPlay);
-    setIsPlaying(true);
 
     if (window.Android && typeof window.Android.startPlayback === 'function') {
-      setIsNativePlayback(true);
       playSongInApp(trackToPlay, newQueue);
     } else {
       setIsNativePlayback(false);
@@ -283,7 +282,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (event.data === YouTube.PlayerState.PLAYING) {
       if(!isPlaying) setIsPlaying(true);
     } else if (event.data === YouTube.PlayerState.PAUSED || event.data === YouTube.PlayerState.BUFFERING) {
-      if(isPlaying) setIsPlaying(false);
+      // Intentionally do not set isPlaying to false here to allow our controls to be the source of truth
     } else if (event.data === YouTube.PlayerState.ENDED) {
         playNext();
     }
@@ -294,7 +293,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setProgress(newProgress);
       
       if (isNativePlayback) {
-          if (currentTrack && window.Android && typeof window.Android.seekTo === 'function') {
+          if (currentTrack && window.Android?.seekTo) {
               const seekTimeInSeconds = (newProgress / 100) * currentTrack.duration;
               window.Android.seekTo(Math.round(seekTimeInSeconds));
           }
@@ -310,6 +309,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const handleReady = (event: any) => {
     if (isNativePlayback) return;
     setIsReady(true);
+    if(isPlaying) {
+      event.target.playVideo();
+    }
   }
 
   const value = {
@@ -346,6 +348,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                     width: '0',
                     playerVars: {
                         autoplay: 1,
+                        controls: 0,
                     },
                 }}
                 onStateChange={handleStateChange}
