@@ -11,8 +11,9 @@ import { useUserData } from "@/context/user-data-context";
 import { PlaylistCard } from "@/components/playlist-card";
 import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { Playlist } from "@/lib/types";
+import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
 
 export default function LibraryPage() {
   const { playlists: userPlaylists, likedSongs, getTrackById } = useUserData();
@@ -60,6 +61,12 @@ export default function LibraryPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold font-headline tracking-tight">Your Library</h1>
         <div className="flex items-center gap-2">
+           <ImportPlaylistDialog>
+             <Button variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Import Playlist
+              </Button>
+           </ImportPlaylistDialog>
            <AddPlaylistDialog>
              <Button variant="outline">
                 <Plus className="mr-2 h-4 w-4" />
