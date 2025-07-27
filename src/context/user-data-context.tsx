@@ -200,7 +200,7 @@ export const UserDataProvider = ({ children }: { children: React.Node }) => {
         id: LIKED_SONGS_PLAYLIST_ID,
         name: 'Liked Songs',
         description: `${userData.likedSongs.length} songs`,
-        coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
+        coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
         'data-ai-hint': 'glowing heart',
         trackIds: userData.likedSongs,
         public: false,
