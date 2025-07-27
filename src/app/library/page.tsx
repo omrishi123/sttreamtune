@@ -57,20 +57,20 @@ export default function LibraryPage() {
   const allPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist, ...processedUserPlaylists];
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-bold font-headline tracking-tight">Your Library</h1>
+    <div className="space-y-4 md:space-y-8">
+      <div className="flex justify-between items-center gap-2">
+        <h1 className="text-2xl md:text-4xl font-bold font-headline tracking-tight">Your Library</h1>
         <div className="flex items-center gap-2">
            <ImportPlaylistDialog>
-             <Button variant="outline">
-                <Upload className="mr-2 h-4 w-4" />
-                Import Playlist
+             <Button variant="outline" size="sm">
+                <Upload className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Import</span>
               </Button>
            </ImportPlaylistDialog>
            <AddPlaylistDialog>
-             <Button variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                New Playlist
+             <Button variant="outline" size="sm">
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">New</span>
               </Button>
           </AddPlaylistDialog>
         </div>
@@ -83,7 +83,7 @@ export default function LibraryPage() {
           <TabsTrigger value="albums" disabled>Albums</TabsTrigger>
         </TabsList>
         <TabsContent value="playlists" className="mt-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4">
             {allPlaylists.map((playlist) => (
               <PlaylistCard key={playlist.id} playlist={playlist} />
             ))}
