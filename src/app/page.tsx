@@ -7,6 +7,8 @@ import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 
 interface PlaylistSectionProps {
   title: string;
@@ -50,17 +52,22 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-6 px-6">
-        {categories.map(category => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory(category)}
-            className="rounded-full whitespace-nowrap"
-          >
-            {category}
-          </Button>
-        ))}
+      <div className="relative">
+        <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex items-center gap-2 pb-2">
+                {categories.map(category => (
+                <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'outline'}
+                    onClick={() => setSelectedCategory(category)}
+                    className="rounded-full whitespace-nowrap"
+                >
+                    {category}
+                </Button>
+                ))}
+            </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
       
       {filteredPlaylists.map(section => (

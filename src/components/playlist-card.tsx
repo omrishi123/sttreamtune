@@ -37,11 +37,11 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
             onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
           />
         </CardContent>
-        <CardHeader className="p-4 flex-1">
-          <CardTitle className="text-base font-semibold truncate group-hover:text-primary">
+        <CardHeader className="p-3 flex-1">
+          <CardTitle className="text-sm font-semibold truncate group-hover:text-primary leading-tight">
             {playlist.name}
           </CardTitle>
-          {playlist.owner && <CardDescription className="text-xs truncate">
+          {playlist.owner && <CardDescription className="text-xs truncate mt-1">
             By {playlist.owner}
           </CardDescription>}
         </CardHeader>
