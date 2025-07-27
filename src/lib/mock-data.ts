@@ -15,14 +15,14 @@ export const tracks: Track[] = [
 ];
 
 export const playlists: Playlist[] = [
-  { id: 'pl-1', name: 'Workout Hits', description: 'High-energy tracks to keep you motivated.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['3', '7', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'gym workout' },
-  { id: 'pl-2', name: 'Chill Focus', description: 'Instrumental beats for concentration.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['2', '4', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'person studying' },
-  { id: 'pl-3', name: 'Top 100', description: 'The most popular tracks right now.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'music chart' },
-  { id: 'pl-4', name: 'Cosmic Dreams', description: 'Embark on a journey through sound.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['1', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'galaxy stars' },
-  { id: 'pl-5', name: 'Nature Walk', description: 'Calm and soothing sounds of nature.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['2', '4', '6', '9'], public: true, owner: 'StreamTune', 'data-ai-hint': 'forest path' },
+  { id: 'pl-1', name: 'Workout Hits', description: 'High-energy tracks to keep you motivated.', coverArt: 'https://i.ytimg.com/vi/3tmd-ClpJxA/hqdefault.jpg', trackIds: ['3', '7', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'gym workout' },
+  { id: 'pl-2', name: 'Chill Focus', description: 'Instrumental beats for concentration.', coverArt: 'https://i.ytimg.com/vi/o-YBDTqX_ZU/hqdefault.jpg', trackIds: ['2', '4', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'person studying' },
+  { id: 'pl-3', name: 'Top 100', description: 'The most popular tracks right now.', coverArt: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg', trackIds: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'music chart' },
+  { id: 'pl-4', name: 'Cosmic Dreams', description: 'Embark on a journey through sound.', coverArt: 'https://i.ytimg.com/vi/k4yXQkG2s1E/hqdefault.jpg', trackIds: ['1', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'galaxy stars' },
+  { id: 'pl-5', name: 'Nature Walk', description: 'Calm and soothing sounds of nature.', coverArt: 'https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg', trackIds: ['2', '4', '6', '9'], public: true, owner: 'StreamTune', 'data-ai-hint': 'forest path' },
   { id: 'pl-6', name: 'Liked Songs', description: 'Your collection of favorite tracks.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['1', '5', '9'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'glowing heart' },
-  { id: 'pl-7', name: 'My Roadtrip', description: 'Songs for the open road.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['3', '5', '7'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'car roadtrip' },
-  { id: 'pl-8', name: 'Morning Coffee', description: 'Acoustic and mellow tunes.', coverArt: 'https://placehold.co/300x300.png', trackIds: ['4', '10'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'morning coffee' },
+  { id: 'pl-7', name: 'My Roadtrip', description: 'Songs for the open road.', coverArt: 'https://i.ytimg.com/vi/3tmd-ClpJxA/hqdefault.jpg', trackIds: ['3', '5', '7'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'car roadtrip' },
+  { id: 'pl-8', name: 'Morning Coffee', description: 'Acoustic and mellow tunes.', coverArt: 'https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg', trackIds: ['4', '10'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'morning coffee' },
 ];
 
 export const userPlaylists = playlists.filter(p => !p.public);
@@ -249,64 +249,64 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEE0jGfUgUMvzeWAaMPcqHL9",
           "name": "Nonstop Ram Bhajans",
           "description": "Listen to all the trending songs of the week in this playlist!",
-          "coverArt": "https://i.ibb.co/L5Bwz7p/ram-bhajan.jpg",
+          "coverArt": "https://i.ytimg.com/vi/B8_wMan3D_U/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "T-Series Bhakti Sagar"
         },
         {
           "id": "PLFPJRCFRDARRXCaWKpL5tuyWzz_B_ntwE",
           "name": "Shree Krishna Govind",
           "description": "Shree Krishna Govind Hare Murari.",
-          "coverArt": "https://i.ibb.co/BGCrRzQ/krishna-bhajan.jpg",
+          "coverArt": "https://i.ytimg.com/vi/h2-h3aSYr44/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "Jubin Nautiyal"
         },
         {
           "id": "PL2iMjy7LPXAGbh13EK99NSka47D4Vu2bt",
           "name": "Hanuman Chalisa",
           "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
-          "coverArt": "https://i.ibb.co/hL77sYR/hanuman-chalisa.jpg",
+          "coverArt": "https://i.ytimg.com/vi/AofKx0f-c3k/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "T-Series Bhakti Sagar"
         },
         {
           "id": "PL20B425742CB4BCCD",
           "name": "Top Krishna Bhajans",
           "description": "The best bhajans dedicated to Lord Krishna.",
-          "coverArt": "https://i.ibb.co/hZnt1S4/top-krishna-bhajan.jpg",
+          "coverArt": "https://i.ytimg.com/vi/y5wI-iM-A-Y/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "Art of Living"
         },
         {
           "id": "PLyXHXSHxLqKxWA9_JhSjMpXQabvHBvzis",
           "name": "Sunderkand Path",
           "description": "Musical rendition of the Sunderkand.",
-          "coverArt": "https://i.ibb.co/mFkY2k2/sunderkand-path.jpg",
+          "coverArt": "https://i.ytimg.com/vi/A5Xp6g2m2w8/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "Shemaroo Bhakti"
         },
         {
           "id": "PL109z4jBDfVksX38sA3le--iT-JzfBNcw",
           "name": "Shiv Bhajans",
           "description": "Devotional songs for Lord Shiva.",
-          "coverArt": "https://i.ibb.co/2kM3150/shiv-bhajan.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Q_S9c54iYpU/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "Shemaroo Bhakti"
         },
         {
           "id": "PLIdZRpy-6dcVeLLaxMkQbvaFXQlKugMhH",
           "name": "Ganesh Bhajans",
           "description": "A collection of devotional songs for Lord Ganesha.",
-          "coverArt": "https://i.ibb.co/jGGxW3p/ganesh-bhajan.jpg",
+          "coverArt": "https://i.ytimg.com/vi/j5f_6lgrg-M/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "Shemaroo Bhakti"
         },
       ]
     },
@@ -317,28 +317,28 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL0Z67tlyTaWo-c_QyUnhsoa4cUwceCmRu",
           "name": "Independence Day Special",
           "description": "Patriotic songs to celebrate the spirit of the nation.",
-          "coverArt": "https://i.ibb.co/P9tG0T5/independence-day.jpg",
+          "coverArt": "https://i.ytimg.com/vi/Jfg4p1y5z-M/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "T-Series"
         },
         {
           "id": "PLtp23GqaHmiAJgvaHYI3UULaqgcVOKwNd",
           "name": "Best Patriotic Songs",
           "description": "A collection of the most popular patriotic songs.",
-          "coverArt": "https://i.ibb.co/ZJp5LgQ/best-patriotic.jpg",
+          "coverArt": "https://i.ytimg.com/vi/B-l_2k4Nd3M/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "Various Artists"
         },
         {
           "id": "PL9bw4S5ePsEHil8ve8D0fRLf4ewqZ6hNZ",
           "name": "Top Indian Patriotic Songs",
           "description": "Feel the pride with these top patriotic songs from India.",
-          "coverArt": "https://i.ibb.co/LQrK1tX/top-indian-patriotic.jpg",
+          "coverArt": "https://i.ytimg.com/vi/lqI4n-v_8vM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "T-Series"
         }
       ]
     },
@@ -349,10 +349,10 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL5A5QJkW7MkvYslAbg7_rFij8yVEeiEwF",
           "name": "Shrimad Bhagavad Gita",
           "description": "Listen to all chapters of the sacred scripture.",
-          "coverArt": "https://i.ibb.co/1KChy0s/bhagavad-gita.jpg",
+          "coverArt": "https://i.ytimg.com/vi/hMejVAMyGkM/hqdefault.jpg",
           "trackIds": [],
           "public": true,
-          "owner": "OM RISHI"
+          "owner": "GEETHANJALI"
         }
       ]
     },

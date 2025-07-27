@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -14,7 +15,15 @@ import { Plus } from "lucide-react";
 import { Playlist } from "@/lib/types";
 
 export default function LibraryPage() {
-  const { playlists: userPlaylists, likedSongs } = useUserData();
+  const { playlists: userPlaylists, likedSongs, getTrackById } = useUserData();
+
+  const getFirstTrackArtwork = (trackIds: string[]) => {
+    if (trackIds.length > 0) {
+      const firstTrack = getTrackById(trackIds[0]);
+      return firstTrack?.artwork;
+    }
+    return undefined;
+  };
   
   const likedSongsPlaylist: Playlist = {
     id: "liked-songs",
@@ -23,7 +32,7 @@ export default function LibraryPage() {
     owner: "You",
     public: false,
     trackIds: likedSongs,
-    coverArt: "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg",
+    coverArt: getFirstTrackArtwork(likedSongs) || "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg",
     'data-ai-hint': 'glowing heart',
     isLikedSongs: true,
   };
@@ -39,7 +48,12 @@ export default function LibraryPage() {
     'data-ai-hint': 'time clock',
   }
 
-  const allPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist, ...userPlaylists];
+  const processedUserPlaylists = userPlaylists.map(playlist => ({
+    ...playlist,
+    coverArt: getFirstTrackArtwork(playlist.trackIds) || playlist.coverArt
+  }));
+
+  const allPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist, ...processedUserPlaylists];
 
   return (
     <div className="space-y-8">
