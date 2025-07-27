@@ -166,7 +166,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           console.log("Calling native playback service with playlist:", playlistJson, "and index:", currentIndex);
           setIsNativePlayback(true);
           setTimeout(() => {
-            window.Android.startPlayback(
+            window.Android?.startPlayback(
               playlistJson,
               currentIndex
             );
@@ -199,7 +199,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playNext = () => {
     if (isNativePlayback) {
-       if (window.Android?.playNext) {
+       if (window.Android && typeof window.Android.playNext === 'function') {
          window.Android.playNext();
        }
        return;
@@ -218,7 +218,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   const playPrev = () => {
     if (isNativePlayback) {
-       if (window.Android?.playPrevious) {
+       if (window.Android && typeof window.Android.playPrevious === 'function') {
          window.Android.playPrevious();
        }
        return;
