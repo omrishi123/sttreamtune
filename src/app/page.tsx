@@ -6,7 +6,6 @@ import type { YoutubePlaylistsOutput } from '@/ai/flows/get-youtube-playlists-fl
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 
