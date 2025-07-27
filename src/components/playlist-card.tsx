@@ -11,17 +11,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PlaylistCardProps {
   playlist: Playlist;
 }
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
-
+const PLACEHOLDER_IMAGE_URL = "https://placehold.co/300x300.png";
 
 export function PlaylistCard({ playlist }: PlaylistCardProps) {
-  const [imgSrc, setImgSrc] = useState(playlist.coverArt || "https://placehold.co/300x300.png");
+  const [imgSrc, setImgSrc] = useState(playlist.coverArt || PLACEHOLDER_IMAGE_URL);
+
+  useEffect(() => {
+    setImgSrc(playlist.coverArt || PLACEHOLDER_IMAGE_URL);
+  }, [playlist.coverArt]);
 
   return (
     <Link href={`/playlists/${playlist.id}`} className="group">
