@@ -171,7 +171,7 @@ export const UserDataProvider = ({ children }: { children: React.Node }) => {
       trackIds: [],
       public: false,
       owner: currentUser.name || 'You', 
-      coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
+      coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
       'data-ai-hint': 'playlist cover',
     };
     addPlaylist(newPlaylist);

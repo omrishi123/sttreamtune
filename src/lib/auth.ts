@@ -15,7 +15,7 @@ const GUEST_USER: User = {
   id: 'guest',
   name: 'Guest',
   email: '',
-  photoURL: 'https://i.postimg.cc/SswWC87w/streamtune.png',
+  photoURL: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
 };
 
 // This function adapts a Firebase user to our application's User type.
@@ -24,7 +24,7 @@ const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || 'User',
     email: firebaseUser.email || '',
-    photoURL: firebaseUser.photoURL || 'https://i.postimg.cc/SswWC87w/streamtune.png',
+    photoURL: firebaseUser.photoURL || 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
   };
 };
 
