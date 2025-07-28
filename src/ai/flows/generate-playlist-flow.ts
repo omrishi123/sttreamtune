@@ -29,7 +29,7 @@ const PlaylistSuggestionSchema = z.object({
   songs: z.array(z.object({
       title: z.string().describe('The title of the song.'),
       artist: z.string().describe('The artist of the song.'),
-    })).describe('A list of 5-7 songs that fit the prompt. Include a mix of popular and lesser-known tracks if possible.'),
+    })).describe('A list of 15-20 songs that fit the prompt. Include a mix of popular and lesser-known tracks if possible.'),
 });
 
 export async function generatePlaylist(input: GeneratePlaylistInput): Promise<GeneratePlaylistResponse> {
@@ -51,7 +51,7 @@ const generatePlaylistFlow = ai.defineFlow(
       output: { schema: PlaylistSuggestionSchema },
       model: googleAI.model('gemini-1.5-flash'),
       prompt: `You are a music expert and DJ. A user wants a new playlist.
-      Based on their prompt, generate a creative playlist name, a short description, a simple prompt for cover art, and a list of 5-7 songs.
+      Based on their prompt, generate a creative playlist name, a short description, a simple prompt for cover art, and a list of songs.
 
       User Prompt: {{{prompt}}}
       `,
