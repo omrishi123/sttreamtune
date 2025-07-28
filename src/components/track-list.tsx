@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Play, Music, Heart, PlusCircle, Trash2 } from "lucide-react";
@@ -28,17 +29,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Skeleton } from "./ui/skeleton";
 
 interface TrackListProps {
   tracks: Track[];
   playlist?: Playlist;
+  onRemoveTrack: (trackId: string) => void;
+  isLoading?: boolean;
 }
 
-export function TrackList({ tracks, playlist }: TrackListProps) {
+export function TrackList({ tracks, playlist, onRemoveTrack, isLoading }: TrackListProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
-  const { isLiked, toggleLike, addTrackToCache, removeTrackFromPlaylist } = useUserData();
+  const { isLiked, toggleLike, addTrackToCache } = useUserData();
 
   const handlePlayTrack = (track: Track) => {
+    if (isLoading) return;
     if (currentTrack?.id === track.id && isPlaying) {
       pause();
     } else if (currentTrack?.id === track.id && !isPlaying) {
@@ -56,7 +61,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
 
   const handleRemoveTrack = (trackId: string) => {
     if (playlist) {
-      removeTrackFromPlaylist(playlist.id, trackId);
+      onRemoveTrack(trackId);
     }
   };
 
@@ -72,6 +77,32 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
     playlist.id.startsWith('pl-ai-') || 
     playlist.id.startsWith('pl-yt-')
   );
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({length: 5}).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 p-4">
+             <Skeleton className="h-5 w-5" />
+             <div className="flex-1 space-y-2">
+               <Skeleton className="h-4 w-3/4" />
+               <Skeleton className="h-3 w-1/2" />
+             </div>
+             <Skeleton className="h-4 w-12" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  
+  if (tracks.length === 0 && !isLoading) {
+    return (
+      <div className="text-center py-10 text-muted-foreground">
+        <p>No tracks in this playlist yet.</p>
+        <p className="text-sm">Click the main play button to load songs.</p>
+      </div>
+    )
+  }
 
   return (
     <Table>
