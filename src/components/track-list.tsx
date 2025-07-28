@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "./ui/button";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
-import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,7 +72,8 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const isUserPlaylist = playlist && (playlist.id.startsWith('playlist-') || playlist.id.startsWith('pl-ai-') || playlist.id.startsWith('pl-yt-'));
+  const isUserPlaylist = playlist && !playlist.public && !playlist.isLikedSongs;
+
 
   return (
     <Table>
