@@ -1,3 +1,4 @@
+
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User, UserData, Playlist, Track } from '@/lib/types';
@@ -18,7 +19,6 @@ interface UserDataContextType extends UserData {
   createPlaylist: (name: string, description?: string) => void;
   addTrackToPlaylist: (playlistId: string, trackId: string) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
-  deletePlaylist: (playlistId: string) => void;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
@@ -204,13 +204,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const deletePlaylist = (playlistId: string) => {
-    setUserData(prev => ({
-        ...prev,
-        playlists: prev.playlists.filter(p => p.id !== playlistId),
-    }));
-  };
-
   const getPlaylistById = (playlistId: string): Playlist | undefined => {
      if (!currentUser) return undefined;
 
@@ -252,7 +245,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     createPlaylist,
     addTrackToPlaylist,
     removeTrackFromPlaylist,
-    deletePlaylist,
     getPlaylistById,
     addTrackToCache,
     addTracksToCache,
