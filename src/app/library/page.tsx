@@ -11,9 +11,10 @@ import { useUserData } from "@/context/user-data-context";
 import { PlaylistCard } from "@/components/playlist-card";
 import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Sparkles } from "lucide-react";
 import { Playlist } from "@/lib/types";
 import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
+import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
 
 export default function LibraryPage() {
   const { playlists: userPlaylists, likedSongs, getTrackById } = useUserData();
@@ -61,6 +62,12 @@ export default function LibraryPage() {
       <div className="flex justify-between items-center gap-2">
         <h1 className="text-2xl md:text-4xl font-bold font-headline tracking-tight">Your Library</h1>
         <div className="flex items-center gap-2">
+           <GeneratePlaylistDialog>
+              <Button variant="outline" size="sm">
+                <Sparkles className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Create with AI</span>
+              </Button>
+           </GeneratePlaylistDialog>
            <ImportPlaylistDialog>
              <Button variant="outline" size="sm">
                 <Upload className="h-4 w-4 sm:mr-2" />
