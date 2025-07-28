@@ -9,6 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
 import { searchYoutube, YoutubeSearchOutput } from './search-youtube-flow';
 import { GeneratePlaylistResponse, GeneratePlaylistResponseSchema } from '@/lib/types';
@@ -63,7 +64,7 @@ const generatePlaylistFlow = ai.defineFlow(
 
     // Step 2: Generate cover art in parallel
     const imagePromise = ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        model: googleAI.model('gemini-2.0-flash-preview-image-generation'),
         prompt: `Album cover for a playlist about ${suggestion.coverArtPrompt}. Clean, modern, vibrant, high-resolution.`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
