@@ -49,6 +49,7 @@ const generatePlaylistFlow = ai.defineFlow(
       name: 'playlistSuggestionPrompt',
       input: { schema: GeneratePlaylistInputSchema },
       output: { schema: PlaylistSuggestionSchema },
+      model: googleAI.model('gemini-1.5-flash'),
       prompt: `You are a music expert and DJ. A user wants a new playlist.
       Based on their prompt, generate a creative playlist name, a short description, a simple prompt for cover art, and a list of 5-7 songs.
 
