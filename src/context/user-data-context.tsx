@@ -21,6 +21,7 @@ interface UserDataContextType extends UserData {
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
   addPlaylist: (playlist: Playlist) => void;
+  removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
@@ -190,6 +191,17 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       )
     }));
   };
+  
+  const removeTrackFromPlaylist = (playlistId: string, trackId: string) => {
+    setUserData(prev => ({
+      ...prev,
+      playlists: prev.playlists.map(p =>
+        p.id === playlistId
+          ? { ...p, trackIds: p.trackIds.filter(id => id !== trackId) }
+          : p
+      )
+    }));
+  };
 
   const getPlaylistById = (playlistId: string): Playlist | undefined => {
      if (!currentUser) return undefined;
@@ -235,6 +247,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     addTrackToCache,
     addTracksToCache,
     addPlaylist,
+    removeTrackFromPlaylist,
   };
 
   // Prevent rendering children until the auth state is resolved and data is loaded.
