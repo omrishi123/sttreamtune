@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Image from "next/image";
@@ -33,46 +34,36 @@ export default function PlaylistPage() {
       if (!id) return;
       setIsLoading(true);
       let foundPlaylist: Playlist | undefined | null;
-      let fetchedTracks: Track[] = [];
 
-      // Always try to get the playlist from user data first.
-      // This covers user-created, liked, recently played, AI, and imported playlists.
-      foundPlaylist = getPlaylistById(id);
-      
-      if (foundPlaylist) {
-        // If it's a local playlist, get tracks from the cache.
-        fetchedTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
+      // Check user-created playlists, liked songs, or recently played first
+      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
+        foundPlaylist = getPlaylistById(id);
       } else {
-        // If not found locally, assume it's a public YouTube playlist and fetch from the API.
+        // Otherwise, assume it's a YouTube playlist
         try {
-          const playlistDetails = await getYoutubePlaylistDetails({ playlistId: id });
-          if (playlistDetails) {
-            foundPlaylist = playlistDetails;
-            const youtubeTracks = await getTracksForPlaylist(id);
-            addTracksToCache(youtubeTracks); // Add new tracks to the global cache
-            fetchedTracks = youtubeTracks;
-          } else {
-            foundPlaylist = null; // Mark as not found if API returns nothing
-          }
+          foundPlaylist = await getYoutubePlaylistDetails({ playlistId: id });
         } catch (error) {
-           console.error("Failed to fetch from YouTube", error)
+           console.error("Failed to fetch from youtube", error)
            foundPlaylist = null;
         }
       }
       
       if (foundPlaylist) {
-        // If tracks for a local playlist weren't fully loaded from cache, fetch them now.
-        // This is a fallback for cases where the playlist exists but tracks are missing.
-        if (foundPlaylist.trackIds.length > 0 && fetchedTracks.length === 0 && !foundPlaylist.isLikedSongs) {
-             const youtubeTracks = await getTracksForPlaylist(id);
-             addTracksToCache(youtubeTracks);
-             fetchedTracks = youtubeTracks;
-        }
         setPlaylist(foundPlaylist);
-        setTracks(fetchedTracks);
         setImgSrc(foundPlaylist.coverArt);
+        // If it's a local playlist (user-created, liked, recently played, AI, or imported)
+        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
+            const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
+            setTracks(playlistTracks);
+        } else {
+            // It's a youtube playlist, fetch tracks for it from the API
+            const youtubeTracks = await getTracksForPlaylist(id);
+            addTracksToCache(youtubeTracks);
+            setTracks(youtubeTracks);
+        }
+
       } else {
-        setPlaylist(null); // Playlist not found, will trigger 404
+        setPlaylist(null); // Not found
       }
       setIsLoading(false);
     };

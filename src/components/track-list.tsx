@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "./ui/button";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast";
+
 
 interface TrackListProps {
   tracks: Track[];
@@ -36,6 +39,7 @@ interface TrackListProps {
 export function TrackList({ tracks, playlist }: TrackListProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache, removeTrackFromPlaylist } = useUserData();
+  const { toast } = useToast();
 
   const handlePlayTrack = (track: Track) => {
     if (currentTrack?.id === track.id && isPlaying) {
@@ -53,21 +57,23 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
     toggleLike(track.id);
   }
 
-  const handleRemoveTrack = (trackId: string) => {
-    if (playlist) {
-      removeTrackFromPlaylist(playlist.id, trackId);
-    }
-  }
+  const handleRemoveTrack = (track: Track) => {
+    if (!playlist || playlist.isLikedSongs) return;
+    removeTrackFromPlaylist(playlist.id, track.id);
+    toast({
+      title: "Song Removed",
+      description: `"${track.title}" has been removed from "${playlist.name}".`,
+    });
+  };
 
   const formatDuration = (seconds: number) => {
-    if (isNaN(seconds) || seconds === null) return '0:00';
+    if (isNaN(seconds)) return '0:00';
     const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
+    const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const canBeModified = playlist && !playlist.isLikedSongs;
-
+  const isUserPlaylist = playlist && (playlist.id.startsWith('playlist-') || playlist.id.startsWith('pl-ai-') || playlist.id.startsWith('pl-yt-'));
 
   return (
     <Table>
@@ -119,7 +125,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
                 5 days ago
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1 sm:gap-2">
+                <div className="flex items-center justify-end gap-0">
                    <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100", isTrackLiked && "opacity-100")} onClick={() => handleToggleLike(track)}>
                       <Heart className={cn("h-4 w-4", isTrackLiked && "fill-primary text-primary")} />
                    </Button>
@@ -129,23 +135,23 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
                         <PlusCircle className="h-4 w-4" />
                      </Button>
                    </AddToPlaylistMenu>
-                   {canBeModified && (
+                   {isUserPlaylist && (
                      <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                           <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
+                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will permanently remove "{track.title}" from this playlist.
+                            This will permanently remove <span className="font-bold">{track.title}</span> from <span className="font-bold">{playlist?.name}</span>.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleRemoveTrack(track.id)}>
+                          <AlertDialogAction onClick={() => handleRemoveTrack(track)}>
                             Remove
                           </AlertDialogAction>
                         </AlertDialogFooter>

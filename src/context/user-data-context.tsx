@@ -17,11 +17,12 @@ interface UserDataContextType extends UserData {
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description?: string) => void;
   addTrackToPlaylist: (playlistId: string, trackId: string) => void;
+  removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
+  deletePlaylist: (playlistId: string) => void;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
   addPlaylist: (playlist: Playlist) => void;
-  removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
@@ -191,7 +192,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       )
     }));
   };
-  
+
   const removeTrackFromPlaylist = (playlistId: string, trackId: string) => {
     setUserData(prev => ({
       ...prev,
@@ -199,7 +200,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         p.id === playlistId
           ? { ...p, trackIds: p.trackIds.filter(id => id !== trackId) }
           : p
-      )
+      ),
+    }));
+  };
+
+  const deletePlaylist = (playlistId: string) => {
+    setUserData(prev => ({
+        ...prev,
+        playlists: prev.playlists.filter(p => p.id !== playlistId),
     }));
   };
 
@@ -243,11 +251,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     getTrackById,
     createPlaylist,
     addTrackToPlaylist,
+    removeTrackFromPlaylist,
+    deletePlaylist,
     getPlaylistById,
     addTrackToCache,
     addTracksToCache,
     addPlaylist,
-    removeTrackFromPlaylist,
   };
 
   // Prevent rendering children until the auth state is resolved and data is loaded.
