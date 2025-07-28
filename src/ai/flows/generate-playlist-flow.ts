@@ -14,7 +14,7 @@ import { searchYoutube, YoutubeSearchOutput } from './search-youtube-flow';
 import { GeneratePlaylistResponse, GeneratePlaylistResponseSchema } from '@/lib/types';
 import { nanoid } from 'nanoid';
 
-export const GeneratePlaylistInputSchema = z.object({
+const GeneratePlaylistInputSchema = z.object({
   prompt: z.string().describe('The user-provided prompt for the playlist to be generated.'),
   userId: z.string().describe("The ID of the user creating the playlist."),
   userName: z.string().describe("The name of the user creating the playlist."),
