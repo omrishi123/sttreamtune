@@ -14,59 +14,56 @@ import React, { useEffect, useState } from "react";
 import { usePlayer } from "@/context/player-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Icons } from "@/components/icons";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
 export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
-  const { getPlaylistById, getTrackById, addTracksToCache, removeTrackFromPlaylist } = useUserData();
+  const { getPlaylistById, getTrackById, addTracksToCache } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
   const [playlist, setPlaylist] = useState<Playlist | undefined | null>(undefined);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFetchingTracks, setIsFetchingTracks] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchPlaylistData = async () => {
       if (!id) return;
       setIsLoading(true);
-      
-      const userPlaylist = getPlaylistById(id);
+      let foundPlaylist: Playlist | undefined | null;
 
-      if (userPlaylist) {
-        // This is a playlist from the user's library (created, imported, AI, liked)
-        const playlistTracks = userPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
-        setPlaylist(userPlaylist);
-        setTracks(playlistTracks);
-        setImgSrc(userPlaylist.coverArt);
+      // Check user-created playlists, liked songs, or recently played first
+      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
+        foundPlaylist = getPlaylistById(id);
       } else {
-        // This is likely a public playlist from the homepage
+        // Otherwise, assume it's a YouTube playlist
         try {
-          setIsFetchingTracks(true);
-          const [youtubePlaylist, youtubeTracks] = await Promise.all([
-            getYoutubePlaylistDetails({ playlistId: id }),
-            getTracksForPlaylist(id)
-          ]);
-         
-          if (youtubePlaylist) {
-             addTracksToCache(youtubeTracks);
-             setPlaylist(youtubePlaylist);
-             setTracks(youtubeTracks);
-             setImgSrc(youtubePlaylist.coverArt);
-          } else {
-            setPlaylist(null); // Not found
-          }
+          foundPlaylist = await getYoutubePlaylistDetails({ playlistId: id });
         } catch (error) {
            console.error("Failed to fetch from youtube", error)
-           setPlaylist(null);
-        } finally {
-          setIsFetchingTracks(false);
+           foundPlaylist = null;
         }
+      }
+      
+      if (foundPlaylist) {
+        setPlaylist(foundPlaylist);
+        setImgSrc(foundPlaylist.coverArt);
+        // If it's a local playlist (user-created, liked, recently played, AI, or imported)
+        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
+            const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
+            setTracks(playlistTracks);
+        } else {
+            // It's a youtube playlist, fetch tracks for it from the API
+            const youtubeTracks = await getTracksForPlaylist(id);
+            addTracksToCache(youtubeTracks);
+            setTracks(youtubeTracks);
+        }
+
+      } else {
+        setPlaylist(null); // Not found
       }
       setIsLoading(false);
     };
@@ -103,8 +100,10 @@ export default function PlaylistPage() {
   const totalDuration = tracks.reduce((acc, track) => acc + (track?.duration || 0), 0);
   const totalMinutes = Math.floor(totalDuration / 60);
 
-  const handlePlay = async () => {
-    setQueueAndPlay(tracks, tracks[0].id, playlist);
+  const handlePlayPlaylist = () => {
+    if(tracks.length > 0) {
+      setQueueAndPlay(tracks, tracks[0].id, playlist);
+    }
   };
 
   const handleShare = () => {
@@ -137,21 +136,13 @@ export default function PlaylistPage() {
           <p className="text-sm text-muted-foreground">
             Created by{" "}
             <span className="text-foreground font-medium">{playlist.owner}</span>
-            {tracks.length > 0 && (
-              <>
-                {" \u2022 "}
-                {tracks.length} songs, about {totalMinutes} min
-              </>
-            )}
+            {" \u2022 "}
+            {tracks.length} songs, about {totalMinutes} min
           </p>
           <div className="flex items-center justify-center sm:justify-start gap-2 pt-2">
-             <Button size="lg" onClick={handlePlay} disabled={isFetchingTracks || tracks.length === 0}>
-                {isFetchingTracks ? (
-                    <Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                    <Play className="mr-2 h-5 w-5"/>
-                )}
-                {isFetchingTracks ? "Loading..." : "Play"}
+             <Button size="lg" onClick={handlePlayPlaylist}>
+                <Play className="mr-2 h-5 w-5"/>
+                Play
              </Button>
              <Button size="lg" variant="outline" onClick={handleShare}>
                 <Share2 className="mr-2 h-5 w-5"/>
@@ -162,15 +153,7 @@ export default function PlaylistPage() {
       </header>
 
       <section>
-        <TrackList 
-          tracks={tracks} 
-          playlist={playlist} 
-          onRemoveTrack={(trackId) => {
-            removeTrackFromPlaylist(playlist.id, trackId);
-            setTracks(currentTracks => currentTracks.filter(t => t.id !== trackId));
-          }}
-          isLoading={isFetchingTracks}
-        />
+        <TrackList tracks={tracks} playlist={playlist} />
       </section>
     </div>
   );
