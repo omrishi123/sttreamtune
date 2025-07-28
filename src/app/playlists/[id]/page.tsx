@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Image from "next/image";
@@ -62,6 +61,13 @@ export default function PlaylistPage() {
       }
       
       if (foundPlaylist) {
+        // If tracks for a local playlist weren't fully loaded from cache, fetch them now.
+        // This is a fallback for cases where the playlist exists but tracks are missing.
+        if (foundPlaylist.trackIds.length > 0 && fetchedTracks.length === 0 && !foundPlaylist.isLikedSongs) {
+             const youtubeTracks = await getTracksForPlaylist(id);
+             addTracksToCache(youtubeTracks);
+             fetchedTracks = youtubeTracks;
+        }
         setPlaylist(foundPlaylist);
         setTracks(fetchedTracks);
         setImgSrc(foundPlaylist.coverArt);
