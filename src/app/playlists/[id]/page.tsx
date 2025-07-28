@@ -47,25 +47,32 @@ export default function PlaylistPage() {
       } else {
         // This is likely a public playlist from the homepage
         try {
-          const youtubePlaylist = await getYoutubePlaylistDetails({ playlistId: id });
+          setIsFetchingTracks(true);
+          const [youtubePlaylist, youtubeTracks] = await Promise.all([
+            getYoutubePlaylistDetails({ playlistId: id }),
+            getTracksForPlaylist(id)
+          ]);
+         
           if (youtubePlaylist) {
-            setPlaylist(youtubePlaylist);
-            setImgSrc(youtubePlaylist.coverArt);
-            // We intentionally do NOT fetch tracks here to save API calls
-            setTracks([]); 
+             addTracksToCache(youtubeTracks);
+             setPlaylist(youtubePlaylist);
+             setTracks(youtubeTracks);
+             setImgSrc(youtubePlaylist.coverArt);
           } else {
             setPlaylist(null); // Not found
           }
         } catch (error) {
            console.error("Failed to fetch from youtube", error)
            setPlaylist(null);
+        } finally {
+          setIsFetchingTracks(false);
         }
       }
       setIsLoading(false);
     };
 
     fetchPlaylistData();
-  }, [id, getPlaylistById, getTrackById]);
+  }, [id, getPlaylistById, getTrackById, addTracksToCache]);
 
   if (isLoading) {
     return (
@@ -96,38 +103,8 @@ export default function PlaylistPage() {
   const totalDuration = tracks.reduce((acc, track) => acc + (track?.duration || 0), 0);
   const totalMinutes = Math.floor(totalDuration / 60);
 
-  const handlePlayAndFetch = async () => {
-    // If tracks are already loaded, just play
-    if (tracks.length > 0) {
-        setQueueAndPlay(tracks, tracks[0].id, playlist);
-        return;
-    }
-    
-    // Otherwise, fetch them first
-    setIsFetchingTracks(true);
-    try {
-        const youtubeTracks = await getTracksForPlaylist(id);
-        if (youtubeTracks && youtubeTracks.length > 0) {
-            addTracksToCache(youtubeTracks);
-            setTracks(youtubeTracks);
-            setQueueAndPlay(youtubeTracks, youtubeTracks[0].id, playlist);
-        } else {
-            toast({
-                variant: "destructive",
-                title: "Could not play playlist",
-                description: "No tracks were found for this playlist.",
-            });
-        }
-    } catch (error) {
-        console.error("Error fetching tracks on play:", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not fetch tracks to play.",
-        });
-    } finally {
-        setIsFetchingTracks(false);
-    }
+  const handlePlay = async () => {
+    setQueueAndPlay(tracks, tracks[0].id, playlist);
   };
 
   const handleShare = () => {
@@ -137,9 +114,6 @@ export default function PlaylistPage() {
       description: "Playlist link has been copied to your clipboard.",
     });
   }
-
-  const isUserPlaylist = playlist.id.startsWith('pl-');
-  const tracksAvailable = tracks.length > 0;
 
   return (
     <div className="space-y-8">
@@ -163,7 +137,7 @@ export default function PlaylistPage() {
           <p className="text-sm text-muted-foreground">
             Created by{" "}
             <span className="text-foreground font-medium">{playlist.owner}</span>
-            {tracksAvailable && (
+            {tracks.length > 0 && (
               <>
                 {" \u2022 "}
                 {tracks.length} songs, about {totalMinutes} min
@@ -171,7 +145,7 @@ export default function PlaylistPage() {
             )}
           </p>
           <div className="flex items-center justify-center sm:justify-start gap-2 pt-2">
-             <Button size="lg" onClick={handlePlayAndFetch} disabled={isFetchingTracks}>
+             <Button size="lg" onClick={handlePlay} disabled={isFetchingTracks || tracks.length === 0}>
                 {isFetchingTracks ? (
                     <Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
@@ -195,7 +169,7 @@ export default function PlaylistPage() {
             removeTrackFromPlaylist(playlist.id, trackId);
             setTracks(currentTracks => currentTracks.filter(t => t.id !== trackId));
           }}
-          isLoading={isFetchingTracks && !tracksAvailable}
+          isLoading={isFetchingTracks}
         />
       </section>
     </div>
