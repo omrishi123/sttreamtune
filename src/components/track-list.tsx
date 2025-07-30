@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Play, Music, Heart, PlusCircle, Trash2, MoreHorizontal } from "lucide-react";
+import { Play, Music, Heart, PlusCircle, Trash2 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { useUserData } from "@/context/user-data-context";
 import type { Track, Playlist } from "@/lib/types";
@@ -28,14 +28,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 
 interface TrackListProps {
   tracks: Track[];
@@ -131,58 +123,38 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
                 {formatDuration(track.duration)}
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100", isTrackLiked && "opacity-100")} onClick={() => handleToggleLike(track)}>
+                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 data-[state=selected]:opacity-100">
+                   <Button variant="ghost" size="icon" className={cn(isTrackLiked && "opacity-100")} onClick={() => handleToggleLike(track)}>
                       <Heart className={cn("h-4 w-4", isTrackLiked && "fill-primary text-primary")} />
                    </Button>
-                   <span className="text-muted-foreground w-8 mx-1 sm:hidden">{formatDuration(track.duration)}</span>
-                   
-                   <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                         <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100">
-                           <MoreHorizontal className="h-4 w-4" />
+                   <AddToPlaylistMenu track={track}>
+                      <Button variant="ghost" size="icon">
+                         <PlusCircle className="h-4 w-4" />
+                      </Button>
+                   </AddToPlaylistMenu>
+                  {canEditPlaylist && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                           <Trash2 className="h-4 w-4" />
                          </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <AddToPlaylistMenu track={track}>
-                           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              <span>Add to playlist</span>
-                           </DropdownMenuItem>
-                        </AddToPlaylistMenu>
-                        {canEditPlaylist && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                 <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                    onSelect={(e) => e.preventDefault()}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    <span>Remove from playlist</span>
-                                  </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                 <AlertDialogHeader>
-                                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                   <AlertDialogDescription>
-                                     This will permanently remove "{track.title}" from this playlist.
-                                   </AlertDialogDescription>
-                                 </AlertDialogHeader>
-                                 <AlertDialogFooter>
-                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                   <AlertDialogAction onClick={() => handleRemoveTrack(track.id)} className="bg-destructive hover:bg-destructive/90">
-                                     Remove
-                                   </AlertDialogAction>
-                                 </AlertDialogFooter>
-                               </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                   </DropdownMenu>
-
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                         <AlertDialogHeader>
+                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                           <AlertDialogDescription>
+                             This will permanently remove "{track.title}" from this playlist.
+                           </AlertDialogDescription>
+                         </AlertDialogHeader>
+                         <AlertDialogFooter>
+                           <AlertDialogCancel>Cancel</AlertDialogCancel>
+                           <AlertDialogAction onClick={() => handleRemoveTrack(track.id)} className="bg-destructive hover:bg-destructive/90">
+                             Remove
+                           </AlertDialogAction>
+                         </AlertDialogFooter>
+                       </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

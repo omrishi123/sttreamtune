@@ -284,5 +284,3 @@ export function Player() {
     </footer>
   );
 }
-
-    
