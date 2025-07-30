@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -17,9 +18,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 export function QueueSheet() {
-  const { queue, currentTrack, removeTrackFromQueue, clearQueue } = usePlayer();
+  const { queue, currentTrack, removeTrackFromQueue, clearQueue, setQueueAndPlay } = usePlayer();
   const tracksInQueue = queue.filter(track => track.id !== currentTrack?.id);
 
+  const handlePlayFromQueue = (trackId: string) => {
+     const trackToPlay = queue.find(t => t.id === trackId);
+     if (trackToPlay) {
+       setQueueAndPlay(queue, trackId);
+     }
+  }
 
   return (
     <Sheet>
@@ -61,19 +68,21 @@ export function QueueSheet() {
               <div className="space-y-2">
                 {tracksInQueue.length > 0 ? (
                   tracksInQueue.map((track) => (
-                    <div key={track.id} className="flex items-center gap-3 p-2 group">
-                      <Image
-                        src={track.artwork}
-                        alt={track.title}
-                        width={40}
-                        height={40}
-                        className="rounded-md"
-                        data-ai-hint={track['data-ai-hint']}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">{track.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
-                      </div>
+                    <div key={track.id} className="flex items-center gap-3 p-2 group rounded-md hover:bg-muted/50 cursor-pointer" >
+                       <div className="flex items-center gap-3 flex-1 min-w-0" onClick={() => handlePlayFromQueue(track.id)}>
+                          <Image
+                            src={track.artwork}
+                            alt={track.title}
+                            width={40}
+                            height={40}
+                            className="rounded-md"
+                            data-ai-hint={track['data-ai-hint']}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">{track.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                          </div>
+                       </div>
                       <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => removeTrackFromQueue(track.id)}>
                         <X className="h-4 w-4" />
                       </Button>
