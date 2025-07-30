@@ -17,22 +17,60 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUserData } from '@/context/user-data-context';
 import { Switch } from './ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { onAuthChange } from '@/lib/auth';
+import type { User } from '@/lib/types';
+import { Icons } from './icons';
 
 export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { createPlaylist } = useUserData();
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { createPlaylist } = useUserData();
+  const { toast } = useToast();
+
+   React.useEffect(() => {
+    if (!isOpen) return;
+    const unsubscribe = onAuthChange(setUser);
+    return () => unsubscribe();
+  }, [isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name) {
-      createPlaylist(name, description, isPublic);
+    if (!name) return;
+    
+    if (isPublic && user?.id === 'guest') {
+       toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'You must be logged in to create a public playlist.',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await createPlaylist(name, description, isPublic);
+      toast({
+        title: 'Playlist Created!',
+        description: `"${name}" has been created.`,
+      });
       setIsOpen(false);
       setName('');
       setDescription('');
       setIsPublic(false);
+    } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to create playlist. Please try again.',
+        });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -58,6 +96,7 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -70,6 +109,7 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
                 onChange={(e) => setDescription(e.target.value)}
                 className="col-span-3"
                 placeholder="(Optional)"
+                disabled={isLoading}
               />
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
@@ -82,17 +122,21 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
                     id="public"
                     checked={isPublic}
                     onCheckedChange={setIsPublic}
+                    disabled={isLoading}
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary">
+              <Button type="button" variant="secondary" disabled={isLoading}>
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit">Create Playlist</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+              Create Playlist
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

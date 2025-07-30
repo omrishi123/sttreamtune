@@ -4,9 +4,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import type { User, UserData, Playlist, Track } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
-const COMMUNITY_PLAYLISTS_KEY = 'communityPlaylists';
 
 interface CachedTracks {
   [key: string]: Track;
@@ -18,7 +19,7 @@ interface UserDataContextType extends UserData {
   toggleLike: (trackId: string) => void;
   addRecentlyPlayed: (trackId: string) => void;
   getTrackById: (trackId: string) => Track | undefined;
-  createPlaylist: (name: string, description: string, isPublic: boolean) => void;
+  createPlaylist: (name: string, description: string, isPublic: boolean) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, trackId: string) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
@@ -64,20 +65,6 @@ const getInitialTrackCache = (): CachedTracks => {
     }
 }
 
-const getInitialCommunityPlaylists = (): Playlist[] => {
-    if (typeof window === 'undefined' || !window.localStorage) {
-        return [];
-    }
-    try {
-        const storedPlaylists = window.localStorage.getItem(COMMUNITY_PLAYLISTS_KEY);
-        return storedPlaylists ? JSON.parse(storedPlaylists) : [];
-    } catch (error) {
-        console.error("Error reading community playlists from localStorage:", error);
-        return [];
-    }
-};
-
-
 export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
@@ -85,24 +72,35 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [communityPlaylists, setCommunityPlaylists] = useState<Playlist[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Subscribe to auth changes directly in this provider
+  // Subscribe to auth changes
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
       setCurrentUser(user);
       if (user) {
         setUserData(getInitialUserData(user.id));
         setTrackCache(getInitialTrackCache());
-        setCommunityPlaylists(getInitialCommunityPlaylists());
       } else {
         // Handle logout case
         setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [] });
-        setCommunityPlaylists([]);
       }
        setIsInitialized(true);
     });
     return () => unsubscribe();
   }, []);
 
+  // Fetch community playlists from Firestore in real-time
+  useEffect(() => {
+    const q = query(collection(db, "communityPlaylists"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const playlists: Playlist[] = [];
+      querySnapshot.forEach((doc) => {
+        playlists.push({ id: doc.id, ...doc.data() } as Playlist);
+      });
+      setCommunityPlaylists(playlists);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Persist user data to local storage
   useEffect(() => {
@@ -127,21 +125,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       }
     }
   }, [trackCache, currentUser, isInitialized]);
-
-  // Persist community playlists to local storage
-  useEffect(() => {
-    if (!isInitialized) return;
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        // Sort by id (which is timestamp-based) to keep newest first
-        const sortedPlaylists = [...communityPlaylists].sort((a, b) => b.id.localeCompare(a.id));
-        window.localStorage.setItem(COMMUNITY_PLAYLISTS_KEY, JSON.stringify(sortedPlaylists));
-      } catch (error) {
-        console.error("Error writing community playlists to localStorage:", error);
-      }
-    }
-  }, [communityPlaylists, isInitialized]);
-
 
   const addTrackToCache = (track: Track) => {
     if (!trackCache[track.id]) {
@@ -190,18 +173,16 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       ...prev,
       playlists: [playlist, ...prev.playlists],
     }));
-    if (playlist.public) {
-       setCommunityPlaylists(prev => [playlist, ...prev]);
-    }
   };
   
-  const createPlaylist = (name: string, description: string = '', isPublic: boolean = false) => {
+  const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false) => {
     if (!currentUser) {
       console.error("Cannot create playlist: no user is logged in.");
       return;
     }
-    const newPlaylist: Playlist = {
-      id: `playlist-${Date.now()}`,
+    
+    // The playlist object for local state and/or Firestore
+    const newPlaylistData = {
       name,
       description,
       trackIds: [],
@@ -210,7 +191,23 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
       'data-ai-hint': 'playlist cover',
     };
-    addPlaylist(newPlaylist);
+
+    if (isPublic) {
+      try {
+        await addDoc(collection(db, "communityPlaylists"), {
+          ...newPlaylistData,
+          createdAt: serverTimestamp(),
+        });
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+    } else {
+        const newLocalPlaylist: Playlist = {
+        ...newPlaylistData,
+        id: `playlist-${Date.now()}`,
+      };
+      addPlaylist(newLocalPlaylist);
+    }
   };
   
   const addTrackToPlaylist = (playlistId: string, trackId: string) => {
@@ -275,7 +272,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return communityPlaylists.find(p => p.id === playlistId);
   }
 
-
   const value: UserDataContextType = {
     ...userData,
     communityPlaylists,
@@ -292,7 +288,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     addPlaylist,
   };
 
-  // Prevent rendering children until the auth state is resolved and data is loaded.
   if (!isInitialized) {
     return null;
   }
