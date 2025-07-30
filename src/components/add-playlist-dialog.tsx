@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,16 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,6 +40,8 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
+  const router = useRouter();
 
   const { createPlaylist } = useUserData();
   const { toast } = useToast();
@@ -44,12 +57,8 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
     if (!name) return;
     
     if (isPublic && user?.id === 'guest') {
-       toast({
-        variant: 'destructive',
-        title: 'Login Required',
-        description: 'You must be logged in to create a public playlist.',
-      });
-      return;
+       setShowLoginAlert(true);
+       return;
     }
 
     setIsLoading(true);
@@ -75,71 +84,90 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create new playlist</DialogTitle>
-          <DialogDescription>
-            Give your playlist a name and an optional description.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="col-span-3"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="col-span-3"
-                placeholder="(Optional)"
-                disabled={isLoading}
-              />
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="public" className="text-right">
-                Public
-              </Label>
-              <div className="col-span-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Share with the community</span>
-                <Switch
-                    id="public"
-                    checked={isPublic}
-                    onCheckedChange={setIsPublic}
-                    disabled={isLoading}
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create new playlist</DialogTitle>
+            <DialogDescription>
+              Give your playlist a name and an optional description.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="col-span-3"
+                  required
+                  disabled={isLoading}
                 />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">
+                  Description
+                </Label>
+                <Input
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="col-span-3"
+                  placeholder="(Optional)"
+                  disabled={isLoading}
+                />
+              </div>
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="public" className="text-right">
+                  Public
+                </Label>
+                <div className="col-span-3 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Share with the community</span>
+                  <Switch
+                      id="public"
+                      checked={isPublic}
+                      onCheckedChange={setIsPublic}
+                      disabled={isLoading}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="secondary" disabled={isLoading}>
-                Cancel
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary" disabled={isLoading}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+                Create Playlist
               </Button>
-            </DialogClose>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-              Create Playlist
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={showLoginAlert} onOpenChange={setShowLoginAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Login Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You must be logged in to create a public playlist that is shared
+              with the community.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/login')}>
+              Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

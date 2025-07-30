@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,16 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -31,8 +42,10 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
   const { addPlaylist, addTracksToCache } = useUserData();
   const { toast } = useToast();
+  const router = useRouter();
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -50,7 +63,7 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       });
       return;
     }
-    if (!user) {
+    if (!user) { // This check can stay as a fallback
       toast({
         variant: 'destructive',
         title: 'Not logged in',
@@ -59,12 +72,8 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       return;
     }
      if (isPublic && user?.id === 'guest') {
-       toast({
-        variant: 'destructive',
-        title: 'Login Required',
-        description: 'You must be logged in to create a public playlist.',
-      });
-      return;
+       setShowLoginAlert(true);
+       return;
     }
 
     setIsLoading(true);
@@ -84,10 +93,12 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       addTracksToCache(result.tracks);
       
       if (isPublic) {
-         await addDoc(collection(db, "communityPlaylists"), {
+         const docRef = await addDoc(collection(db, "communityPlaylists"), {
           ...result.playlist,
           createdAt: serverTimestamp(),
         });
+        const finalPlaylist = { ...result.playlist, id: docRef.id };
+        addPlaylist(finalPlaylist);
       } else {
         addPlaylist(result.playlist);
       }
@@ -114,56 +125,75 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create with AI</DialogTitle>
-          <DialogDescription>
-            Describe the kind of playlist you want, and let AI do the rest. For example: "Acoustic songs for a rainy day" or "Upbeat 80s pop for a road trip".
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid w-full items-center gap-2">
-              <Label htmlFor="prompt">Your Vibe</Label>
-              <Textarea
-                id="prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="e.g., Lofi beats for studying"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="flex items-center justify-between gap-4 pt-2">
-              <Label htmlFor="public" className="text-right whitespace-nowrap">
-                Make Public
-              </Label>
-               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Share with the community</span>
-                <Switch
-                    id="public"
-                    checked={isPublic}
-                    onCheckedChange={setIsPublic}
-                    disabled={isLoading}
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create with AI</DialogTitle>
+            <DialogDescription>
+              Describe the kind of playlist you want, and let AI do the rest. For example: "Acoustic songs for a rainy day" or "Upbeat 80s pop for a road trip".
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="prompt">Your Vibe</Label>
+                <Textarea
+                  id="prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="e.g., Lofi beats for studying"
+                  required
+                  disabled={isLoading}
                 />
               </div>
+              <div className="flex items-center justify-between gap-4 pt-2">
+                <Label htmlFor="public" className="text-right whitespace-nowrap">
+                  Make Public
+                </Label>
+                 <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Share with the community</span>
+                  <Switch
+                      id="public"
+                      checked={isPublic}
+                      onCheckedChange={setIsPublic}
+                      disabled={isLoading}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="secondary" disabled={isLoading}>
-                Cancel
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary" disabled={isLoading}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading ? 'Generating...' : 'Generate'}
               </Button>
-            </DialogClose>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? 'Generating...' : 'Generate'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={showLoginAlert} onOpenChange={setShowLoginAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Login Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You must be logged in to create a public playlist that is shared
+              with the community.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/login')}>
+              Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
