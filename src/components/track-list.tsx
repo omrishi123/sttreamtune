@@ -82,10 +82,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const isPlaylistOwner = currentUser && playlist?.ownerId === currentUser.id;
-
-  // For private playlists (which don't have ownerId), we assume the current user is the owner
-  const canEditPlaylist = !playlist?.public || isPlaylistOwner;
+  const canEditPlaylist = currentUser && playlist?.ownerId === currentUser.id;
 
   return (
     <Table>

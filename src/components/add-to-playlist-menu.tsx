@@ -38,7 +38,10 @@ export function AddToPlaylistMenu({
   const editablePlaylists = useMemo(() => {
     if (!currentUser) return [];
 
-    const userPrivatePlaylists = playlists;
+    // Playlists from local storage (always private and owned by current user)
+    const userPrivatePlaylists = playlists; 
+    
+    // Playlists from Firestore (public) that are owned by the current user
     const userPublicPlaylists = communityPlaylists.filter(p => p.ownerId === currentUser.id);
 
     return [...userPrivatePlaylists, ...userPublicPlaylists];
