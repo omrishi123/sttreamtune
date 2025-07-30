@@ -14,6 +14,7 @@ import {
   VolumeX,
   Heart,
   Timer,
+  ChevronUp,
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -33,6 +34,8 @@ import { useUserData } from "@/context/user-data-context";
 import { cn } from "@/lib/utils";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { useToast } from "@/hooks/use-toast";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { NowPlayingView } from "./now-playing-view";
 
 export function Player() {
   const { 
@@ -91,76 +94,11 @@ export function Player() {
 
   if (isMobile) {
     return (
-       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-3 flex flex-col gap-2 text-card-foreground shadow-md z-40">
+      <Sheet>
+       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-2 py-2 flex flex-col gap-2 text-card-foreground shadow-md z-40">
         
-        {/* Top Row: Song Info & Like/Queue */}
-        <div className="flex items-center w-full">
-          <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
-            <Image
-              src={currentTrack.artwork}
-              alt={currentTrack.title}
-              width={40}
-              height={40}
-              className="rounded-md"
-              data-ai-hint={currentTrack['data-ai-hint']}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
-              <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-              <Button variant="ghost" size="icon" onClick={handleToggleLike}>
-                <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
-              </Button>
-              <AddToPlaylistMenu track={currentTrack} />
-          </div>
-        </div>
-
-        {/* Middle Row: Main Player Controls */}
-         <div className="flex items-center justify-around w-full">
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-8 h-8">
-                  <Timer className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2" side="top" align="center">
-                <DropdownMenuLabel>Sleep Timer</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleSetSleepTimer(15 * 60 * 1000, "15 minutes")}>15 minutes</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
-                 <DropdownMenuItem onClick={() => {
-                  const remainingTime = (duration - currentTime) * 1000;
-                  handleSetSleepTimer(remainingTime, "end of song");
-                }}>
-                  End of song
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleSetSleepTimer(0, "Off")} className="text-destructive">
-                  Turn off timer
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8">
-              <SkipBack className="h-5 w-5" />
-            </Button>
-            <Button
-              size="icon"
-              className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10"
-              onClick={handlePlayPause}
-            >
-              {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground" />}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8">
-              <SkipForward className="h-5 w-5" />
-            </Button>
-            <QueueSheet />
-        </div>
-
-        {/* Bottom Row: Progress Bar */}
-         <div className="flex items-center gap-2 w-full">
+        {/* Progress Bar */}
+         <div className="flex items-center gap-2 w-full px-2">
             <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
@@ -169,7 +107,46 @@ export function Player() {
             />
             <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
         </div>
+
+        {/* Main Control Row */}
+        <div className="flex items-center w-full">
+          <SheetTrigger asChild>
+            <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1 cursor-pointer">
+              <Image
+                src={currentTrack.artwork}
+                alt={currentTrack.title}
+                width={40}
+                height={40}
+                className="rounded-md"
+                data-ai-hint={currentTrack['data-ai-hint']}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
+                <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+              </div>
+            </div>
+          </SheetTrigger>
+          <div className="flex items-center">
+              <Button variant="ghost" size="icon" onClick={handleToggleLike}>
+                <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-10 w-10"
+                onClick={handlePlayPause}
+              >
+                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+              </Button>
+          </div>
+        </div>
+
+        <SheetContent side="bottom" className="h-full p-0 border-none">
+          <NowPlayingView />
+        </SheetContent>
+
       </footer>
+      </Sheet>
     )
   }
 

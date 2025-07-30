@@ -34,6 +34,7 @@ interface PlayerContextType {
   progress: number;
   handleSeek: (value: number[]) => void;
   removeTrackFromQueue: (trackId: string) => void;
+  reorderQueue: (startIndex: number, endIndex: number) => void;
   clearQueue: () => void;
   currentTime: number;
   duration: number;
@@ -269,6 +270,15 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueState(prev => prev.filter(track => track.id !== trackId));
   };
 
+  const reorderQueue = (startIndex: number, endIndex: number) => {
+    setQueueState(prev => {
+        const newQueue = Array.from(prev);
+        const [removed] = newQueue.splice(startIndex, 1);
+        newQueue.splice(endIndex, 0, removed);
+        return newQueue;
+    });
+  };
+
   const clearQueue = () => {
     setQueueState(currentTrack ? [currentTrack] : []);
   };
@@ -327,6 +337,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     progress,
     handleSeek,
     removeTrackFromQueue,
+    reorderQueue,
     clearQueue,
     currentTime,
     duration
