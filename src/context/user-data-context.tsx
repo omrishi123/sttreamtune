@@ -1,6 +1,6 @@
 
 'use client';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import type { User, UserData, Playlist, Track } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
@@ -14,6 +14,7 @@ interface CachedTracks {
 }
 
 interface UserDataContextType extends UserData {
+  allPlaylists: Playlist[];
   communityPlaylists: Playlist[];
   isLiked: (trackId: string) => boolean;
   toggleLike: (trackId: string) => void;
@@ -301,9 +302,18 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return communityPlaylists.find(p => p.id === playlistId);
   }
 
+  const allPlaylists = useMemo(() => {
+    // Combine user's private playlists with all community playlists
+    // We filter community playlists to avoid showing duplicates if a user's own public playlist is also in their local list
+    const communityPlaylistsToAdd = communityPlaylists.filter(cp => !userData.playlists.some(up => up.id === cp.id));
+    return [...userData.playlists, ...communityPlaylistsToAdd];
+  }, [userData.playlists, communityPlaylists]);
+
+
   const value: UserDataContextType = {
     ...userData,
     communityPlaylists,
+    allPlaylists,
     isLiked,
     toggleLike,
     addRecentlyPlayed,

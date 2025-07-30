@@ -22,7 +22,7 @@ export function AddToPlaylistMenu({
   track: Track;
   children?: React.ReactNode;
 }) {
-  const { playlists, addTrackToPlaylist, addTrackToCache } = useUserData();
+  const { allPlaylists, addTrackToPlaylist, addTrackToCache } = useUserData();
   const { toast } = useToast();
 
   const handleAdd = (playlistId: string) => {
@@ -54,7 +54,7 @@ export function AddToPlaylistMenu({
           </DropdownMenuItem>
         </AddPlaylistDialog>
         <DropdownMenuSeparator />
-        {playlists.map((playlist) => (
+        {allPlaylists.map((playlist) => (
           <DropdownMenuItem
             key={playlist.id}
             onClick={() => handleAdd(playlist.id)}
