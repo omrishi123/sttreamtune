@@ -14,7 +14,7 @@ import { useUserData } from "@/context/user-data-context";
 import { cn } from "@/lib/utils";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { ScrollArea } from "./ui/scroll-area";
-import { SheetClose } from "./ui/sheet";
+import { SheetClose, SheetHeader, SheetTitle } from "./ui/sheet";
 
 export function NowPlayingView() {
   const { 
@@ -79,22 +79,25 @@ export function NowPlayingView() {
 
   return (
     <div className="h-full w-full bg-background text-foreground flex flex-col">
-       <header className="flex items-center justify-between p-4 flex-shrink-0">
-          <SheetClose asChild>
-            <Button variant="ghost" size="icon">
-              <X className="h-6 w-6" />
-            </Button>
-          </SheetClose>
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">Playing from</p>
-            <p className="font-semibold">{currentPlaylist?.name || "Queue"}</p>
+       <SheetHeader className="p-4 flex-shrink-0">
+          <SheetTitle className="sr-only">Now Playing</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetClose asChild>
+                <Button variant="ghost" size="icon">
+                <X className="h-6 w-6" />
+                </Button>
+            </SheetClose>
+            <div className="text-center">
+                <p className="text-sm text-muted-foreground">Playing from</p>
+                <p className="font-semibold">{currentPlaylist?.name || "Queue"}</p>
+            </div>
+            <AddToPlaylistMenu track={currentTrack}>
+                <Button variant="ghost" size="icon">
+                    <ListMusic className="h-6 w-6" />
+                </Button>
+            </AddToPlaylistMenu>
           </div>
-          <AddToPlaylistMenu track={currentTrack}>
-             <Button variant="ghost" size="icon">
-                <ListMusic className="h-6 w-6" />
-             </Button>
-          </AddToPlaylistMenu>
-       </header>
+       </SheetHeader>
 
        <main className="flex-1 flex flex-col items-center justify-center gap-8 px-8">
           <Image
