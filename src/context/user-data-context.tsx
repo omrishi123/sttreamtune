@@ -5,7 +5,7 @@ import type { User, UserData, Playlist, Track } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, writeBatch } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, writeBatch, deleteDoc } from "firebase/firestore";
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
 
@@ -22,6 +22,7 @@ interface UserDataContextType extends UserData {
   createPlaylist: (name: string, description: string, isPublic: boolean) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, trackId: string) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
+  deletePlaylist: (playlistId: string) => Promise<void>;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
@@ -183,14 +184,13 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    // The playlist object for local state and/or Firestore
     const newPlaylistData = {
       name,
       description,
       trackIds: [],
       public: isPublic,
       owner: currentUser.name, 
-      ownerId: currentUser.id, // always include ownerId
+      ownerId: currentUser.id,
       coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
       'data-ai-hint': 'playlist cover',
     };
@@ -219,13 +219,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       addTrackToCache(track); // Ensure track is in cache
     }
 
-    // Check if it's a community playlist by looking for it in the state
-    const isCommunityPlaylist = communityPlaylists.some(p => p.id === playlistId);
+    const playlist = getPlaylistById(playlistId);
 
-    if (isCommunityPlaylist) {
+    if (playlist?.public) {
       const playlistRef = doc(db, 'communityPlaylists', playlistId);
       try {
-        // Firestore security rules will enforce ownership
         await updateDoc(playlistRef, {
           trackIds: arrayUnion(trackId)
         });
@@ -233,7 +231,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error updating community playlist:", error);
       }
     } else {
-      // It's a local/private playlist, update local state
       setUserData(prev => ({
         ...prev,
         playlists: prev.playlists.map(p =>
@@ -246,12 +243,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
-    const isCommunity = communityPlaylists.some(p => p.id === playlistId);
+    const playlist = getPlaylistById(playlistId);
 
-    if (isCommunity) {
+    if (playlist?.public) {
       const playlistRef = doc(db, 'communityPlaylists', playlistId);
       try {
-        // Firestore security rules will enforce ownership
         await updateDoc(playlistRef, {
           trackIds: arrayRemove(trackId)
         });
@@ -266,6 +262,25 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             ? { ...p, trackIds: p.trackIds.filter(id => id !== trackId) }
             : p
         ),
+      }));
+    }
+  };
+  
+  const deletePlaylist = async (playlistId: string) => {
+    const playlist = getPlaylistById(playlistId);
+    if (!playlist) return;
+
+    if (playlist.public) {
+      try {
+        await deleteDoc(doc(db, "communityPlaylists", playlistId));
+      } catch (error) {
+        console.error("Error deleting public playlist:", error);
+      }
+    } else {
+      // It's a private playlist, remove from local state
+      setUserData(prev => ({
+        ...prev,
+        playlists: prev.playlists.filter(p => p.id !== playlistId),
       }));
     }
   };
@@ -304,7 +319,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     const userPlaylist = userData.playlists.find(p => p.id === playlistId);
     if (userPlaylist) return userPlaylist;
 
-    // Fallback to check community playlists if not found in user's personal list
     return communityPlaylists.find(p => p.id === playlistId);
   }
 
@@ -318,6 +332,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     createPlaylist,
     addTrackToPlaylist,
     removeTrackFromPlaylist,
+    deletePlaylist,
     getPlaylistById,
     addTrackToCache,
     addTracksToCache,

@@ -7,20 +7,39 @@ import { getTracksForPlaylist, getYoutubePlaylistDetails } from "@/ai/flows/get-
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play, Share2 } from "lucide-react";
-import type { Playlist, Track } from "@/lib/types";
+import { Play, Share2, MoreHorizontal, Trash2 } from "lucide-react";
+import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState } from "react";
 import { usePlayer } from "@/context/player-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { onAuthChange } from "@/lib/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
 export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
-  const { getPlaylistById, getTrackById, addTracksToCache } = useUserData();
+  const router = useRouter();
+  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
@@ -28,7 +47,13 @@ export default function PlaylistPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
+  useEffect(() => {
+    const unsubscribe = onAuthChange(setCurrentUser);
+    return () => unsubscribe();
+  }, []);
+  
   useEffect(() => {
     const fetchPlaylistData = async () => {
       if (!id) return;
@@ -119,6 +144,19 @@ export default function PlaylistPage() {
     });
   }
 
+  const handleDeletePlaylist = async () => {
+    if (playlist) {
+      await deletePlaylist(playlist.id);
+      toast({
+        title: "Playlist Deleted",
+        description: `"${playlist.name}" has been deleted.`,
+      });
+      router.push('/library');
+    }
+  };
+
+  const isOwner = currentUser && playlist && playlist.ownerId === currentUser.id;
+
   return (
     <div className="space-y-8">
        <header className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
@@ -153,6 +191,40 @@ export default function PlaylistPage() {
                 <Share2 className="mr-2 h-5 w-5"/>
                 Share
              </Button>
+             {isOwner && (
+                <AlertDialog>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="lg" variant="outline">
+                        <MoreHorizontal className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Delete playlist</span>
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the
+                        playlist "{playlist.name}".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
           </div>
         </div>
       </header>
