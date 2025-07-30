@@ -14,7 +14,8 @@ import {
   VolumeX,
   Heart,
   Timer,
-  ListMusic
+  ListMusic,
+  PlusCircle,
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -92,40 +93,35 @@ export function Player() {
 
   if (isMobile) {
     return (
-      <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-2 flex flex-col gap-2 text-card-foreground shadow-md z-40">
+      <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border p-3 flex flex-col gap-2 text-card-foreground shadow-md z-40">
+        {/* Top part: Track info */}
         <div className="flex items-center gap-3">
           <Image
             src={currentTrack.artwork}
             alt={currentTrack.title}
-            width={48}
-            height={48}
-            className="rounded-md"
+            width={40}
+            height={40}
+            className="rounded"
             data-ai-hint={currentTrack['data-ai-hint']}
           />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
-          <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={handleToggleLike}>
-                <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={handleToggleLike}>
+              <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
+            </Button>
+            <AddToPlaylistMenu track={currentTrack}>
+              <Button variant="ghost" size="icon">
+                  <PlusCircle className="h-5 w-5" />
               </Button>
-              <AddToPlaylistMenu track={currentTrack} />
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-10 w-10"
-                onClick={handlePlayPause}
-              >
-                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              </Button>
-               <Button variant="ghost" size="icon" onClick={playNext}>
-                <SkipForward className="h-5 w-5" />
-               </Button>
-               <QueueSheet />
+            </AddToPlaylistMenu>
           </div>
         </div>
-         <div className="flex items-center gap-2 w-full">
+        
+        {/* Middle part: Slider */}
+        <div className="flex items-center gap-2 w-full -my-1">
             <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
@@ -133,6 +129,52 @@ export function Player() {
               className="w-full"
             />
             <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
+        </div>
+
+        {/* Bottom part: Controls */}
+        <div className="flex items-center justify-between w-full -mt-1">
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Timer className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mb-2" side="top" align="start">
+                <DropdownMenuLabel>Sleep Timer</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(15 * 60 * 1000, "15 minutes")}>15 minutes</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const remainingTime = (duration - currentTime) * 1000;
+                  handleSetSleepTimer(remainingTime, "end of song");
+                }}>
+                  End of song
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleSetSleepTimer(0, "Off")} className="text-destructive">
+                  Turn off timer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={playPrev}>
+                    <SkipBack className="h-6 w-6" />
+                </Button>
+                <Button
+                    size="icon"
+                    className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10"
+                    onClick={handlePlayPause}
+                >
+                    {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground pl-0.5" />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={playNext}>
+                    <SkipForward className="h-6 w-6" />
+                </Button>
+            </div>
+
+           <QueueSheet />
         </div>
       </footer>
     )
@@ -242,3 +284,5 @@ export function Player() {
     </footer>
   );
 }
+
+    
