@@ -19,6 +19,7 @@ export interface Playlist {
   trackIds: string[];
   public: boolean;
   owner: string; // user display name
+  ownerId?: string; // user's unique ID
   'data-ai-hint'?: string;
   isLikedSongs?: boolean;
 }
@@ -45,6 +46,7 @@ export const GeneratePlaylistResponseSchema = z.object({
     trackIds: z.array(z.string()),
     public: z.boolean(),
     owner: z.string(),
+    ownerId: z.optional(z.string()),
     'data-ai-hint': z.optional(z.string()),
     isLikedSongs: z.optional(z.boolean()),
   }),

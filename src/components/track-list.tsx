@@ -4,7 +4,7 @@
 import { Play, Music, Heart, PlusCircle, Trash2, MoreHorizontal } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { useUserData } from "@/context/user-data-context";
-import type { Track, Playlist } from "@/lib/types";
+import type { Track, Playlist, User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -35,6 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { onAuthChange } from "@/lib/auth";
 
 
 interface TrackListProps {
@@ -45,6 +46,12 @@ interface TrackListProps {
 export function TrackList({ tracks, playlist }: TrackListProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache, removeTrackFromPlaylist } = useUserData();
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthChange(setCurrentUser);
+    return () => unsubscribe();
+  }, []);
 
   const handlePlayTrack = (track: Track) => {
     if (currentTrack?.id === track.id && isPlaying) {
@@ -75,11 +82,10 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const canEditPlaylist = playlist && (
-    playlist.id.startsWith('playlist-') || 
-    playlist.id.startsWith('pl-ai-') || 
-    playlist.id.startsWith('pl-yt-')
-  );
+  const isPlaylistOwner = currentUser && playlist?.ownerId === currentUser.id;
+
+  // For private playlists (which don't have ownerId), we assume the current user is the owner
+  const canEditPlaylist = !playlist?.public || isPlaylistOwner;
 
   return (
     <Table>

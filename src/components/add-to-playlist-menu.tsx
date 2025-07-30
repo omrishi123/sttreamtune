@@ -14,6 +14,10 @@ import { useUserData } from '@/context/user-data-context';
 import { useToast } from '@/hooks/use-toast';
 import { AddPlaylistDialog } from './add-playlist-dialog';
 import { Track } from '@/lib/types';
+import { useMemo } from 'react';
+import { onAuthChange } from '@/lib/auth';
+import type { User } from '@/lib/types';
+import React from 'react';
 
 export function AddToPlaylistMenu({
   track,
@@ -22,8 +26,23 @@ export function AddToPlaylistMenu({
   track: Track;
   children?: React.ReactNode;
 }) {
-  const { allPlaylists, addTrackToPlaylist, addTrackToCache } = useUserData();
+  const { playlists, communityPlaylists, addTrackToPlaylist, addTrackToCache } = useUserData();
   const { toast } = useToast();
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthChange(setCurrentUser);
+    return () => unsubscribe();
+  }, []);
+
+  const editablePlaylists = useMemo(() => {
+    if (!currentUser) return [];
+
+    const userPrivatePlaylists = playlists;
+    const userPublicPlaylists = communityPlaylists.filter(p => p.ownerId === currentUser.id);
+
+    return [...userPrivatePlaylists, ...userPublicPlaylists];
+  }, [playlists, communityPlaylists, currentUser]);
 
   const handleAdd = (playlistId: string) => {
     addTrackToCache(track);
@@ -54,14 +73,18 @@ export function AddToPlaylistMenu({
           </DropdownMenuItem>
         </AddPlaylistDialog>
         <DropdownMenuSeparator />
-        {allPlaylists.map((playlist) => (
-          <DropdownMenuItem
-            key={playlist.id}
-            onClick={() => handleAdd(playlist.id)}
-          >
-            {playlist.name}
-          </DropdownMenuItem>
-        ))}
+        {editablePlaylists.length > 0 ? (
+          editablePlaylists.map((playlist) => (
+            <DropdownMenuItem
+              key={playlist.id}
+              onClick={() => handleAdd(playlist.id)}
+            >
+              {playlist.name}
+            </DropdownMenuItem>
+          ))
+        ) : (
+           <DropdownMenuItem disabled>No editable playlists</DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

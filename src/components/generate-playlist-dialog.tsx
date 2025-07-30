@@ -95,10 +95,11 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       if (isPublic) {
          const docRef = await addDoc(collection(db, "communityPlaylists"), {
           ...result.playlist,
+          ownerId: user.id, // Add ownerId for public playlists
           createdAt: serverTimestamp(),
         });
-        const finalPlaylist = { ...result.playlist, id: docRef.id };
-        addPlaylist(finalPlaylist);
+        const finalPlaylist = { ...result.playlist, id: docRef.id, ownerId: user.id };
+        // We don't add public playlists to local state anymore, it comes from firestore
       } else {
         addPlaylist(result.playlist);
       }

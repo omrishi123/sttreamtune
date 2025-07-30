@@ -5,7 +5,7 @@ import type { User, UserData, Playlist, Track } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, writeBatch } from "firebase/firestore";
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
 
@@ -14,7 +14,6 @@ interface CachedTracks {
 }
 
 interface UserDataContextType extends UserData {
-  allPlaylists: Playlist[];
   communityPlaylists: Playlist[];
   isLiked: (trackId: string) => boolean;
   toggleLike: (trackId: string) => void;
@@ -179,7 +178,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false) => {
-    if (!currentUser) {
+    if (!currentUser || currentUser.id === 'guest') {
       console.error("Cannot create playlist: no user is logged in.");
       return;
     }
@@ -190,7 +189,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       description,
       trackIds: [],
       public: isPublic,
-      owner: currentUser.name || 'You', 
+      owner: currentUser.name, 
+      ownerId: currentUser.id, // always include ownerId
       coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
       'data-ai-hint': 'playlist cover',
     };
@@ -219,11 +219,13 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       addTrackToCache(track); // Ensure track is in cache
     }
     
+    // Check if it's a community playlist by looking for it in the state
     const isCommunity = communityPlaylists.some(p => p.id === playlistId);
 
     if (isCommunity) {
       const playlistRef = doc(db, 'communityPlaylists', playlistId);
       try {
+        // Firestore security rules will enforce ownership
         await updateDoc(playlistRef, {
           trackIds: arrayUnion(trackId)
         });
@@ -231,6 +233,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error updating community playlist:", error);
       }
     } else {
+      // It's a local playlist
       setUserData(prev => ({
         ...prev,
         playlists: prev.playlists.map(p => 
@@ -248,6 +251,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (isCommunity) {
       const playlistRef = doc(db, 'communityPlaylists', playlistId);
       try {
+        // Firestore security rules will enforce ownership
         await updateDoc(playlistRef, {
           trackIds: arrayRemove(trackId)
         });
@@ -302,18 +306,9 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return communityPlaylists.find(p => p.id === playlistId);
   }
 
-  const allPlaylists = useMemo(() => {
-    // Combine user's private playlists with all community playlists
-    // We filter community playlists to avoid showing duplicates if a user's own public playlist is also in their local list
-    const communityPlaylistsToAdd = communityPlaylists.filter(cp => !userData.playlists.some(up => up.id === cp.id));
-    return [...userData.playlists, ...communityPlaylistsToAdd];
-  }, [userData.playlists, communityPlaylists]);
-
-
   const value: UserDataContextType = {
     ...userData,
     communityPlaylists,
-    allPlaylists,
     isLiked,
     toggleLike,
     addRecentlyPlayed,

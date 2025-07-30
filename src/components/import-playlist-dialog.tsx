@@ -78,6 +78,15 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
        return;
     }
 
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Not Logged In',
+            description: 'You must be logged in to import a playlist.',
+        });
+        return;
+    }
+
 
     setIsLoading(true);
 
@@ -94,17 +103,17 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
         ...playlistDetails,
         trackIds: tracks.map(t => t.id),
         public: isPublic,
-        owner: user?.name || 'You',
+        owner: user.name,
+        ownerId: user.id
       };
 
 
       if(isPublic) {
-        const docRef = await addDoc(collection(db, "communityPlaylists"), {
+        await addDoc(collection(db, "communityPlaylists"), {
           ...importedPlaylistData,
           createdAt: serverTimestamp(),
         });
-        const finalPlaylist = { ...importedPlaylistData, id: docRef.id };
-        addPlaylist(finalPlaylist as Playlist);
+        // No need to add to local state, Firestore listener will pick it up
       } else {
         const finalPlaylist = { ...importedPlaylistData, id: `pl-yt-${playlistId}`};
         addPlaylist(finalPlaylist as Playlist);
