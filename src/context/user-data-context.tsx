@@ -5,7 +5,7 @@ import type { User, UserData, Playlist, Track } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
 
@@ -97,6 +97,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         playlists.push({ id: doc.id, ...doc.data() } as Playlist);
       });
       setCommunityPlaylists(playlists);
+    }, (error) => {
+        console.error("Firestore (11.9.0): Uncaught Error in snapshot listener:", error)
     });
 
     return () => unsubscribe();
@@ -210,30 +212,57 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const addTrackToPlaylist = (playlistId: string, trackId: string) => {
-      const track = getTrackById(trackId);
-      if (track) {
-        addTrackToCache(track); // Ensure track is in cache
+  const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
+    const track = getTrackById(trackId);
+    if (track) {
+      addTrackToCache(track); // Ensure track is in cache
+    }
+    
+    const isCommunity = communityPlaylists.some(p => p.id === playlistId);
+
+    if (isCommunity) {
+      const playlistRef = doc(db, 'communityPlaylists', playlistId);
+      try {
+        await updateDoc(playlistRef, {
+          trackIds: arrayUnion(trackId)
+        });
+      } catch (error) {
+        console.error("Error updating community playlist:", error);
       }
+    } else {
       setUserData(prev => ({
-      ...prev,
-      playlists: prev.playlists.map(p => 
-        p.id === playlistId 
-          ? { ...p, trackIds: [...p.trackIds.filter(id => id !== trackId), trackId] }
-          : p
-      )
-    }));
+        ...prev,
+        playlists: prev.playlists.map(p => 
+          p.id === playlistId 
+            ? { ...p, trackIds: [...p.trackIds.filter(id => id !== trackId), trackId] }
+            : p
+        )
+      }));
+    }
   };
 
-  const removeTrackFromPlaylist = (playlistId: string, trackId: string) => {
-    setUserData(prev => ({
-      ...prev,
-      playlists: prev.playlists.map(p =>
-        p.id === playlistId
-          ? { ...p, trackIds: p.trackIds.filter(id => id !== trackId) }
-          : p
-      ),
-    }));
+  const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
+    const isCommunity = communityPlaylists.some(p => p.id === playlistId);
+
+    if (isCommunity) {
+      const playlistRef = doc(db, 'communityPlaylists', playlistId);
+      try {
+        await updateDoc(playlistRef, {
+          trackIds: arrayRemove(trackId)
+        });
+      } catch (error) {
+        console.error("Error updating community playlist:", error);
+      }
+    } else {
+      setUserData(prev => ({
+        ...prev,
+        playlists: prev.playlists.map(p =>
+          p.id === playlistId
+            ? { ...p, trackIds: p.trackIds.filter(id => id !== trackId) }
+            : p
+        ),
+      }));
+    }
   };
 
   const getPlaylistById = (playlistId: string): Playlist | undefined => {
