@@ -218,11 +218,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (track) {
       addTrackToCache(track); // Ensure track is in cache
     }
-    
-    // Check if it's a community playlist by looking for it in the state
-    const isCommunity = communityPlaylists.some(p => p.id === playlistId);
 
-    if (isCommunity) {
+    // Check if it's a community playlist by looking for it in the state
+    const isCommunityPlaylist = communityPlaylists.some(p => p.id === playlistId);
+
+    if (isCommunityPlaylist) {
       const playlistRef = doc(db, 'communityPlaylists', playlistId);
       try {
         // Firestore security rules will enforce ownership
@@ -233,14 +233,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error updating community playlist:", error);
       }
     } else {
-      // It's a local playlist
+      // It's a local/private playlist, update local state
       setUserData(prev => ({
         ...prev,
-        playlists: prev.playlists.map(p => 
-          p.id === playlistId 
-            ? { ...p, trackIds: [...p.trackIds.filter(id => id !== trackId), trackId] }
+        playlists: prev.playlists.map(p =>
+          p.id === playlistId && !p.trackIds.includes(trackId)
+            ? { ...p, trackIds: [...p.trackIds, trackId] }
             : p
-        )
+        ),
       }));
     }
   };
@@ -283,6 +283,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         trackIds: userData.likedSongs,
         public: false,
         owner: currentUser.name || "You",
+        ownerId: currentUser.id,
         isLikedSongs: true,
       };
     }
@@ -295,6 +296,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         trackIds: userData.recentlyPlayed,
         public: false,
         owner: currentUser.name || "You",
+        ownerId: currentUser.id,
         'data-ai-hint': 'time clock',
       };
     }
