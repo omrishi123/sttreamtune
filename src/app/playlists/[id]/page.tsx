@@ -33,33 +33,38 @@ export default function PlaylistPage() {
     const fetchPlaylistData = async () => {
       if (!id) return;
       setIsLoading(true);
-      let foundPlaylist: Playlist | undefined | null;
-
-      // Check user-created playlists, liked songs, or recently played first
-      if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
-        foundPlaylist = getPlaylistById(id);
-      } else {
-        // Otherwise, assume it's a YouTube playlist
-        try {
-          foundPlaylist = await getYoutubePlaylistDetails({ playlistId: id });
-        } catch (error) {
-           console.error("Failed to fetch from youtube", error)
-           foundPlaylist = null;
-        }
-      }
       
+      let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
+
+      // If playlist is not found in our context (local or community)
+      if (!foundPlaylist) {
+          try {
+            // Check if it's a YouTube playlist by trying to fetch its details
+            const ytPlaylistDetails = await getYoutubePlaylistDetails({ playlistId: id });
+            if (ytPlaylistDetails) {
+                 const youtubeTracks = await getTracksForPlaylist(id);
+                 addTracksToCache(youtubeTracks);
+                 // We don't save the playlist itself, just use the data for this view
+                 foundPlaylist = {
+                     ...ytPlaylistDetails,
+                     trackIds: youtubeTracks.map(t => t.id)
+                 };
+                 setTracks(youtubeTracks);
+            }
+          } catch (error) {
+             console.error("Failed to fetch from YouTube", error);
+             foundPlaylist = null;
+          }
+      }
+
       if (foundPlaylist) {
         setPlaylist(foundPlaylist);
         setImgSrc(foundPlaylist.coverArt);
-        // If it's a local playlist (user-created, liked, recently played, AI, or imported)
-        if (id.startsWith('playlist-') || id === 'liked-songs' || id === 'recently-played' || id.startsWith('pl-ai-') || id.startsWith('pl-yt-')) {
-            const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
-            setTracks(playlistTracks);
-        } else {
-            // It's a youtube playlist, fetch tracks for it from the API
-            const youtubeTracks = await getTracksForPlaylist(id);
-            addTracksToCache(youtubeTracks);
-            setTracks(youtubeTracks);
+
+        // If tracks haven't been set by the YouTube fetch logic above
+        if (tracks.length === 0) {
+           const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
+           setTracks(playlistTracks);
         }
 
       } else {
@@ -69,7 +74,7 @@ export default function PlaylistPage() {
     };
 
     fetchPlaylistData();
-  }, [id, getPlaylistById, getTrackById, addTracksToCache]);
+  }, [id, getPlaylistById, getTrackById, addTracksToCache, tracks.length]);
 
   if (isLoading) {
     return (
