@@ -13,9 +13,7 @@ import {
   Volume2,
   VolumeX,
   Heart,
-  Timer,
-  ChevronUp,
-  ListMusic
+  Timer
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -35,8 +33,6 @@ import { useUserData } from "@/context/user-data-context";
 import { cn } from "@/lib/utils";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
-import { NowPlayingView } from "./now-playing-view";
 
 export function Player() {
   const { 
@@ -95,38 +91,20 @@ export function Player() {
 
   if (isMobile) {
     return (
-      <Sheet>
-       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-2 py-2 flex flex-col gap-2 text-card-foreground shadow-md z-40">
-        
-        {/* Progress Bar */}
-         <div className="flex items-center gap-2 w-full px-2">
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
-            <Slider
-              value={[progress]}
-              onValueChange={handleSeek}
-              className="w-full"
-            />
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
-        </div>
-
-        {/* Main Control Row */}
-        <div className="flex items-center w-full">
-          <SheetTrigger asChild>
-            <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1 cursor-pointer">
-              <Image
-                src={currentTrack.artwork}
-                alt={currentTrack.title}
-                width={40}
-                height={40}
-                className="rounded-md"
-                data-ai-hint={currentTrack['data-ai-hint']}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
-                <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
-              </div>
-            </div>
-          </SheetTrigger>
+      <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-2 flex flex-col gap-2 text-card-foreground shadow-md z-40">
+        <div className="flex items-center gap-3">
+          <Image
+            src={currentTrack.artwork}
+            alt={currentTrack.title}
+            width={40}
+            height={40}
+            className="rounded-md"
+            data-ai-hint={currentTrack['data-ai-hint']}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
+            <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+          </div>
           <div className="flex items-center">
               <Button variant="ghost" size="icon" onClick={handleToggleLike}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
@@ -139,20 +117,19 @@ export function Player() {
               >
                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
               </Button>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <ChevronUp className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
+               <QueueSheet />
           </div>
         </div>
-
-        <SheetContent side="bottom" className="h-full p-0 border-none">
-          <NowPlayingView />
-        </SheetContent>
-
+         <div className="flex items-center gap-2 w-full">
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
+            <Slider
+              value={[progress]}
+              onValueChange={handleSeek}
+              className="w-full"
+            />
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
+        </div>
       </footer>
-      </Sheet>
     )
   }
 
