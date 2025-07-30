@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,17 @@ import type { User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Camera } from "lucide-react";
+
+// Extend the window type to include our optional AndroidBridge and callbacks
+declare global {
+  interface Window {
+    Android?: {
+      chooseProfileImage: () => void;
+    };
+    onProfileImageChosen: (base64Data: string) => void;
+  }
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -21,6 +32,7 @@ export default function ProfilePage() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthChange((currentUser) => {
@@ -34,6 +46,27 @@ export default function ProfilePage() {
     });
     return () => unsubscribe();
   }, [router]);
+  
+  // Effect to set up the callback for native code
+  useEffect(() => {
+    // Function that native code will call
+    window.onProfileImageChosen = (base64Data: string) => {
+      setPhotoPreview(`data:image/jpeg;base64,${base64Data}`);
+      // Convert base64 to a File object to be compatible with existing logic
+      fetch(`data:image/jpeg;base64,${base64Data}`)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+          setPhoto(file);
+        });
+    };
+
+    // Cleanup function
+    return () => {
+      delete (window as any).onProfileImageChosen;
+    };
+  }, []);
+
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -44,6 +77,16 @@ export default function ProfilePage() {
         setPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleProfileImageClick = () => {
+    if (window.Android && typeof window.Android.chooseProfileImage === 'function') {
+      // Use native image picker
+      window.Android.chooseProfileImage();
+    } else {
+      // Fallback to web file input
+      fileInputRef.current?.click();
     }
   };
 
@@ -99,17 +142,40 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="flex items-center gap-6">
-                        <Avatar className="h-24 w-24">
-                        <AvatarImage src={photoPreview || user.photoURL} alt={user.name} data-ai-hint="user avatar" />
-                        <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
-                        </Avatar>
-                        <div className="grid w-full max-w-sm items-center gap-1.5">
-                            <Label htmlFor="picture">Profile Picture</Label>
-                            <Input id="picture" type="file" accept="image/*" onChange={handlePhotoChange} disabled={isLoading} />
-                             <p className="text-sm text-muted-foreground">Upload a new image to change your avatar.</p>
+                    <div className="space-y-4">
+                      <Label>Profile Picture</Label>
+                      <div className="flex items-center gap-6">
+                        <div className="relative group">
+                          <Avatar className="h-24 w-24">
+                            <AvatarImage src={photoPreview || user.photoURL} alt={user.name} data-ai-hint="user avatar" />
+                            <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
+                          </Avatar>
+                           <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="absolute bottom-0 right-0 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-background"
+                              onClick={handleProfileImageClick}
+                            >
+                                <Camera className="h-4 w-4"/>
+                                <span className="sr-only">Change Photo</span>
+                            </Button>
                         </div>
+                        <p className="text-sm text-muted-foreground flex-1">
+                          Click the camera icon to choose a new profile picture from your device.
+                        </p>
+                        <Input 
+                            id="picture" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handlePhotoChange} 
+                            disabled={isLoading}
+                            ref={fileInputRef}
+                            className="hidden"
+                        />
+                      </div>
                     </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="name">Display Name</Label>
                         <Input
@@ -147,3 +213,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
