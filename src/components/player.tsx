@@ -15,6 +15,7 @@ import {
   Heart,
   Timer,
   ChevronUp,
+  ListMusic
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -138,6 +139,11 @@ export function Player() {
               >
                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
               </Button>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <ChevronUp className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
           </div>
         </div>
 
