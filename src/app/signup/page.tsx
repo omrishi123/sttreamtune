@@ -32,8 +32,7 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signUp(email, password);
-      // You might want to update the user's profile with the name here
+      await signUp(email, password, name);
       router.push('/');
       router.refresh();
     } catch (error: any) {

@@ -6,7 +6,8 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  updateProfile,
 } from 'firebase/auth';
 import { auth } from './firebase';
 import type { User } from '@/lib/types';
@@ -38,8 +39,14 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
   });
 };
 
-export const signUp = (email, password) => {
-  return createUserWithEmailAndPassword(auth, email, password);
+export const signUp = async (email, password, name) => {
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  if (userCredential.user) {
+    await updateProfile(userCredential.user, {
+      displayName: name,
+    });
+  }
+  return userCredential;
 };
 
 export const login = (email, password) => {
