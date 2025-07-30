@@ -19,6 +19,11 @@ import { useUserData } from '@/context/user-data-context';
 import { useToast } from '@/hooks/use-toast';
 import { getYoutubePlaylistDetails, getTracksForPlaylist } from '@/ai/flows/get-youtube-playlists-flow';
 import { Icons } from './icons';
+import { Switch } from './ui/switch';
+import { onAuthChange } from '@/lib/auth';
+import type { User, Playlist } from '@/lib/types';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function extractPlaylistId(url: string): string | null {
   const regex = /[?&]list=([^&]+)/;
@@ -28,10 +33,19 @@ function extractPlaylistId(url: string): string | null {
 
 export function ImportPlaylistDialog({ children }: { children: React.ReactNode }) {
   const [url, setUrl] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
   const { addPlaylist, addTracksToCache } = useUserData();
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const unsubscribe = onAuthChange(setUser);
+    return () => unsubscribe();
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +59,16 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
       });
       return;
     }
+    
+    if (isPublic && user?.id === 'guest') {
+       toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'You must be logged in to import a public playlist.',
+      });
+      return;
+    }
+
 
     setIsLoading(true);
 
@@ -57,13 +81,22 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
       const tracks = await getTracksForPlaylist(playlistId);
       addTracksToCache(tracks);
 
-      const newPlaylist = {
+      const importedPlaylistData = {
         ...playlistDetails,
-        id: `pl-yt-${playlistId}`, // a unique ID for imported playlists
+        id: `pl-yt-${playlistId}`,
         trackIds: tracks.map(t => t.id),
+        public: isPublic,
+        owner: user?.name || 'You',
       };
 
-      addPlaylist(newPlaylist);
+      if(isPublic) {
+        await addDoc(collection(db, "communityPlaylists"), {
+          ...importedPlaylistData,
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        addPlaylist(importedPlaylistData);
+      }
 
       toast({
         title: 'Playlist Imported!',
@@ -72,6 +105,7 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
 
       setIsOpen(false);
       setUrl('');
+      setIsPublic(false);
     } catch (error: any) {
       console.error('Failed to import playlist:', error);
       toast({
@@ -109,6 +143,20 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
                 required
                 disabled={isLoading}
               />
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="public" className="text-right">
+                Public
+              </Label>
+              <div className="col-span-3 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Share with the community</span>
+                <Switch
+                    id="public"
+                    checked={isPublic}
+                    onCheckedChange={setIsPublic}
+                    disabled={isLoading}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

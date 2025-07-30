@@ -19,11 +19,15 @@ import { useUserData } from '@/context/user-data-context';
 import { useToast } from '@/hooks/use-toast';
 import { generatePlaylist } from '@/ai/flows/generate-playlist-flow';
 import { onAuthChange } from '@/lib/auth';
-import type { User } from '@/lib/types';
+import type { User, Playlist } from '@/lib/types';
 import { Icons } from './icons';
+import { Switch } from './ui/switch';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function GeneratePlaylistDialog({ children }: { children: React.ReactNode }) {
   const [prompt, setPrompt] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -31,9 +35,10 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
   const { toast } = useToast();
 
   React.useEffect(() => {
+    if (!isOpen) return;
     const unsubscribe = onAuthChange(setUser);
     return () => unsubscribe();
-  }, []);
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +58,14 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       });
       return;
     }
+     if (isPublic && user?.id === 'guest') {
+       toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'You must be logged in to create a public playlist.',
+      });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -61,17 +74,24 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
         prompt,
         userId: user.id,
         userName: user.name,
+        isPublic: isPublic,
       });
 
       if (!result || !result.playlist || !result.tracks) {
         throw new Error('AI failed to generate a valid playlist.');
       }
       
-      // Add tracks to global cache first
       addTracksToCache(result.tracks);
       
-      // Then add the playlist to user data
-      addPlaylist(result.playlist);
+      if (isPublic) {
+         await addDoc(collection(db, "communityPlaylists"), {
+          ...result.playlist,
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        addPlaylist(result.playlist);
+      }
+      
 
       toast({
         title: 'Playlist Generated!',
@@ -80,6 +100,7 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
 
       setIsOpen(false);
       setPrompt('');
+      setIsPublic(false);
     } catch (error: any) {
       console.error('Failed to generate playlist:', error);
       toast({
@@ -114,6 +135,20 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
                 required
                 disabled={isLoading}
               />
+            </div>
+            <div className="flex items-center justify-between gap-4 pt-2">
+              <Label htmlFor="public" className="text-right whitespace-nowrap">
+                Make Public
+              </Label>
+               <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Share with the community</span>
+                <Switch
+                    id="public"
+                    checked={isPublic}
+                    onCheckedChange={setIsPublic}
+                    disabled={isLoading}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

@@ -19,6 +19,7 @@ const GeneratePlaylistInputSchema = z.object({
   prompt: z.string().describe('The user-provided prompt for the playlist to be generated.'),
   userId: z.string().describe("The ID of the user creating the playlist."),
   userName: z.string().describe("The name of the user creating the playlist."),
+  isPublic: z.boolean().describe("Whether the playlist should be public."),
 });
 export type GeneratePlaylistInput = z.infer<typeof GeneratePlaylistInputSchema>;
 
@@ -92,7 +93,7 @@ const generatePlaylistFlow = ai.defineFlow(
       name: suggestion.name,
       description: suggestion.description,
       owner: input.userName,
-      public: false,
+      public: input.isPublic,
       trackIds: foundTracks.map(track => track.id),
       coverArt: coverArtUrl,
       'data-ai-hint': suggestion.coverArtPrompt,
