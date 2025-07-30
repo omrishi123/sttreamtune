@@ -43,7 +43,7 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
   });
 };
 
-export const signUp = async (email, password, name) => {
+export const signUp = async (email: string, password: string, name: string) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   if (userCredential.user) {
     await updateProfile(userCredential.user, {
@@ -72,9 +72,9 @@ export const updateUserProfile = async (name: string, photo: File | null) => {
     throw new Error("No user is signed in.");
   }
 
-  const profileUpdates: { displayName?: string, photoURL?: string } = {};
+  const profileUpdates: { displayName?: string } = {};
 
-  if (name) {
+  if (name && name !== user.displayName) {
     profileUpdates.displayName = name;
   }
 
@@ -88,13 +88,10 @@ export const updateUserProfile = async (name: string, photo: File | null) => {
     });
     
     const photoDataUrl = await promise;
-    // We save the photo to localStorage instead of Firebase Storage
+    // We save the photo to localStorage instead of a remote server
     if (typeof window !== 'undefined') {
         window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
     }
-    // We can also update the photoURL in the auth profile if we want,
-    // but the local one will be prioritized by adaptFirebaseUser
-    profileUpdates.photoURL = photoDataUrl;
   }
 
   if (Object.keys(profileUpdates).length > 0) {
