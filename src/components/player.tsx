@@ -13,7 +13,8 @@ import {
   Volume2,
   VolumeX,
   Heart,
-  Timer
+  Timer,
+  ListMusic
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -96,8 +97,8 @@ export function Player() {
           <Image
             src={currentTrack.artwork}
             alt={currentTrack.title}
-            width={40}
-            height={40}
+            width={48}
+            height={48}
             className="rounded-md"
             data-ai-hint={currentTrack['data-ai-hint']}
           />
@@ -105,10 +106,11 @@ export function Player() {
             <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={handleToggleLike}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
+              <AddToPlaylistMenu track={currentTrack} />
               <Button
                 size="icon"
                 variant="ghost"
@@ -117,6 +119,9 @@ export function Player() {
               >
                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
               </Button>
+               <Button variant="ghost" size="icon" onClick={playNext}>
+                <SkipForward className="h-5 w-5" />
+               </Button>
                <QueueSheet />
           </div>
         </div>
