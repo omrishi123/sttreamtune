@@ -11,7 +11,7 @@ import {
   Library,
   Users,
   PlusCircle,
-  User,
+  User as UserIcon,
   LogOut,
 } from "lucide-react";
 
@@ -188,8 +188,8 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                 <DropdownMenuContent className="w-56 mb-2 ml-2" side="top" align="start">
                   <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled={isGuest}>
-                    <User className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>
+                    <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
                    {!isGuest && (
@@ -229,8 +229,8 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     <DropdownMenuContent className="w-56 mr-4" side="bottom" align="end">
                       <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled={isGuest}>
-                        <User className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>
+                        <UserIcon className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                       </DropdownMenuItem>
                       {!isGuest && (

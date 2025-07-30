@@ -1,3 +1,4 @@
+
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -21,11 +22,14 @@ const GUEST_USER: User = {
 
 // This function adapts a Firebase user to our application's User type.
 const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
+   // Check for locally stored photo first for this user
+  const localPhoto = typeof window !== 'undefined' ? window.localStorage.getItem(`photoURL-${firebaseUser.uid}`) : null;
+
   return {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || 'User',
     email: firebaseUser.email || '',
-    photoURL: firebaseUser.photoURL || 'https://i.postimg.cc/SswWC87w/streamtune.png',
+    photoURL: localPhoto || firebaseUser.photoURL || 'https://i.postimg.cc/SswWC87w/streamtune.png',
   };
 };
 
@@ -61,3 +65,39 @@ export const signInWithGoogle = () => {
   const provider = new GoogleAuthProvider();
   return signInWithPopup(auth, provider);
 }
+
+export const updateUserProfile = async (name: string, photo: File | null) => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("No user is signed in.");
+  }
+
+  const profileUpdates: { displayName?: string, photoURL?: string } = {};
+
+  if (name) {
+    profileUpdates.displayName = name;
+  }
+
+  if (photo) {
+    // Convert file to Base64 Data URL to store locally
+    const reader = new FileReader();
+    const promise = new Promise<string>((resolve, reject) => {
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(photo);
+    });
+    
+    const photoDataUrl = await promise;
+    // We save the photo to localStorage instead of Firebase Storage
+    if (typeof window !== 'undefined') {
+        window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
+    }
+    // We can also update the photoURL in the auth profile if we want,
+    // but the local one will be prioritized by adaptFirebaseUser
+    profileUpdates.photoURL = photoDataUrl;
+  }
+
+  if (Object.keys(profileUpdates).length > 0) {
+      await updateProfile(user, profileUpdates);
+  }
+};
