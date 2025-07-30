@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import type { YoutubePlaylistsOutput } from '@/ai/flows/get-youtube-playlists-flow';
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
@@ -15,17 +16,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Filter } from "lucide-react";
+import { Filter, ChevronRight } from "lucide-react";
+import { useUserData } from '@/context/user-data-context';
+import type { Playlist } from '@/lib/types';
 
 
 interface PlaylistSectionProps {
   title: string;
-  playlists: YoutubePlaylistsOutput | null;
+  playlists: Playlist[] | null;
+  viewAllLink?: string;
 }
 
-const PlaylistSection: React.FC<PlaylistSectionProps> = ({ title, playlists }) => (
+const PlaylistSection: React.FC<PlaylistSectionProps> = ({ title, playlists, viewAllLink }) => (
   <section>
-    <h2 className="text-2xl font-bold font-headline mb-4">{title}</h2>
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-2xl font-bold font-headline">{title}</h2>
+      {viewAllLink && (
+        <Button asChild variant="ghost" size="sm">
+          <Link href={viewAllLink}>
+            View all
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      )}
+    </div>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {playlists?.map((playlist) => (
         <PlaylistCard key={playlist.id} playlist={playlist} />
@@ -37,6 +51,12 @@ const PlaylistSection: React.FC<PlaylistSectionProps> = ({ title, playlists }) =
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const { communityPlaylists } = useUserData();
+
+  const recentCommunityPlaylists = useMemo(() => {
+    return communityPlaylists.slice(0, 6);
+  }, [communityPlaylists]);
+
 
   const categories = useMemo(() => {
     const allCategories = ['All'];
@@ -86,6 +106,14 @@ export default function HomePage() {
             </DropdownMenuContent>
           </DropdownMenu>
       </div>
+
+      {recentCommunityPlaylists.length > 0 && (
+         <PlaylistSection 
+            title="Community Playlists" 
+            playlists={recentCommunityPlaylists}
+            viewAllLink="/community"
+          />
+      )}
       
       {filteredPlaylists.map(section => (
          <PlaylistSection 

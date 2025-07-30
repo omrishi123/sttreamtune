@@ -14,8 +14,6 @@ import {
   VolumeX,
   Heart,
   Timer,
-  ListMusic,
-  PlusCircle,
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -93,59 +91,47 @@ export function Player() {
 
   if (isMobile) {
     return (
-      <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border p-3 flex flex-col gap-2 text-card-foreground shadow-md z-40">
-        {/* Top part: Track info */}
-        <div className="flex items-center gap-3">
-          <Image
-            src={currentTrack.artwork}
-            alt={currentTrack.title}
-            width={40}
-            height={40}
-            className="rounded"
-            data-ai-hint={currentTrack['data-ai-hint']}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
-            <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+       <footer className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-3 flex flex-col gap-2 text-card-foreground shadow-md z-40">
+        
+        {/* Top Row: Song Info & Like/Queue */}
+        <div className="flex items-center w-full">
+          <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
+            <Image
+              src={currentTrack.artwork}
+              alt={currentTrack.title}
+              width={40}
+              height={40}
+              className="rounded-md"
+              data-ai-hint={currentTrack['data-ai-hint']}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
+              <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+            </div>
           </div>
           <div className="flex items-center">
-            <Button variant="ghost" size="icon" onClick={handleToggleLike}>
-              <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
-            </Button>
-            <AddToPlaylistMenu track={currentTrack}>
-              <Button variant="ghost" size="icon">
-                  <PlusCircle className="h-5 w-5" />
+              <Button variant="ghost" size="icon" onClick={handleToggleLike}>
+                <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
-            </AddToPlaylistMenu>
+              <AddToPlaylistMenu track={currentTrack} />
           </div>
         </div>
-        
-        {/* Middle part: Slider */}
-        <div className="flex items-center gap-2 w-full -my-1">
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
-            <Slider
-              value={[progress]}
-              onValueChange={handleSeek}
-              className="w-full"
-            />
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
-        </div>
 
-        {/* Bottom part: Controls */}
-        <div className="flex items-center justify-between w-full -mt-1">
-           <DropdownMenu>
+        {/* Middle Row: Main Player Controls */}
+         <div className="flex items-center justify-around w-full">
+             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Timer className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="w-8 h-8">
+                  <Timer className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2" side="top" align="start">
+              <DropdownMenuContent className="mb-2" side="top" align="center">
                 <DropdownMenuLabel>Sleep Timer</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(15 * 60 * 1000, "15 minutes")}>15 minutes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
+                 <DropdownMenuItem onClick={() => {
                   const remainingTime = (duration - currentTime) * 1000;
                   handleSetSleepTimer(remainingTime, "end of song");
                 }}>
@@ -157,24 +143,31 @@ export function Player() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8">
+              <SkipBack className="h-5 w-5" />
+            </Button>
+            <Button
+              size="icon"
+              className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10"
+              onClick={handlePlayPause}
+            >
+              {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8">
+              <SkipForward className="h-5 w-5" />
+            </Button>
+            <QueueSheet />
+        </div>
 
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={playPrev}>
-                    <SkipBack className="h-6 w-6" />
-                </Button>
-                <Button
-                    size="icon"
-                    className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10"
-                    onClick={handlePlayPause}
-                >
-                    {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground pl-0.5" />}
-                </Button>
-                <Button variant="ghost" size="icon" onClick={playNext}>
-                    <SkipForward className="h-6 w-6" />
-                </Button>
-            </div>
-
-           <QueueSheet />
+        {/* Bottom Row: Progress Bar */}
+         <div className="flex items-center gap-2 w-full">
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
+            <Slider
+              value={[progress]}
+              onValueChange={handleSeek}
+              className="w-full"
+            />
+            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
         </div>
       </footer>
     )

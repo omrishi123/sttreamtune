@@ -9,6 +9,7 @@ import {
   Home,
   Search,
   Library,
+  Users,
   PlusCircle,
   User,
   LogOut,
@@ -69,6 +70,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     { href: "/", label: "Home", icon: Home },
     { href: "/search", label: "Search", icon: Search },
     { href: "/library", label: "Your Library", icon: Library },
+    { href: "/community", label: "Community", icon: Users },
   ];
   
   const currentUserPlaylists = userPlaylists;
