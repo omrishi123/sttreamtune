@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Share2, MoreHorizontal, Trash2 } from "lucide-react";
 import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { usePlayer } from "@/context/player-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { searchYoutube } from "@/ai/flows/search-youtube-flow";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
@@ -54,52 +55,69 @@ export default function PlaylistPage() {
     return () => unsubscribe();
   }, []);
   
-  useEffect(() => {
-    const fetchPlaylistData = async () => {
-      if (!id) return;
-      setIsLoading(true);
-      
-      let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
+  const fetchPlaylistData = useCallback(async () => {
+    if (!id) return;
+    setIsLoading(true);
 
-      // If playlist is not found in our context (local or community)
-      if (!foundPlaylist) {
-          try {
-            // Check if it's a YouTube playlist by trying to fetch its details
-            const ytPlaylistDetails = await getYoutubePlaylistDetails({ playlistId: id });
-            if (ytPlaylistDetails) {
-                 const youtubeTracks = await getTracksForPlaylist(id);
-                 addTracksToCache(youtubeTracks);
-                 // We don't save the playlist itself, just use the data for this view
-                 foundPlaylist = {
-                     ...ytPlaylistDetails,
-                     trackIds: youtubeTracks.map(t => t.id)
-                 };
-                 setTracks(youtubeTracks);
-            }
-          } catch (error) {
-             console.error("Failed to fetch from YouTube", error);
-             foundPlaylist = null;
-          }
-      }
+    let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
+    let fetchedTracks: Track[] = [];
 
-      if (foundPlaylist) {
-        setPlaylist(foundPlaylist);
-        setImgSrc(foundPlaylist.coverArt);
-
-        // If tracks haven't been set by the YouTube fetch logic above
-        if (tracks.length === 0) {
-           const playlistTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
-           setTracks(playlistTracks);
+    // If playlist is not found in our context (local or community), treat as external YouTube playlist
+    if (!foundPlaylist) {
+      try {
+        const ytPlaylistDetails = await getYoutubePlaylistDetails({ playlistId: id });
+        if (ytPlaylistDetails) {
+          fetchedTracks = await getTracksForPlaylist(id);
+          addTracksToCache(fetchedTracks);
+          foundPlaylist = {
+            ...ytPlaylistDetails,
+            trackIds: fetchedTracks.map(t => t.id)
+          };
         }
-
-      } else {
-        setPlaylist(null); // Not found
+      } catch (error) {
+        console.error("Failed to fetch from YouTube", error);
+        foundPlaylist = null;
       }
-      setIsLoading(false);
-    };
+    }
 
+    if (foundPlaylist) {
+      setPlaylist(foundPlaylist);
+      setImgSrc(foundPlaylist.coverArt);
+
+      if (fetchedTracks.length > 0) {
+        setTracks(fetchedTracks);
+      } else {
+        // For local and community playlists, resolve tracks from cache or fetch if missing
+        const cachedTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
+        
+        const missingTrackIds = foundPlaylist.trackIds.filter(trackId => !cachedTracks.find(t => t.id === trackId));
+
+        if (missingTrackIds.length > 0) {
+            // Since we only have video IDs, we have to "search" for them to get details.
+            // This is a stand-in for a proper batch get-details-by-id function.
+            const newlyFetchedTracks = (await Promise.all(
+              missingTrackIds.map(videoId => searchYoutube({ query: `https://www.youtube.com/watch?v=${videoId}` }))
+            )).flat().filter(Boolean);
+
+            addTracksToCache(newlyFetchedTracks);
+            const allTracks = [...cachedTracks, ...newlyFetchedTracks];
+            // Re-order based on original trackIds
+            const finalTrackList = foundPlaylist.trackIds.map(tid => allTracks.find(t => t.id === tid)).filter(Boolean) as Track[];
+            setTracks(finalTrackList);
+        } else {
+            setTracks(cachedTracks);
+        }
+      }
+    } else {
+      setPlaylist(null); // Not found
+    }
+    setIsLoading(false);
+  }, [id, getPlaylistById, getTrackById, addTracksToCache]);
+
+
+  useEffect(() => {
     fetchPlaylistData();
-  }, [id, getPlaylistById, getTrackById, addTracksToCache, tracks.length]);
+  }, [id, fetchPlaylistData]);
 
   if (isLoading) {
     return (
