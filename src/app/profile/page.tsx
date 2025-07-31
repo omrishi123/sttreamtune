@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,26 +47,23 @@ export default function ProfilePage() {
     return () => unsubscribe();
   }, [router]);
   
-  // Effect to set up the callback for native code
-  useEffect(() => {
-    // Function that native code will call
-    window.onProfileImageChosen = (base64Data: string) => {
-      const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
-      setPhotoPreview(photoDataUrl);
-      // Convert base64 to a File object to be compatible with existing logic
-      fetch(photoDataUrl)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-          setPhoto(file);
-        });
-    };
+  const handleNativeImage = useCallback((base64Data: string) => {
+    const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
+    setPhotoPreview(photoDataUrl);
+    fetch(photoDataUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+        setPhoto(file);
+      });
+  }, []);
 
-    // Cleanup function
+  useEffect(() => {
+    window.onProfileImageChosen = handleNativeImage;
     return () => {
       window.onProfileImageChosen = undefined;
     };
-  }, []);
+  }, [handleNativeImage]);
 
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
