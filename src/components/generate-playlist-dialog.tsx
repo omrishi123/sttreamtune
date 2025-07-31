@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState } from 'react';
@@ -30,7 +31,7 @@ import { useUserData } from '@/context/user-data-context';
 import { useToast } from '@/hooks/use-toast';
 import { generatePlaylist } from '@/ai/flows/generate-playlist-flow';
 import { onAuthChange } from '@/lib/auth';
-import type { User, Playlist } from '@/lib/types';
+import type { User, Playlist, Track } from '@/lib/types';
 import { Icons } from './icons';
 import { Switch } from './ui/switch';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -93,12 +94,13 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       addTracksToCache(result.tracks);
       
       if (isPublic) {
-         const docRef = await addDoc(collection(db, "communityPlaylists"), {
+         const publicPlaylistData = {
           ...result.playlist,
-          ownerId: user.id, // Add ownerId for public playlists
+          tracks: result.tracks, // Embed full tracks
+          ownerId: user.id,
           createdAt: serverTimestamp(),
-        });
-        const finalPlaylist = { ...result.playlist, id: docRef.id, ownerId: user.id };
+         }
+         await addDoc(collection(db, "communityPlaylists"), publicPlaylistData);
         // We don't add public playlists to local state anymore, it comes from firestore
       } else {
         addPlaylist(result.playlist);

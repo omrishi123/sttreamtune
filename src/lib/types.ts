@@ -1,3 +1,4 @@
+
 import {z} from 'zod';
 
 export interface Track {
@@ -22,6 +23,7 @@ export interface Playlist {
   ownerId?: string; // user's unique ID
   'data-ai-hint'?: string;
   isLikedSongs?: boolean;
+  tracks?: Track[]; // For public playlists, embed full track objects
 }
 
 export interface User {

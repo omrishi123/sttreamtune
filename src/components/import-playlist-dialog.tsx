@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState } from 'react';
@@ -111,6 +112,7 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
       if(isPublic) {
         await addDoc(collection(db, "communityPlaylists"), {
           ...importedPlaylistData,
+          tracks: tracks, // Embed full track objects
           createdAt: serverTimestamp(),
         });
         // No need to add to local state, Firestore listener will pick it up

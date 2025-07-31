@@ -32,7 +32,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { searchYoutube } from "@/ai/flows/search-youtube-flow";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
@@ -40,7 +39,7 @@ export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist } = useUserData();
+  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist, communityPlaylists } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
@@ -62,8 +61,12 @@ export default function PlaylistPage() {
     let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
     let fetchedTracks: Track[] = [];
 
-    // If playlist is not found in our context (local or community), treat as external YouTube playlist
-    if (!foundPlaylist) {
+    if (foundPlaylist?.public && foundPlaylist.tracks) { // Public playlist from firestore
+        fetchedTracks = foundPlaylist.tracks;
+        addTracksToCache(fetchedTracks);
+    } else if (foundPlaylist) { // Private playlist
+        fetchedTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
+    } else { // External YouTube playlist not in our system
       try {
         const ytPlaylistDetails = await getYoutubePlaylistDetails({ playlistId: id });
         if (ytPlaylistDetails) {
@@ -82,37 +85,13 @@ export default function PlaylistPage() {
 
     if (foundPlaylist) {
       setPlaylist(foundPlaylist);
+      setTracks(fetchedTracks);
       setImgSrc(foundPlaylist.coverArt);
-
-      if (fetchedTracks.length > 0) {
-        setTracks(fetchedTracks);
-      } else {
-        // For local and community playlists, resolve tracks from cache or fetch if missing
-        const cachedTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
-        
-        const missingTrackIds = foundPlaylist.trackIds.filter(trackId => !cachedTracks.find(t => t.id === trackId));
-
-        if (missingTrackIds.length > 0) {
-            // Since we only have video IDs, we have to "search" for them to get details.
-            // This is a stand-in for a proper batch get-details-by-id function.
-            const newlyFetchedTracks = (await Promise.all(
-              missingTrackIds.map(videoId => searchYoutube({ query: `https://www.youtube.com/watch?v=${videoId}` }))
-            )).flat().filter(Boolean);
-
-            addTracksToCache(newlyFetchedTracks);
-            const allTracks = [...cachedTracks, ...newlyFetchedTracks];
-            // Re-order based on original trackIds
-            const finalTrackList = foundPlaylist.trackIds.map(tid => allTracks.find(t => t.id === tid)).filter(Boolean) as Track[];
-            setTracks(finalTrackList);
-        } else {
-            setTracks(cachedTracks);
-        }
-      }
     } else {
       setPlaylist(null); // Not found
     }
     setIsLoading(false);
-  }, [id, getPlaylistById, getTrackById, addTracksToCache]);
+  }, [id, getPlaylistById, getTrackById, addTracksToCache, communityPlaylists]);
 
 
   useEffect(() => {
