@@ -20,7 +20,7 @@ declare global {
     Android?: {
       chooseProfileImage: () => void;
     };
-    onProfileImageChosen: (base64Data: string) => void;
+    onProfileImageChosen?: (base64Data: string) => void;
   }
 }
 
@@ -51,9 +51,10 @@ export default function ProfilePage() {
   useEffect(() => {
     // Function that native code will call
     window.onProfileImageChosen = (base64Data: string) => {
-      setPhotoPreview(`data:image/jpeg;base64,${base64Data}`);
+      const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
+      setPhotoPreview(photoDataUrl);
       // Convert base64 to a File object to be compatible with existing logic
-      fetch(`data:image/jpeg;base64,${base64Data}`)
+      fetch(photoDataUrl)
         .then(res => res.blob())
         .then(blob => {
           const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
@@ -63,7 +64,7 @@ export default function ProfilePage() {
 
     // Cleanup function
     return () => {
-      delete (window as any).onProfileImageChosen;
+      window.onProfileImageChosen = undefined;
     };
   }, []);
 
@@ -147,7 +148,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-6">
                         <div className="relative group">
                           <Avatar className="h-24 w-24">
-                            <AvatarImage src={photoPreview || user.photoURL} alt={user.name} data-ai-hint="user avatar" />
+                            <AvatarImage src={photoPreview || undefined} alt={user.name} data-ai-hint="user avatar" />
                             <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
                           </Avatar>
                            <Button 
@@ -213,4 +214,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
