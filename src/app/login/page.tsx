@@ -77,7 +77,7 @@ export default function LoginPage() {
       await sendPasswordReset(email);
       toast({
         title: "Password Reset Email Sent",
-        description: "If an account exists for that email, a reset link has been sent.",
+        description: "Check your inbox (and spam folder) for a link to reset your password.",
       });
     } catch (error: any) {
       toast({
