@@ -44,12 +44,30 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
   });
 };
 
-export const signUp = async (email: string, password: string, name: string) => {
+export const signUp = async (email: string, password: string, name: string, photo: File | null = null) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  if (userCredential.user) {
-    await updateProfile(userCredential.user, {
+  const user = userCredential.user;
+
+  if (user) {
+    await updateProfile(user, {
       displayName: name,
     });
+
+     if (photo) {
+      // Convert file to Base64 Data URL to store locally
+      const reader = new FileReader();
+      const promise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(photo);
+      });
+      
+      const photoDataUrl = await promise;
+      // We save the photo to localStorage instead of a remote server
+      if (typeof window !== 'undefined') {
+          window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
+      }
+    }
   }
   return userCredential;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 import { signUp, signInWithGoogle } from "@/lib/auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Camera } from "lucide-react";
 
 
 export default function SignupPage() {
@@ -25,14 +27,29 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signUp(email, password, name);
+      await signUp(email, password, name, photo);
       router.push('/');
       router.refresh();
     } catch (error: any) {
@@ -76,7 +93,32 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="relative group mx-auto">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={photoPreview || undefined} alt={name} data-ai-hint="user avatar" />
+              <AvatarFallback>{name?.charAt(0) || "U"}</AvatarFallback>
+            </Avatar>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon" 
+                className="absolute bottom-0 right-0 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-background"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                  <Camera className="h-4 w-4"/>
+                  <span className="sr-only">Add Photo</span>
+              </Button>
+              <Input 
+                id="picture" 
+                type="file" 
+                accept="image/*" 
+                onChange={handlePhotoChange} 
+                disabled={isLoading}
+                ref={fileInputRef}
+                className="hidden"
+            />
+          </div>
+           <div className="grid grid-cols-2 gap-4">
             <Button variant="outline" type="button" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
                {isGoogleLoading ? (
                 <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
