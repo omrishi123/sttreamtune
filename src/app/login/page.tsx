@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -16,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
-import { login, signInWithGoogle } from "@/lib/auth";
+import { login, signInWithGoogle, sendPasswordReset } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,6 +64,30 @@ export default function LoginPage() {
     }
   };
   
+  const handlePasswordReset = async () => {
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Email Required",
+        description: "Please enter your email address to reset your password.",
+      });
+      return;
+    }
+    try {
+      await sendPasswordReset(email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: "If an account exists for that email, a reset link has been sent.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Reset Failed",
+        description: error.message,
+      });
+    }
+  };
+
   const handleGuest = () => {
     router.push('/');
   };
@@ -106,7 +131,12 @@ export default function LoginPage() {
             <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} disabled={isGoogleLoading} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+             <div className="flex items-center justify-between">
+               <Label htmlFor="password">Password</Label>
+               <Button type="button" variant="link" className="px-0 h-auto text-sm" onClick={handlePasswordReset}>
+                  Forgot password?
+               </Button>
+             </div>
             <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} disabled={isGoogleLoading} />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>

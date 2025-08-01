@@ -9,6 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from './firebase';
 import type { User } from '@/lib/types';
@@ -65,6 +66,10 @@ export const signInWithGoogle = () => {
   const provider = new GoogleAuthProvider();
   return signInWithPopup(auth, provider);
 }
+
+export const sendPasswordReset = (email: string) => {
+  return sendPasswordResetEmail(auth, email);
+};
 
 export const updateUserProfile = async (name: string, photo: File | null) => {
   const user = auth.currentUser;
