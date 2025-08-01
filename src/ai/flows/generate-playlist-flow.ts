@@ -36,7 +36,7 @@ const PlaylistSuggestionSchema = z.object({
 export async function generatePlaylist(input: GeneratePlaylistInput): Promise<GeneratePlaylistResponse> {
   const { playlist, tracks, generatedCoverArt } = await generatePlaylistFlow(input);
   // Return the generatedCoverArt separately so the frontend can display it immediately,
-  // but it's not saved to the database.
+  // but it's not saved to the database for public playlists to avoid size limit errors.
   return { playlist, tracks, generatedCoverArt };
 }
 
@@ -92,8 +92,10 @@ const generatePlaylistFlow = ai.defineFlow(
       .filter((track): track is NonNullable<typeof track> => track !== null && track !== undefined);
 
     const generatedCoverArt = imageResponse.media?.url;
-    // Use the generated image if available, otherwise use a placeholder.
-    const coverArtUrl = generatedCoverArt || 'https://placehold.co/300x300.png';
+
+    // Use a placeholder for all playlists by default to prevent Firestore size issues.
+    // The generatedCoverArt is returned separately for immediate UI use.
+    const coverArtUrl = 'https://placehold.co/300x300.png';
 
     // Step 5: Format the final playlist object
     const finalPlaylist = {
@@ -103,7 +105,7 @@ const generatePlaylistFlow = ai.defineFlow(
       owner: input.userName,
       public: input.isPublic,
       trackIds: foundTracks.map(track => track.id),
-      coverArt: coverArtUrl,
+      coverArt: coverArtUrl, // Always use the placeholder for the saved version.
       ownerId: input.userId,
       'data-ai-hint': suggestion.coverArtPrompt,
     };
@@ -111,7 +113,7 @@ const generatePlaylistFlow = ai.defineFlow(
     return {
       playlist: finalPlaylist,
       tracks: foundTracks,
-      generatedCoverArt: generatedCoverArt, // Return the temporary art for immediate display and saving
+      generatedCoverArt: generatedCoverArt, // Return the temporary art for immediate display
     };
   }
 );

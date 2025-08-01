@@ -95,23 +95,25 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       
       const playlistToSave = { ...result.playlist };
 
+      // The flow now returns a placeholder URL in playlist.coverArt to avoid DB size limits.
+      // For private playlists, we can override it with the full generated image data URI
+      // because it will be stored in localStorage, which has a larger limit.
+      if (!isPublic && result.generatedCoverArt) {
+        playlistToSave.coverArt = result.generatedCoverArt;
+      }
+      
       if (isPublic) {
-         // For public playlists, we save the generated cover art if available.
-         if (result.generatedCoverArt) {
-            playlistToSave.coverArt = result.generatedCoverArt;
-         }
-         
+         // For public playlists, we save the version with the placeholder URL.
          const publicPlaylistData = {
           ...playlistToSave,
-          tracks: result.tracks, // Embed full tracks for public playlists
+          tracks: result.tracks,
           createdAt: serverTimestamp(),
          }
          await addDoc(collection(db, "communityPlaylists"), publicPlaylistData);
       } else {
-        // For private playlists, the cover art (real or placeholder) is already in playlistToSave
+        // For private playlists, add the version with the (potentially overridden) cover art
         addPlaylist(playlistToSave);
       }
-      
 
       toast({
         title: 'Playlist Generated!',
