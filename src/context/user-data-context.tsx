@@ -223,9 +223,15 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
     if (playlist?.public) {
       const playlistRef = doc(db, 'communityPlaylists', playlistId);
-      try {
+      const trackData = getTrackById(trackId);
+      if (!trackData) {
+        console.error("Cannot add a track that is not in cache");
+        return;
+      }
+       try {
         await updateDoc(playlistRef, {
-          trackIds: arrayUnion(trackId)
+          tracks: arrayUnion(trackData),
+          trackIds: arrayUnion(trackId) // Also update trackIds for consistency
         });
       } catch (error) {
         console.error("Error updating community playlist:", error);
@@ -243,17 +249,24 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
-    const playlist = getPlaylistById(playlistId);
+     const playlist = getPlaylistById(playlistId);
+    if (!playlist) return;
 
-    if (playlist?.public) {
-      const playlistRef = doc(db, 'communityPlaylists', playlistId);
-      try {
-        await updateDoc(playlistRef, {
-          trackIds: arrayRemove(trackId)
-        });
-      } catch (error) {
-        console.error("Error updating community playlist:", error);
-      }
+    if (playlist.public) {
+        const playlistRef = doc(db, 'communityPlaylists', playlistId);
+        // Find the full track object to remove it from the 'tracks' array
+        const trackToRemove = playlist.tracks?.find(t => t.id === trackId);
+        try {
+            const updates: { trackIds: any, tracks?: any } = {
+                trackIds: arrayRemove(trackId)
+            };
+            if (trackToRemove) {
+                updates.tracks = arrayRemove(trackToRemove);
+            }
+            await updateDoc(playlistRef, updates);
+        } catch (error) {
+            console.error("Error removing track from public playlist:", error);
+        }
     } else {
       setUserData(prev => ({
         ...prev,
@@ -273,6 +286,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (playlist.public) {
       try {
         await deleteDoc(doc(db, "communityPlaylists", playlistId));
+        // Remove from local state to update UI immediately
+        setCommunityPlaylists(prev => prev.filter(p => p.id !== playlistId));
       } catch (error) {
         console.error("Error deleting public playlist:", error);
       }
