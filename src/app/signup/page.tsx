@@ -51,7 +51,7 @@ export default function SignupPage() {
     try {
       await signUp(email, password, name, photo);
       router.push('/');
-      router.refresh();
+      window.location.reload();
     } catch (error: any) {
        toast({
         variant: "destructive",
@@ -96,7 +96,7 @@ export default function SignupPage() {
           <div className="relative group mx-auto">
             <Avatar className="h-24 w-24">
               <AvatarImage src={photoPreview || undefined} alt={name} data-ai-hint="user avatar" />
-              <AvatarFallback>{name?.charAt(0) || "U"}</AvatarFallback>
+              <AvatarFallback>{name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
               <Button 
                 type="button" 
