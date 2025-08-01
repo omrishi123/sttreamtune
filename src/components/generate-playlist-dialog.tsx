@@ -95,15 +95,15 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       
       const playlistToSave = { ...result.playlist };
 
-      // The flow now returns a placeholder URL in playlist.coverArt to avoid DB size limits.
-      // For private playlists, we can override it with the full generated image data URI
+      // For private playlists, we can override the cover art with the full generated image data URI
       // because it will be stored in localStorage, which has a larger limit.
       if (!isPublic && result.generatedCoverArt) {
         playlistToSave.coverArt = result.generatedCoverArt;
       }
       
       if (isPublic) {
-         // For public playlists, we save the version with the placeholder URL.
+         // For public playlists, we save to Firestore. The cover art is already set
+         // to the first track's artwork by the flow.
          const publicPlaylistData = {
           ...playlistToSave,
           tracks: result.tracks,
@@ -111,7 +111,7 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
          }
          await addDoc(collection(db, "communityPlaylists"), publicPlaylistData);
       } else {
-        // For private playlists, add the version with the (potentially overridden) cover art
+        // For private playlists, add the version with the (potentially AI-generated) cover art
         addPlaylist(playlistToSave);
       }
 

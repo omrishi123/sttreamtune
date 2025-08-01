@@ -93,9 +93,8 @@ const generatePlaylistFlow = ai.defineFlow(
 
     const generatedCoverArt = imageResponse.media?.url;
 
-    // Use a placeholder for all playlists by default to prevent Firestore size issues.
-    // The generatedCoverArt is returned separately for immediate UI use.
-    const coverArtUrl = 'https://placehold.co/300x300.png';
+    // Use the first track's artwork as the cover, or a placeholder if no tracks are found.
+    const coverArtUrl = foundTracks.length > 0 ? foundTracks[0].artwork : 'https://placehold.co/300x300.png';
 
     // Step 5: Format the final playlist object
     const finalPlaylist = {
@@ -105,7 +104,7 @@ const generatePlaylistFlow = ai.defineFlow(
       owner: input.userName,
       public: input.isPublic,
       trackIds: foundTracks.map(track => track.id),
-      coverArt: coverArtUrl, // Always use the placeholder for the saved version.
+      coverArt: coverArtUrl, // Use the first track's artwork or a placeholder.
       ownerId: input.userId,
       'data-ai-hint': suggestion.coverArtPrompt,
     };
@@ -113,7 +112,9 @@ const generatePlaylistFlow = ai.defineFlow(
     return {
       playlist: finalPlaylist,
       tracks: foundTracks,
-      generatedCoverArt: generatedCoverArt, // Return the temporary art for immediate display
+      // For private playlists, we can return the AI-generated art for immediate use.
+      // The dialog component will decide whether to use it.
+      generatedCoverArt: generatedCoverArt, 
     };
   }
 );
