@@ -48,11 +48,14 @@ export default function ProfilePage() {
   }, [router]);
 
   useEffect(() => {
-    // This function will be called by the native Android code
+    // This function will be called by the native Android code.
+    // We attach it directly to the window object.
     window.onProfileImageChosen = (base64Data: string) => {
       const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
+      
       // Update the state to show the preview
       setPhotoPreview(photoDataUrl);
+
       // Convert the base64 string back to a File object for submission
       fetch(photoDataUrl)
         .then(res => res.blob())
@@ -66,7 +69,7 @@ export default function ProfilePage() {
     return () => {
       window.onProfileImageChosen = undefined;
     };
-  }, []); // Empty dependency array ensures this runs only once
+  }, []); // Empty dependency array ensures this runs only once on mount.
 
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
