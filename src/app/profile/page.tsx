@@ -33,7 +33,6 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const avatarImageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthChange((currentUser) => {
@@ -54,10 +53,8 @@ export default function ProfilePage() {
     window.onProfileImageChosen = (base64Data: string) => {
       const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
       
-      // Directly manipulate the DOM for the preview to ensure it updates visually
-      if (avatarImageRef.current) {
-        avatarImageRef.current.src = photoDataUrl;
-      }
+      // Update the React state to show the preview. This is the correct way.
+      setPhotoPreview(photoDataUrl);
 
       // Convert the base64 string back to a File object for submission
       fetch(photoDataUrl)
@@ -154,7 +151,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-6">
                         <div className="relative group">
                           <Avatar className="h-24 w-24">
-                            <AvatarImage ref={avatarImageRef} src={photoPreview || undefined} alt={user.name} data-ai-hint="user avatar" />
+                            <AvatarImage src={photoPreview || undefined} alt={user.name} data-ai-hint="user avatar" />
                             <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
                           </Avatar>
                            <Button 
