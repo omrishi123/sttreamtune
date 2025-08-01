@@ -10,7 +10,6 @@ import {
   signInWithPopup,
   updateProfile,
   sendPasswordResetEmail,
-  signInWithRedirect,
 } from 'firebase/auth';
 import { auth } from './firebase';
 import type { User } from '@/lib/types';
@@ -83,7 +82,7 @@ export const logout = () => {
 
 export const signInWithGoogle = () => {
   const provider = new GoogleAuthProvider();
-  return signInWithRedirect(auth, provider);
+  return signInWithPopup(auth, provider);
 }
 
 export const sendPasswordReset = (email: string) => {
