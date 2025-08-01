@@ -83,7 +83,7 @@ export const logout = () => {
 
 export const signInWithGoogle = () => {
   const provider = new GoogleAuthProvider();
-  return signInWithPopup(auth, provider);
+  return signInWithRedirect(auth, provider);
 }
 
 export const sendPasswordReset = (email: string) => {
