@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,15 @@ import { signUp, signInWithGoogle } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 
+// Extend the window type to include our optional AndroidBridge and callbacks
+declare global {
+  interface Window {
+    Android?: {
+      chooseProfileImage: () => void;
+    };
+    onProfileImageChosen?: (base64Data: string) => void;
+  }
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -34,6 +43,27 @@ export default function SignupPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    // This function will be called by the native Android code.
+    window.onProfileImageChosen = (base64Data: string) => {
+      const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
+      setPhotoPreview(photoDataUrl);
+
+      // Convert the base64 string back to a File object for submission
+      fetch(photoDataUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+          setPhoto(file);
+        });
+    };
+
+    // Clean up the function when the component unmounts
+    return () => {
+      window.onProfileImageChosen = undefined;
+    };
+  }, []);
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -43,6 +73,16 @@ export default function SignupPage() {
         setPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfileImageClick = () => {
+    if (window.Android && typeof window.Android.chooseProfileImage === 'function') {
+      // Use native image picker
+      window.Android.chooseProfileImage();
+    } else {
+      // Fallback to web file input
+      fileInputRef.current?.click();
     }
   };
 
@@ -104,7 +144,7 @@ export default function SignupPage() {
                 variant="outline" 
                 size="icon" 
                 className="absolute bottom-0 right-0 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-background"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleProfileImageClick}
               >
                   <Camera className="h-4 w-4"/>
                   <span className="sr-only">Add Photo</span>
