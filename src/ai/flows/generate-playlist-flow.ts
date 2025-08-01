@@ -34,15 +34,21 @@ const PlaylistSuggestionSchema = z.object({
 });
 
 export async function generatePlaylist(input: GeneratePlaylistInput): Promise<GeneratePlaylistResponse> {
-  const { playlist, tracks } = await generatePlaylistFlow(input);
-  return { playlist, tracks };
+  const { playlist, tracks, generatedCoverArt } = await generatePlaylistFlow(input);
+  // Return the generatedCoverArt separately so the frontend can display it immediately,
+  // but it's not saved to the database.
+  return { playlist, tracks, generatedCoverArt };
 }
 
 const generatePlaylistFlow = ai.defineFlow(
   {
     name: 'generatePlaylistFlow',
     inputSchema: GeneratePlaylistInputSchema,
-    outputSchema: GeneratePlaylistResponseSchema,
+    outputSchema: z.object({
+      playlist: GeneratePlaylistResponseSchema.shape.playlist,
+      tracks: GeneratePlaylistResponseSchema.shape.tracks,
+      generatedCoverArt: z.string().optional(),
+    }),
   },
   async (input) => {
     // Step 1: Generate playlist ideas and song list from the user prompt
@@ -85,7 +91,10 @@ const generatePlaylistFlow = ai.defineFlow(
       .map(res => res[0]) // Take the top result for each search
       .filter((track): track is NonNullable<typeof track> => track !== null && track !== undefined);
 
-    const coverArtUrl = imageResponse.media?.url || 'https://placehold.co/300x300.png';
+    const generatedCoverArt = imageResponse.media?.url;
+    // We do NOT save the generated image to Firestore to avoid size limit errors.
+    // We use a placeholder instead for the saved document.
+    const coverArtUrl = 'https://placehold.co/300x300.png';
 
     // Step 5: Format the final playlist object
     const finalPlaylist = {
@@ -95,13 +104,15 @@ const generatePlaylistFlow = ai.defineFlow(
       owner: input.userName,
       public: input.isPublic,
       trackIds: foundTracks.map(track => track.id),
-      coverArt: coverArtUrl,
+      coverArt: coverArtUrl, // Use placeholder for the database
+      ownerId: input.userId,
       'data-ai-hint': suggestion.coverArtPrompt,
     };
     
     return {
       playlist: finalPlaylist,
       tracks: foundTracks,
+      generatedCoverArt: generatedCoverArt, // Return the temporary art for immediate display
     };
   }
 );

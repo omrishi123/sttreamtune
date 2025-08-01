@@ -33,6 +33,7 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarImageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthChange((currentUser) => {
@@ -53,15 +54,17 @@ export default function ProfilePage() {
     window.onProfileImageChosen = (base64Data: string) => {
       const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
       
-      // Update the state to show the preview
-      setPhotoPreview(photoDataUrl);
+      // Directly manipulate the DOM for the preview to ensure it updates visually
+      if (avatarImageRef.current) {
+        avatarImageRef.current.src = photoDataUrl;
+      }
 
       // Convert the base64 string back to a File object for submission
       fetch(photoDataUrl)
         .then(res => res.blob())
         .then(blob => {
           const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-          setPhoto(file);
+          setPhoto(file); // Set the file for the form submission
         });
     };
 
@@ -106,7 +109,7 @@ export default function ProfilePage() {
         description: "Your profile has been successfully updated.",
       });
       // Refresh the page to reflect changes everywhere
-      router.refresh();
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -151,7 +154,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-6">
                         <div className="relative group">
                           <Avatar className="h-24 w-24">
-                            <AvatarImage src={photoPreview || undefined} alt={user.name} data-ai-hint="user avatar" />
+                            <AvatarImage ref={avatarImageRef} src={photoPreview || undefined} alt={user.name} data-ai-hint="user avatar" />
                             <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
                           </Avatar>
                            <Button 

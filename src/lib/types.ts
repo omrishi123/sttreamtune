@@ -64,6 +64,7 @@ export const GeneratePlaylistResponseSchema = z.object({
       'data-ai-hint': z.optional(z.string()),
     })
   ),
+  generatedCoverArt: z.string().optional(),
 });
 export type GeneratePlaylistResponse = z.infer<
   typeof GeneratePlaylistResponseSchema

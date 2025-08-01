@@ -64,7 +64,7 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       });
       return;
     }
-    if (!user) { // This check can stay as a fallback
+    if (!user) { 
       toast({
         variant: 'destructive',
         title: 'Not logged in',
@@ -93,17 +93,25 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       
       addTracksToCache(result.tracks);
       
+      const playlistToSave = { ...result.playlist };
+      // If a temporary cover art was generated, use it for the local state,
+      // but don't save it to the database.
+      if (result.generatedCoverArt) {
+        playlistToSave.coverArt = result.generatedCoverArt;
+      }
+
       if (isPublic) {
+         // Create the data to be saved to Firestore, ensuring we don't include the large coverArt data URI
          const publicPlaylistData = {
-          ...result.playlist,
+          ...result.playlist, // This already has the placeholder coverArt URL
           tracks: result.tracks, // Embed full tracks
           ownerId: user.id,
           createdAt: serverTimestamp(),
          }
          await addDoc(collection(db, "communityPlaylists"), publicPlaylistData);
-        // We don't add public playlists to local state anymore, it comes from firestore
       } else {
-        addPlaylist(result.playlist);
+        // For private playlists, we can use the generated cover art in local state
+        addPlaylist(playlistToSave);
       }
       
 
