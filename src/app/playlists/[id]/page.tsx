@@ -160,7 +160,7 @@ export default function PlaylistPage() {
     }
   };
 
-  const isOwner = currentUser && playlist && playlist.ownerId === currentUser.id;
+  const isOwner = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : true);
 
   return (
     <div className="space-y-8">
