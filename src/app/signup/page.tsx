@@ -51,7 +51,7 @@ export default function SignupPage() {
     try {
       await signUp(email, password, name, photo);
       router.push('/');
-      window.location.reload();
+      router.refresh();
     } catch (error: any) {
        toast({
         variant: "destructive",
