@@ -91,7 +91,7 @@ export default function PlaylistPage() {
       setPlaylist(null); // Not found
     }
     setIsLoading(false);
-  }, [id, getPlaylistById, getTrackById, addTracksToCache, communityPlaylists]);
+  }, [id, getPlaylistById, getTrackById, addTracksToCache]);
 
 
   useEffect(() => {
@@ -143,12 +143,20 @@ export default function PlaylistPage() {
 
   const handleDeletePlaylist = async () => {
     if (playlist) {
-      await deletePlaylist(playlist.id);
-      toast({
-        title: "Playlist Deleted",
-        description: `"${playlist.name}" has been deleted.`,
-      });
-      router.push('/library');
+      try {
+        await deletePlaylist(playlist.id);
+        toast({
+          title: "Playlist Deleted",
+          description: `"${playlist.name}" has been deleted.`,
+        });
+        router.push('/library');
+      } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: error.message || "Could not delete playlist. Please check permissions and try again.",
+        });
+      }
     }
   };
 
