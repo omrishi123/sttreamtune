@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,24 +46,27 @@ export default function ProfilePage() {
     });
     return () => unsubscribe();
   }, [router]);
-  
-  const handleNativeImage = useCallback((base64Data: string) => {
-    const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
-    setPhotoPreview(photoDataUrl);
-    fetch(photoDataUrl)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-        setPhoto(file);
-      });
-  }, []);
 
   useEffect(() => {
-    window.onProfileImageChosen = handleNativeImage;
+    // This function will be called by the native Android code
+    window.onProfileImageChosen = (base64Data: string) => {
+      const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
+      // Update the state to show the preview
+      setPhotoPreview(photoDataUrl);
+      // Convert the base64 string back to a File object for submission
+      fetch(photoDataUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+          setPhoto(file);
+        });
+    };
+
+    // Clean up the function when the component unmounts
     return () => {
       window.onProfileImageChosen = undefined;
     };
-  }, [handleNativeImage]);
+  }, []); // Empty dependency array ensures this runs only once
 
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
