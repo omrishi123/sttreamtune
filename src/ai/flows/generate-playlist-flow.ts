@@ -92,9 +92,8 @@ const generatePlaylistFlow = ai.defineFlow(
       .filter((track): track is NonNullable<typeof track> => track !== null && track !== undefined);
 
     const generatedCoverArt = imageResponse.media?.url;
-    // We do NOT save the generated image to Firestore to avoid size limit errors.
-    // We use a placeholder instead for the saved document.
-    const coverArtUrl = 'https://placehold.co/300x300.png';
+    // Use the generated image if available, otherwise use a placeholder.
+    const coverArtUrl = generatedCoverArt || 'https://placehold.co/300x300.png';
 
     // Step 5: Format the final playlist object
     const finalPlaylist = {
@@ -104,7 +103,7 @@ const generatePlaylistFlow = ai.defineFlow(
       owner: input.userName,
       public: input.isPublic,
       trackIds: foundTracks.map(track => track.id),
-      coverArt: coverArtUrl, // Use placeholder for the database
+      coverArt: coverArtUrl,
       ownerId: input.userId,
       'data-ai-hint': suggestion.coverArtPrompt,
     };
@@ -112,7 +111,7 @@ const generatePlaylistFlow = ai.defineFlow(
     return {
       playlist: finalPlaylist,
       tracks: foundTracks,
-      generatedCoverArt: generatedCoverArt, // Return the temporary art for immediate display
+      generatedCoverArt: generatedCoverArt, // Return the temporary art for immediate display and saving
     };
   }
 );

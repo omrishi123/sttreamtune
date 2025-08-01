@@ -94,23 +94,21 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       addTracksToCache(result.tracks);
       
       const playlistToSave = { ...result.playlist };
-      // If a temporary cover art was generated, use it for the local state,
-      // but don't save it to the database.
-      if (result.generatedCoverArt) {
-        playlistToSave.coverArt = result.generatedCoverArt;
-      }
 
       if (isPublic) {
-         // Create the data to be saved to Firestore, ensuring we don't include the large coverArt data URI
+         // For public playlists, we save the generated cover art if available.
+         if (result.generatedCoverArt) {
+            playlistToSave.coverArt = result.generatedCoverArt;
+         }
+         
          const publicPlaylistData = {
-          ...result.playlist, // This already has the placeholder coverArt URL
-          tracks: result.tracks, // Embed full tracks
-          ownerId: user.id,
+          ...playlistToSave,
+          tracks: result.tracks, // Embed full tracks for public playlists
           createdAt: serverTimestamp(),
          }
          await addDoc(collection(db, "communityPlaylists"), publicPlaylistData);
       } else {
-        // For private playlists, we can use the generated cover art in local state
+        // For private playlists, the cover art (real or placeholder) is already in playlistToSave
         addPlaylist(playlistToSave);
       }
       
@@ -125,10 +123,13 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       setIsPublic(false);
     } catch (error: any) {
       console.error('Failed to generate playlist:', error);
+      const isFirestoreError = error.message?.includes('longer than 1048487 bytes');
       toast({
         variant: 'destructive',
         title: 'Generation Failed',
-        description: error.message || 'Could not generate the playlist. Please try a different prompt.',
+        description: isFirestoreError
+            ? 'The generated cover art was too large to save. Please try a different prompt.'
+            : (error.message || 'Could not generate the playlist. Please try a different prompt.'),
       });
     } finally {
       setIsLoading(false);
