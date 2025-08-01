@@ -168,7 +168,7 @@ export async function getTracksForPlaylist(playlistId: string): Promise<Track[]>
                     title: item.snippet.title,
                     artist: item.snippet.videoOwnerChannelTitle || 'Unknown Artist',
                     album: 'YouTube Playlist',
-                    artwork: item.snippet.thumbnails?.high?.url || 'https://placehold.co/300x300.png',
+                    artwork: item.snippet.thumbnails?.high?.url || 'https://i.postimg.cc/SswWC87w/streamtune.png',
                     duration: durations.get(item.contentDetails.videoId) || 0,
                     'data-ai-hint': 'youtube video'
                 }));

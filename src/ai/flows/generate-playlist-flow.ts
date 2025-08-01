@@ -94,7 +94,7 @@ const generatePlaylistFlow = ai.defineFlow(
     const generatedCoverArt = imageResponse.media?.url;
 
     // Use the first track's artwork as the cover, or a placeholder if no tracks are found.
-    const coverArtUrl = foundTracks.length > 0 ? foundTracks[0].artwork : 'https://placehold.co/300x300.png';
+    const coverArtUrl = foundTracks.length > 0 ? foundTracks[0].artwork : 'https://i.postimg.cc/SswWC87w/streamtune.png';
 
     // Step 5: Format the final playlist object
     const finalPlaylist = {
