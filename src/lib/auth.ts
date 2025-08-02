@@ -44,26 +44,18 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
   });
 };
 
-export const signUp = async (email: string, password: string, name: string, photo: File | null = null) => {
+export const signUp = async (email: string, password: string, name: string, photoDataUrl: string | null) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // The native app handles photo uploads. This function is for web fallback.
   if (user) {
     await updateProfile(user, {
       displayName: name,
     });
 
-     if (photo && typeof window !== 'undefined' && !window.Android) {
-      // Convert file to Base64 Data URL to store locally for web
-      const reader = new FileReader();
-      const promise = new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(photo);
-      });
-      
-      const photoDataUrl = await promise;
+    if (photoDataUrl && typeof window !== 'undefined') {
+      // Save the received Base64 Data URL to localStorage.
+      // The native app provides this data, or the web file input creates it.
       window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
     }
   }
@@ -87,7 +79,7 @@ export const sendPasswordReset = (email: string) => {
   return sendPasswordResetEmail(auth, email);
 };
 
-export const updateUserProfile = async (name: string, photo: File | null) => {
+export const updateUserProfile = async (name: string, photoDataUrl: string | null) => {
   const user = auth.currentUser;
   if (!user) {
     throw new Error("No user is signed in.");
@@ -98,19 +90,12 @@ export const updateUserProfile = async (name: string, photo: File | null) => {
   if (name && name !== user.displayName) {
     profileUpdates.displayName = name;
   }
-
-  // The native app handles photo uploads. This is the web fallback.
-  if (photo && typeof window !== 'undefined' && !window.Android) {
-    const reader = new FileReader();
-    const promise = new Promise<string>((resolve, reject) => {
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(photo);
-    });
-    
-    const photoDataUrl = await promise;
+  
+  if (photoDataUrl && typeof window !== 'undefined') {
+    // Save the new photo Data URL to localStorage.
     window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
   }
+
 
   if (Object.keys(profileUpdates).length > 0) {
       await updateProfile(user, profileUpdates);

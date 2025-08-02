@@ -14,12 +14,13 @@ import { Icons } from "@/components/icons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera } from "lucide-react";
 
-// Extend the window type to include our optional AndroidBridge
+// Extend the window type to include our optional AndroidBridge and the new callback
 declare global {
   interface Window {
     Android?: {
       chooseProfileImage: () => void;
     };
+    updateProfileImage?: (imageDataUrl: string) => void;
   }
 }
 
@@ -28,8 +29,8 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
-  const [photoFile, setPhotoFile] = useState<File | null>(null); // For web fallback
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null); // For web fallback preview
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,21 +47,36 @@ export default function ProfilePage() {
     return () => unsubscribe();
   }, [router]);
 
+  useEffect(() => {
+    // Define the callback function that the native app will call
+    window.updateProfileImage = (imageDataUrl: string) => {
+      setPhotoDataUrl(imageDataUrl); // Store the raw data for submission
+      setPhotoPreview(imageDataUrl); // Update the preview
+    };
+
+    // Cleanup the function when the component unmounts
+    return () => {
+      delete window.updateProfileImage;
+    };
+  }, []); // Empty dependency array means this effect runs once on mount
+
+
   // This function is for the web file input fallback
   const handleWebPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
+        const dataUrl = reader.result as string;
+        setPhotoDataUrl(dataUrl); // Store the raw data for submission
+        setPhotoPreview(dataUrl); // Update the preview
       };
       reader.readAsDataURL(file);
     }
   };
   
   const handleProfileImageClick = () => {
-    if (window.Android && typeof window.Android.chooseProfileImage === 'function') {
+    if (window.Android?.chooseProfileImage) {
       // Use native image picker
       window.Android.chooseProfileImage();
     } else {
@@ -75,8 +91,8 @@ export default function ProfilePage() {
 
     setIsLoading(true);
     try {
-      // Pass the name and the photo file (if any) to the update function
-      await updateUserProfile(name, photoFile);
+      // Pass the name and the new photo data URL (if any) to the update function
+      await updateUserProfile(name, photoDataUrl);
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated. Refreshing...",

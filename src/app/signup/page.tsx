@@ -21,12 +21,13 @@ import { signUp, signInWithGoogle } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 
-// Extend the window type to include our optional AndroidBridge
+// Extend the window type to include our optional AndroidBridge and the new callback
 declare global {
   interface Window {
     Android?: {
       chooseProfileImage: () => void;
     };
+    updateProfileImage?: (imageDataUrl: string) => void;
   }
 }
 
@@ -36,27 +37,42 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    // Define the callback function that the native app will call
+    window.updateProfileImage = (imageDataUrl: string) => {
+      setPhotoDataUrl(imageDataUrl); // Store the raw data for submission
+      setPhotoPreview(imageDataUrl); // Update the preview
+    };
+
+    // Cleanup the function when the component unmounts
+    return () => {
+      delete window.updateProfileImage;
+    };
+  }, []); // Empty dependency array means this effect runs once on mount
+
+
   // This function is for the web file input fallback
   const handleWebPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
+        const dataUrl = reader.result as string;
+        setPhotoDataUrl(dataUrl);
+        setPhotoPreview(dataUrl);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleProfileImageClick = () => {
-    if (window.Android && typeof window.Android.chooseProfileImage === 'function') {
+    if (window.Android?.chooseProfileImage) {
       // Use native image picker
       window.Android.chooseProfileImage();
     } else {
@@ -69,7 +85,7 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signUp(email, password, name, photoFile);
+      await signUp(email, password, name, photoDataUrl);
       router.push('/');
       router.refresh();
     } catch (error: any) {
