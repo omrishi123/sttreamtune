@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,13 +14,12 @@ import { Icons } from "@/components/icons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera } from "lucide-react";
 
-// Extend the window type to include our optional AndroidBridge and callbacks
+// Extend the window type to include our optional AndroidBridge
 declare global {
   interface Window {
     Android?: {
       chooseProfileImage: () => void;
     };
-    onProfileImageChosen?: (base64Data: string) => void;
   }
 }
 
@@ -29,8 +28,8 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null); // For web fallback
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null); // For web fallback preview
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,34 +46,11 @@ export default function ProfilePage() {
     return () => unsubscribe();
   }, [router]);
 
-  const handleNativeImage = useCallback((base64Data: string) => {
-    const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
-    setPhotoPreview(photoDataUrl);
-
-    // Convert the base64 string back to a File object for submission
-    fetch(photoDataUrl)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-        setPhoto(file);
-      });
-  }, [setPhotoPreview, setPhoto]);
-
-  useEffect(() => {
-    // This function will be called by the native Android code.
-    window.onProfileImageChosen = handleNativeImage;
-
-    // Clean up the function when the component unmounts
-    return () => {
-      window.onProfileImageChosen = undefined;
-    };
-  }, [handleNativeImage]);
-
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // This function is for the web file input fallback
+  const handleWebPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPhoto(file);
+      setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
@@ -99,13 +75,14 @@ export default function ProfilePage() {
 
     setIsLoading(true);
     try {
-      await updateUserProfile(name, photo);
+      // Pass the name and the photo file (if any) to the update function
+      await updateUserProfile(name, photoFile);
       toast({
         title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
+        description: "Your profile has been successfully updated. Refreshing...",
       });
       // Refresh the page to reflect changes everywhere
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -171,7 +148,7 @@ export default function ProfilePage() {
                             id="picture" 
                             type="file" 
                             accept="image/*" 
-                            onChange={handlePhotoChange} 
+                            onChange={handleWebPhotoChange} 
                             disabled={isLoading}
                             ref={fileInputRef}
                             className="hidden"

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,12 @@ import { signUp, signInWithGoogle } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 
-// Extend the window type to include our optional AndroidBridge and callbacks
+// Extend the window type to include our optional AndroidBridge
 declare global {
   interface Window {
     Android?: {
       chooseProfileImage: () => void;
     };
-    onProfileImageChosen?: (base64Data: string) => void;
   }
 }
 
@@ -37,39 +36,17 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleNativeImage = useCallback((base64Data: string) => {
-    const photoDataUrl = `data:image/jpeg;base64,${base64Data}`;
-    setPhotoPreview(photoDataUrl);
-
-    // Convert the base64 string back to a File object for submission
-    fetch(photoDataUrl)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-        setPhoto(file);
-      });
-  }, [setPhotoPreview, setPhoto]);
-
-  useEffect(() => {
-    // This function will be called by the native Android code.
-    window.onProfileImageChosen = handleNativeImage;
-
-    // Clean up the function when the component unmounts
-    return () => {
-      window.onProfileImageChosen = undefined;
-    };
-  }, [handleNativeImage]);
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // This function is for the web file input fallback
+  const handleWebPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPhoto(file);
+      setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
@@ -92,7 +69,7 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signUp(email, password, name, photo);
+      await signUp(email, password, name, photoFile);
       router.push('/');
       router.refresh();
     } catch (error: any) {
@@ -155,7 +132,7 @@ export default function SignupPage() {
                 id="picture" 
                 type="file" 
                 accept="image/*" 
-                onChange={handlePhotoChange} 
+                onChange={handleWebPhotoChange} 
                 disabled={isLoading}
                 ref={fileInputRef}
                 className="hidden"

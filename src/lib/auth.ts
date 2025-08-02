@@ -48,13 +48,14 @@ export const signUp = async (email: string, password: string, name: string, phot
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
+  // The native app handles photo uploads. This function is for web fallback.
   if (user) {
     await updateProfile(user, {
       displayName: name,
     });
 
-     if (photo) {
-      // Convert file to Base64 Data URL to store locally
+     if (photo && typeof window !== 'undefined' && !window.Android) {
+      // Convert file to Base64 Data URL to store locally for web
       const reader = new FileReader();
       const promise = new Promise<string>((resolve, reject) => {
         reader.onloadend = () => resolve(reader.result as string);
@@ -63,10 +64,7 @@ export const signUp = async (email: string, password: string, name: string, phot
       });
       
       const photoDataUrl = await promise;
-      // We save the photo to localStorage instead of a remote server
-      if (typeof window !== 'undefined') {
-          window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
-      }
+      window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
     }
   }
   return userCredential;
@@ -101,8 +99,8 @@ export const updateUserProfile = async (name: string, photo: File | null) => {
     profileUpdates.displayName = name;
   }
 
-  if (photo) {
-    // Convert file to Base64 Data URL to store locally
+  // The native app handles photo uploads. This is the web fallback.
+  if (photo && typeof window !== 'undefined' && !window.Android) {
     const reader = new FileReader();
     const promise = new Promise<string>((resolve, reject) => {
       reader.onloadend = () => resolve(reader.result as string);
@@ -111,10 +109,7 @@ export const updateUserProfile = async (name: string, photo: File | null) => {
     });
     
     const photoDataUrl = await promise;
-    // We save the photo to localStorage instead of a remote server
-    if (typeof window !== 'undefined') {
-        window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
-    }
+    window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
   }
 
   if (Object.keys(profileUpdates).length > 0) {
