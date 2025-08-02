@@ -1,6 +1,7 @@
 
 "use client";
 
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Tabs,
   TabsContent,
@@ -12,12 +13,36 @@ import { PlaylistCard } from "@/components/playlist-card";
 import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Sparkles } from "lucide-react";
-import { Playlist } from "@/lib/types";
+import { Playlist, User } from "@/lib/types";
 import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
 import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
+import { onAuthChange } from '@/lib/auth';
+
+const PlaylistGrid = ({ playlists }: { playlists: Playlist[] }) => {
+    if (playlists.length === 0) {
+        return (
+            <div className="text-center py-10 col-span-full">
+                <p className="text-muted-foreground">No playlists in this section.</p>
+            </div>
+        );
+    }
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4">
+            {playlists.map((playlist) => (
+                <PlaylistCard key={playlist.id} playlist={playlist} />
+            ))}
+        </div>
+    );
+};
 
 export default function LibraryPage() {
-  const { playlists: userPlaylists, likedSongs, getTrackById } = useUserData();
+  const { playlists: userPrivatePlaylists, likedSongs, getTrackById, communityPlaylists } = useUserData();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthChange(setCurrentUser);
+    return () => unsubscribe();
+  }, []);
 
   const getFirstTrackArtwork = (trackIds: string[]) => {
     if (trackIds.length > 0) {
@@ -50,12 +75,17 @@ export default function LibraryPage() {
     'data-ai-hint': 'time clock',
   }
 
-  const processedUserPlaylists = userPlaylists.map(playlist => ({
+  const processedUserPrivatePlaylists = userPrivatePlaylists.map(playlist => ({
     ...playlist,
     coverArt: getFirstTrackArtwork(playlist.trackIds) || playlist.coverArt
   }));
+  
+  const userPublicPlaylists = useMemo(() => {
+    if (!currentUser) return [];
+    return communityPlaylists.filter(p => p.ownerId === currentUser.id);
+  }, [communityPlaylists, currentUser]);
 
-  const allPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist, ...processedUserPlaylists];
+  const defaultPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist];
 
   return (
     <div className="space-y-4 md:space-y-8">
@@ -89,12 +119,27 @@ export default function LibraryPage() {
           <TabsTrigger value="artists" disabled>Artists</TabsTrigger>
           <TabsTrigger value="albums" disabled>Albums</TabsTrigger>
         </TabsList>
-        <TabsContent value="playlists" className="mt-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4">
-            {allPlaylists.map((playlist) => (
-              <PlaylistCard key={playlist.id} playlist={playlist} />
-            ))}
-          </div>
+        <TabsContent value="playlists" className="mt-6 space-y-8">
+          <PlaylistGrid playlists={defaultPlaylists} />
+          
+          {currentUser?.id !== 'guest' && (
+              <>
+                <div className="mt-8">
+                    <h2 className="text-xl font-bold font-headline mb-4">Your Public Playlists</h2>
+                    <PlaylistGrid playlists={userPublicPlaylists} />
+                </div>
+
+                <div className="mt-8">
+                    <h2 className="text-xl font-bold font-headline mb-4">Your Private Playlists</h2>
+                    <PlaylistGrid playlists={processedUserPrivatePlaylists} />
+                </div>
+              </>
+          )}
+
+           {currentUser?.id === 'guest' && (
+             <PlaylistGrid playlists={processedUserPrivatePlaylists} />
+           )}
+          
         </TabsContent>
       </Tabs>
     </div>
