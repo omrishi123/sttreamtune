@@ -20,6 +20,7 @@ declare global {
     Android?: {
       chooseProfileImage: () => void;
     };
+    window: any;
     updateProfileImage?: (imageDataUrl: string) => void;
   }
 }
@@ -56,9 +57,11 @@ export default function ProfilePage() {
 
     // Cleanup the function when the component unmounts
     return () => {
-      delete window.updateProfileImage;
+      if (window.updateProfileImage) {
+        delete window.updateProfileImage;
+      }
     };
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []); 
 
 
   // This function is for the web file input fallback
@@ -95,10 +98,10 @@ export default function ProfilePage() {
       await updateUserProfile(name, photoDataUrl);
       toast({
         title: "Profile Updated",
-        description: "Your profile has been successfully updated. Refreshing...",
+        description: "Your profile has been successfully updated.",
       });
-      // Refresh the page to reflect changes everywhere
-      setTimeout(() => window.location.reload(), 1500);
+      // Refresh the app's data to reflect changes everywhere
+      router.refresh();
     } catch (error: any) {
       toast({
         variant: "destructive",
