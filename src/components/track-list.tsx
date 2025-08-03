@@ -82,7 +82,7 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const canEditPlaylist = currentUser && playlist?.ownerId === currentUser.id;
+  const canEditPlaylist = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : true);
 
   return (
     <Table>

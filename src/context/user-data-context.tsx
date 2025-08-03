@@ -199,6 +199,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       try {
         await addDoc(collection(db, "communityPlaylists"), {
           ...newPlaylistData,
+          tracks: [], // Initialize with empty tracks array
           createdAt: serverTimestamp(),
         });
       } catch (e) {
@@ -214,29 +215,28 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
-    const track = getTrackById(trackId);
-    if (track) {
-      addTrackToCache(track); // Ensure track is in cache
-    }
-
     const playlist = getPlaylistById(playlistId);
+    if (!playlist) return;
 
-    if (playlist?.public) {
-      const playlistRef = doc(db, 'communityPlaylists', playlistId);
-      const trackData = getTrackById(trackId);
-      if (!trackData) {
-        console.error("Cannot add a track that is not in cache");
+    // For public playlists in Firestore
+    if (playlist.public) {
+      const trackToAdd = getTrackById(trackId);
+      if (!trackToAdd) {
+        console.error("Cannot add a track that is not in cache to a public playlist.");
         return;
       }
-       try {
+      const playlistRef = doc(db, 'communityPlaylists', playlistId);
+      try {
         await updateDoc(playlistRef, {
-          tracks: arrayUnion(trackData),
-          trackIds: arrayUnion(trackId) // Also update trackIds for consistency
+          tracks: arrayUnion(trackToAdd),
+          trackIds: arrayUnion(trackId)
         });
       } catch (error) {
-        console.error("Error updating community playlist:", error);
+        console.error("Error updating public playlist:", error);
       }
-    } else {
+    } 
+    // For private playlists in local storage
+    else {
       setUserData(prev => ({
         ...prev,
         playlists: prev.playlists.map(p =>
@@ -249,25 +249,37 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
-     const playlist = getPlaylistById(playlistId);
+    const playlist = getPlaylistById(playlistId);
     if (!playlist) return;
 
+    // For public playlists in Firestore
     if (playlist.public) {
-        const playlistRef = doc(db, 'communityPlaylists', playlistId);
-        // Find the full track object to remove it from the 'tracks' array
-        const trackToRemove = playlist.tracks?.find(t => t.id === trackId);
-        try {
-            const updates: { trackIds: any, tracks?: any } = {
-                trackIds: arrayRemove(trackId)
-            };
-            if (trackToRemove) {
-                updates.tracks = arrayRemove(trackToRemove);
-            }
-            await updateDoc(playlistRef, updates);
+      const playlistRef = doc(db, 'communityPlaylists', playlistId);
+      // Find the full track object to remove it from the 'tracks' array
+      const trackToRemove = playlist.tracks?.find(t => t.id === trackId);
+      if (!trackToRemove) {
+        console.error("Track not found in the public playlist's embedded tracks array.");
+        // As a fallback, still try to remove the ID
+         try {
+            await updateDoc(playlistRef, {
+                trackIds: arrayRemove(trackId),
+            });
         } catch (error) {
-            console.error("Error removing track from public playlist:", error);
+            console.error("Error removing track ID from public playlist (fallback):", error);
         }
-    } else {
+        return;
+      }
+      try {
+        await updateDoc(playlistRef, {
+            tracks: arrayRemove(trackToRemove),
+            trackIds: arrayRemove(trackId)
+        });
+      } catch (error) {
+        console.error("Error removing track from public playlist:", error);
+      }
+    } 
+    // For private playlists in local storage
+    else {
       setUserData(prev => ({
         ...prev,
         playlists: prev.playlists.map(p =>
