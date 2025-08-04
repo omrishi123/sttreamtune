@@ -151,6 +151,14 @@ export default function PlaylistPage() {
         });
         return;
     }
+     if (currentUser.id !== playlist.ownerId) {
+        toast({
+            variant: "destructive",
+            title: "Permission Denied",
+            description: "You are not the owner of this playlist.",
+        });
+        return;
+    }
 
     const result = await deletePlaylistSecurely({
         playlistId: playlist.id,
@@ -209,7 +217,7 @@ export default function PlaylistPage() {
                 <Share2 className="mr-2 h-5 w-5"/>
                 Share
              </Button>
-             {isOwner && (
+             {isOwner && playlist.public && (
                 <AlertDialog>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
