@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deletePlaylistSecurely } from "@/ai/flows/delete-playlist-flow";
+import { secureDeletePlaylist } from "@/ai/flows/secure-delete-playlist-flow";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
@@ -144,23 +144,24 @@ export default function PlaylistPage() {
 
   const handleDeletePlaylist = async () => {
     if (!playlist || !currentUser || !playlist.public) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Cannot delete this playlist.",
-        });
-        return;
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Cannot delete a non-public or invalid playlist.",
+      });
+      return;
     }
-     if (currentUser.id !== playlist.ownerId) {
-        toast({
+    
+    if (currentUser.id === 'guest') {
+       toast({
             variant: "destructive",
-            title: "Permission Denied",
-            description: "You are not the owner of this playlist.",
+            title: "Login Required",
+            description: "You must be logged in to delete a playlist.",
         });
         return;
     }
 
-    const result = await deletePlaylistSecurely({
+    const result = await secureDeletePlaylist({
         playlistId: playlist.id,
         userId: currentUser.id,
     });
@@ -170,8 +171,9 @@ export default function PlaylistPage() {
             title: "Playlist Deleted",
             description: `"${playlist.name}" has been deleted.`,
         });
+        // This will trigger a re-fetch of data in the library page
         router.push('/library');
-        router.refresh();
+        router.refresh(); 
     } else {
         toast({
             variant: "destructive",
@@ -181,7 +183,7 @@ export default function PlaylistPage() {
     }
   };
 
-  const isOwner = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : true);
+  const isOwner = currentUser && playlist && playlist.public && playlist.ownerId === currentUser.id;
 
   return (
     <div className="space-y-8">
@@ -217,7 +219,7 @@ export default function PlaylistPage() {
                 <Share2 className="mr-2 h-5 w-5"/>
                 Share
              </Button>
-             {isOwner && playlist.public && (
+             {isOwner && (
                 <AlertDialog>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -261,5 +263,3 @@ export default function PlaylistPage() {
     </div>
   );
 }
-
-    
