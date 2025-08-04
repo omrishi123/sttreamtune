@@ -1,16 +1,15 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     match /communityPlaylists/{playlistId} {
-      // Anyone can read community playlists
+      // Anyone can read public playlists.
       allow read: if true;
 
-      // Only authenticated users can create a playlist
-      allow create: if request.auth != null;
+      // Users can only create playlists for themselves.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
 
-      // Only the owner of a playlist can update or delete it
+      // The owner of a playlist is the only one who can update or delete it.
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
     }
   }
