@@ -30,6 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { deletePlaylistSecurely } from "@/ai/flows/delete-playlist-flow";
 
@@ -142,45 +143,33 @@ export default function PlaylistPage() {
   }
 
   const handleDeletePlaylist = async () => {
-    if (!playlist || !currentUser) return;
+    if (!playlist || !currentUser || !playlist.public) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Cannot delete this playlist.",
+        });
+        return;
+    }
 
-    if (playlist.public) {
-      // Use the secure Genkit flow for public playlists
-      const result = await deletePlaylistSecurely({
+    const result = await deletePlaylistSecurely({
         playlistId: playlist.id,
         userId: currentUser.id,
-      });
+    });
 
-      if (result.success) {
+    if (result.success) {
         toast({
             title: "Playlist Deleted",
-            description: `"${playlist.name}" has been deleted from the community.`,
+            description: `"${playlist.name}" has been deleted.`,
         });
         router.push('/library');
         router.refresh();
-      } else {
+    } else {
         toast({
             variant: "destructive",
             title: "Deletion Failed",
             description: result.message,
         });
-      }
-    } else {
-      // Use the existing client-side logic for private playlists
-      try {
-          await deletePlaylist(playlist.id);
-          toast({
-              title: "Playlist Deleted",
-              description: `"${playlist.name}" has been deleted from your library.`,
-          });
-          router.push('/library');
-      } catch (error: any) {
-          toast({
-              variant: "destructive",
-              title: "Deletion Failed",
-              description: error.message || "Could not delete the private playlist.",
-          });
-      }
     }
   };
 
