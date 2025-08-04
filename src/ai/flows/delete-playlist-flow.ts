@@ -32,18 +32,21 @@ const deletePlaylistFlow = ai.defineFlow(
   async ({ playlistId, userId }) => {
     try {
       if (!userId || userId === 'guest') {
-        throw new Error("User must be authenticated.");
+        throw new Error("User must be authenticated to delete playlists.");
       }
 
       const playlistRef = doc(db, 'communityPlaylists', playlistId);
       const playlistSnap = await getDoc(playlistRef);
 
       if (!playlistSnap.exists()) {
-        throw new Error("Playlist not found.");
+        // To be safe, we check if it's a private playlist if it doesn't exist in public.
+        // But the primary flow is for public playlists, so we'll just throw a clear error.
+        throw new Error("Playlist not found in community collection.");
       }
 
       const playlistData = playlistSnap.data();
 
+      // This is the crucial server-side check.
       if (playlistData.ownerId !== userId) {
         throw new Error("Permission denied. You are not the owner of this playlist.");
       }
@@ -53,7 +56,7 @@ const deletePlaylistFlow = ai.defineFlow(
       return { success: true, message: "Playlist deleted successfully." };
 
     } catch (error: any) {
-      console.error("Secure delete failed:", error);
+      console.error("Secure playlist deletion failed:", error);
       // Return a structured error to the client
       return { success: false, message: error.message || "An unexpected error occurred during deletion." };
     }

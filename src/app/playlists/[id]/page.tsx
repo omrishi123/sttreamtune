@@ -30,7 +30,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { deletePlaylistSecurely } from "@/ai/flows/delete-playlist-flow";
 
@@ -40,7 +39,7 @@ export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist, communityPlaylists } = useUserData();
+  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
@@ -154,15 +153,15 @@ export default function PlaylistPage() {
 
       if (result.success) {
         toast({
-            title: "Playlist Deleted (Securely)",
-            description: `"${playlist.name}" has been deleted.`,
+            title: "Playlist Deleted",
+            description: `"${playlist.name}" has been deleted from the community.`,
         });
         router.push('/library');
         router.refresh();
       } else {
         toast({
             variant: "destructive",
-            title: "Secure Deletion Failed",
+            title: "Deletion Failed",
             description: result.message,
         });
       }
@@ -172,14 +171,14 @@ export default function PlaylistPage() {
           await deletePlaylist(playlist.id);
           toast({
               title: "Playlist Deleted",
-              description: `"${playlist.name}" has been deleted.`,
+              description: `"${playlist.name}" has been deleted from your library.`,
           });
           router.push('/library');
       } catch (error: any) {
           toast({
               variant: "destructive",
               title: "Deletion Failed",
-              description: error.message || "Could not delete playlist.",
+              description: error.message || "Could not delete the private playlist.",
           });
       }
     }
