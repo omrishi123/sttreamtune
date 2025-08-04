@@ -142,21 +142,31 @@ export default function PlaylistPage() {
   }
 
   const handleDeletePlaylist = async () => {
-    if (playlist) {
-      try {
+    if (!playlist) return;
+    
+    // Final check for permissions before sending the request
+    if (playlist.public && currentUser?.id !== playlist.ownerId) {
+        toast({
+            variant: "destructive",
+            title: "Permission Denied",
+            description: "You are not the owner of this playlist.",
+        });
+        return;
+    }
+
+    try {
         await deletePlaylist(playlist.id);
         toast({
-          title: "Playlist Deleted",
-          description: `"${playlist.name}" has been deleted.`,
+            title: "Playlist Deleted",
+            description: `"${playlist.name}" has been deleted.`,
         });
         router.push('/library');
-      } catch (error: any) {
+    } catch (error: any) {
         toast({
             variant: "destructive",
             title: "Deletion Failed",
             description: error.message || "Could not delete playlist. Please check permissions and try again.",
         });
-      }
     }
   };
 
@@ -240,3 +250,5 @@ export default function PlaylistPage() {
     </div>
   );
 }
+
+    
