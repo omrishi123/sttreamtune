@@ -7,15 +7,18 @@ import { AuthLayout } from "@/components/auth-layout";
 import { PlayerLayout } from "@/components/player-layout";
 import { onAuthChange } from "@/lib/auth";
 import type { User } from "@/lib/types";
-import { UserDataProvider, useUserData } from "@/context/user-data-context";
+import { UserDataProvider } from "@/context/user-data-context";
 import { PlayerProvider } from "@/context/player-context";
 import { Icons } from "./icons";
+import { useAppUpdate } from "@/hooks/use-app-update";
+import { UpdateDialog } from "./update-dialog";
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { showUpdateDialog, updateUrl, latestVersion } = useAppUpdate();
 
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
@@ -56,7 +59,14 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   return (
     <UserDataProvider>
       <PlayerProvider>
-        <PlayerLayout user={user}>{children}</PlayerLayout>
+        <PlayerLayout user={user}>
+          {children}
+          <UpdateDialog 
+            isOpen={showUpdateDialog} 
+            updateUrl={updateUrl} 
+            version={latestVersion} 
+          />
+        </PlayerLayout>
       </PlayerProvider>
     </UserDataProvider>
   );
