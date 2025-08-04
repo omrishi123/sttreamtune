@@ -1,0 +1,17 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /communityPlaylists/{playlistId} {
+      // Anyone can read community playlists
+      allow read: if true;
+
+      // Only authenticated users can create a playlist
+      allow create: if request.auth != null;
+
+      // Only the owner of a playlist can update or delete it
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+    }
+  }
+}
