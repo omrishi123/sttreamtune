@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { deletePlaylistSecurely } from "@/ai/flows/delete-playlist-flow";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
@@ -142,31 +143,45 @@ export default function PlaylistPage() {
   }
 
   const handleDeletePlaylist = async () => {
-    if (!playlist) return;
-    
-    // Final check for permissions before sending the request
-    if (playlist.public && currentUser?.id !== playlist.ownerId) {
-        toast({
-            variant: "destructive",
-            title: "Permission Denied",
-            description: "You are not the owner of this playlist.",
-        });
-        return;
-    }
+    if (!playlist || !currentUser) return;
 
-    try {
-        await deletePlaylist(playlist.id);
+    if (playlist.public) {
+      // Use the secure Genkit flow for public playlists
+      const result = await deletePlaylistSecurely({
+        playlistId: playlist.id,
+        userId: currentUser.id,
+      });
+
+      if (result.success) {
         toast({
-            title: "Playlist Deleted",
+            title: "Playlist Deleted (Securely)",
             description: `"${playlist.name}" has been deleted.`,
         });
         router.push('/library');
-    } catch (error: any) {
+        router.refresh();
+      } else {
         toast({
             variant: "destructive",
-            title: "Deletion Failed",
-            description: error.message || "Could not delete playlist. Please check permissions and try again.",
+            title: "Secure Deletion Failed",
+            description: result.message,
         });
+      }
+    } else {
+      // Use the existing client-side logic for private playlists
+      try {
+          await deletePlaylist(playlist.id);
+          toast({
+              title: "Playlist Deleted",
+              description: `"${playlist.name}" has been deleted.`,
+          });
+          router.push('/library');
+      } catch (error: any) {
+          toast({
+              variant: "destructive",
+              title: "Deletion Failed",
+              description: error.message || "Could not delete playlist.",
+          });
+      }
     }
   };
 
