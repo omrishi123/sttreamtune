@@ -22,7 +22,7 @@ interface UserDataContextType extends UserData {
   createPlaylist: (name: string, description: string, isPublic: boolean) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, trackId: string) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
-  deletePlaylist: (playlistId: string) => Promise<void>;
+  deletePlaylist: (playlistId: string) => Promise<{ success: boolean; message: string; }>;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
@@ -291,17 +291,20 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const deletePlaylist = async (playlistId: string) => {
+  const deletePlaylist = async (playlistId: string): Promise<{ success: boolean; message: string; }> => {
     const playlist = getPlaylistById(playlistId);
-    if (!playlist) return;
+    if (!playlist) return { success: false, message: 'Playlist not found.' };
 
     if (playlist.public) {
+        if (!currentUser || currentUser.id !== playlist.ownerId) {
+            return { success: false, message: 'Permission denied. You are not the owner.' };
+        }
       try {
         await deleteDoc(doc(db, "communityPlaylists", playlistId));
-        // Remove from local state to update UI immediately
-        setCommunityPlaylists(prev => prev.filter(p => p.id !== playlistId));
-      } catch (error) {
+        return { success: true, message: 'Playlist deleted successfully.' };
+      } catch (error: any) {
         console.error("Error deleting public playlist:", error);
+        return { success: false, message: error.message || 'Failed to delete public playlist.' };
       }
     } else {
       // It's a private playlist, remove from local state
@@ -309,6 +312,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         ...prev,
         playlists: prev.playlists.filter(p => p.id !== playlistId),
       }));
+      return { success: true, message: 'Playlist deleted successfully.' };
     }
   };
 

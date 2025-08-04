@@ -32,7 +32,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { secureDeletePlaylist } from "@/ai/flows/secure-delete-playlist-flow";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
@@ -143,16 +142,9 @@ export default function PlaylistPage() {
   }
 
   const handleDeletePlaylist = async () => {
-    if (!playlist || !currentUser || !playlist.public) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Cannot delete a non-public or invalid playlist.",
-      });
-      return;
-    }
-    
-    if (currentUser.id === 'guest') {
+    if (!playlist) return;
+
+    if (currentUser?.id === 'guest') {
        toast({
             variant: "destructive",
             title: "Login Required",
@@ -161,10 +153,7 @@ export default function PlaylistPage() {
         return;
     }
 
-    const result = await secureDeletePlaylist({
-        playlistId: playlist.id,
-        userId: currentUser.id,
-    });
+    const result = await deletePlaylist(playlist.id);
 
     if (result.success) {
         toast({
