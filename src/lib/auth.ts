@@ -23,7 +23,7 @@ const GUEST_USER: User = {
 
 // This function adapts a Firebase user to our application's User type.
 const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
-   // Check for locally stored photo first for this user
+   // Always prefer the locally stored photo for consistency, as Firebase Auth photoURL has size limits.
   const localPhoto = typeof window !== 'undefined' ? window.localStorage.getItem(`photoURL-${firebaseUser.uid}`) : null;
 
   return {
@@ -37,22 +37,15 @@ const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
 export const onAuthChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
-      // One-time profile sync for existing users
-      const localPhoto = typeof window !== 'undefined' ? window.localStorage.getItem(`photoURL-${firebaseUser.uid}`) : null;
-      const profileNeedsUpdate = !firebaseUser.displayName || (localPhoto && !firebaseUser.photoURL);
-
-      if (profileNeedsUpdate) {
+      // One-time profile sync for users who are missing a display name.
+      // We no longer sync the photoURL here to avoid the "URL too long" error.
+      if (!firebaseUser.displayName) {
         try {
-          const updates: { displayName?: string; photoURL?: string } = {};
-          if (!firebaseUser.displayName) updates.displayName = "User"; // Fallback name
-          if (localPhoto && !firebaseUser.photoURL) updates.photoURL = localPhoto;
-          
-          await updateProfile(firebaseUser, updates);
+          await updateProfile(firebaseUser, { displayName: "User" });
         } catch (error) {
-          console.error("Failed to sync user profile:", error);
+          console.error("Failed to set default display name for user:", error);
         }
       }
-      
       callback(adaptFirebaseUser(firebaseUser));
     } else {
       callback(GUEST_USER);
@@ -65,18 +58,10 @@ export const signUp = async (email: string, password: string, name: string, phot
   const user = userCredential.user;
 
   if (user) {
-    const profileUpdates: { displayName?: string; photoURL?: string } = {};
+    // We only update the display name here. Photo is handled in localStorage.
+    await updateProfile(user, { displayName: name });
 
-    if (name) {
-      profileUpdates.displayName = name;
-    }
-    
-    if (photoDataUrl) {
-      profileUpdates.photoURL = photoDataUrl;
-    }
-
-    await updateProfile(user, profileUpdates);
-
+    // Store the potentially long data URI in localStorage instead of the auth profile.
     if (photoDataUrl && typeof window !== 'undefined') {
       window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
     }
@@ -107,20 +92,19 @@ export const updateUserProfile = async (name: string, photoDataUrl: string | nul
     throw new Error("No user is signed in.");
   }
 
-  const profileUpdates: { displayName?: string, photoURL?: string } = {};
+  const profileUpdates: { displayName?: string } = {};
 
   if (name && name !== user.displayName) {
     profileUpdates.displayName = name;
   }
   
-  if (photoDataUrl) {
-    profileUpdates.photoURL = photoDataUrl;
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
-    }
-  }
-
+  // Update display name in Firebase Auth profile if it changed
   if (Object.keys(profileUpdates).length > 0) {
       await updateProfile(user, profileUpdates);
+  }
+
+  // Always handle photo updates in localStorage to avoid size limit errors.
+  if (photoDataUrl && typeof window !== 'undefined') {
+    window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
   }
 };
