@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,13 +20,13 @@ const isNewerVersion = (version1: string, version2: string) => {
         return false;
     }
 
-    const parts1 = version1.split('.');
-    const parts2 = version2.split('.');
+    const parts1 = version1.split('.').map(Number);
+    const parts2 = version2.split('.').map(Number);
     const len = Math.max(parts1.length, parts2.length);
 
     for (let i = 0; i < len; i++) {
-        const p1 = parseInt(parts1[i], 10) || 0;
-        const p2 = parseInt(parts2[i], 10) || 0;
+        const p1 = parts1[i] || 0;
+        const p2 = parts2[i] || 0;
 
         if (p2 > p1) return true;
         if (p1 > p2) return false;
@@ -54,17 +55,8 @@ export function useAppUpdate() {
           const data = docSnap.data();
           const remoteVersion = data.latestVersion;
           const url = data.updateUrl;
-
-          // --- LOGGING FOR DEBUGGING ---
-          console.log(`[UpdateCheck] Current App Version: ${CURRENT_VERSION}`);
-          console.log(`[UpdateCheck] Remote Version from Firebase: ${remoteVersion}`);
           
-          const newVersionAvailable = isNewerVersion(CURRENT_VERSION, remoteVersion);
-          console.log(`[UpdateCheck] Is newer version available? ${newVersionAvailable}`);
-          // --- END LOGGING ---
-          
-          if (remoteVersion && url && newVersionAvailable) {
-             console.log('[UpdateCheck] Triggering update dialog.');
+          if (remoteVersion && url && isNewerVersion(CURRENT_VERSION, remoteVersion)) {
              setLatestVersion(remoteVersion);
              setUpdateUrl(url);
              setShowUpdateDialog(true);
