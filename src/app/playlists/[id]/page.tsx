@@ -203,7 +203,7 @@ export default function PlaylistPage() {
 
 
   const isOwner = currentUser && playlist && playlist.public && playlist.ownerId === currentUser.id;
-  const isPotentiallyBroken = currentUser && currentUser.id !== 'guest' && playlist && playlist.public && playlist.ownerId !== currentUser.id;
+  const isPotentiallyBroken = currentUser && currentUser.id !== 'guest' && playlist && playlist.public && (!playlist.ownerId || playlist.ownerId !== currentUser.id);
 
 
   return (
