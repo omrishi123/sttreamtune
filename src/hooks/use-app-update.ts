@@ -60,7 +60,8 @@ export function useAppUpdate() {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const remoteVersion = data.latestVersion;
+          // Ensure we are reading the correct field from Firestore.
+          const remoteVersion = data.latestVersion; 
           const url = data.updateUrl;
           
           if (remoteVersion && url && isNewerVersion(CURRENT_VERSION, remoteVersion)) {
