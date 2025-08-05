@@ -38,7 +38,7 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
       // One-time profile sync for users who are missing a display name.
-      // We no longer sync the photoURL here to avoid the "URL too long" error.
+      // This is safe and does not cause the "URL too long" error.
       if (!firebaseUser.displayName) {
         try {
           await updateProfile(firebaseUser, { displayName: "User" });
