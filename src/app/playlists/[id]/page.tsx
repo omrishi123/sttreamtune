@@ -203,10 +203,9 @@ export default function PlaylistPage() {
 
 
   const isOwner = currentUser && playlist && playlist.public && playlist.ownerId === currentUser.id;
-  // A playlist is "broken" if it's public, the owner name matches the current user's name,
-  // but the ownerId does NOT match the current user's ID. This identifies old playlists
-  // that were created before the ownerId field was correctly populated.
-  const isPotentiallyBroken = currentUser && currentUser.id !== 'guest' && playlist && playlist.public && playlist.owner === currentUser.name && playlist.ownerId !== currentUser.id;
+  // A playlist is "broken" if it's public, the current user is logged in, and the ownerId is missing.
+  // This is a reliable way to detect old playlists that need repair.
+  const isPotentiallyBroken = currentUser && currentUser.id !== 'guest' && playlist && playlist.public && !playlist.ownerId;
 
 
   return (
