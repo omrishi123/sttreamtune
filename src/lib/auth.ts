@@ -35,8 +35,24 @@ const adaptFirebaseUser = (firebaseUser: FirebaseUser): User => {
 };
 
 export const onAuthChange = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, (firebaseUser) => {
+  return onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
+      // One-time profile sync for existing users
+      const localPhoto = typeof window !== 'undefined' ? window.localStorage.getItem(`photoURL-${firebaseUser.uid}`) : null;
+      const profileNeedsUpdate = !firebaseUser.displayName || (localPhoto && !firebaseUser.photoURL);
+
+      if (profileNeedsUpdate) {
+        try {
+          const updates: { displayName?: string; photoURL?: string } = {};
+          if (!firebaseUser.displayName) updates.displayName = "User"; // Fallback name
+          if (localPhoto && !firebaseUser.photoURL) updates.photoURL = localPhoto;
+          
+          await updateProfile(firebaseUser, updates);
+        } catch (error) {
+          console.error("Failed to sync user profile:", error);
+        }
+      }
+      
       callback(adaptFirebaseUser(firebaseUser));
     } else {
       callback(GUEST_USER);
@@ -49,23 +65,18 @@ export const signUp = async (email: string, password: string, name: string, phot
   const user = userCredential.user;
 
   if (user) {
-    // We create a profile object that we will use to update
     const profileUpdates: { displayName?: string; photoURL?: string } = {};
 
     if (name) {
       profileUpdates.displayName = name;
     }
     
-    // If a photo data URL was provided (from web or native), we use it.
     if (photoDataUrl) {
       profileUpdates.photoURL = photoDataUrl;
     }
 
-    // Now, update the profile in Firebase Authentication in one go.
     await updateProfile(user, profileUpdates);
 
-    // We can still use localStorage as a quick-access cache if desired,
-    // but the primary source of truth is now the Firebase Auth profile.
     if (photoDataUrl && typeof window !== 'undefined') {
       window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
     }
@@ -103,10 +114,8 @@ export const updateUserProfile = async (name: string, photoDataUrl: string | nul
   }
   
   if (photoDataUrl) {
-    // If a new photo is provided, we'll update it.
     profileUpdates.photoURL = photoDataUrl;
     if (typeof window !== 'undefined') {
-      // Also update localStorage for immediate UI changes.
       window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
     }
   }
