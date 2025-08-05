@@ -5,8 +5,9 @@ import type { User, UserData, Playlist, Track } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, writeBatch, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, writeBatch } from "firebase/firestore";
 import { removeTrackFromPublicPlaylist } from '@/ai/flows/update-playlist-flow';
+import { deletePublicPlaylist } from '@/ai/flows/delete-playlist-flow';
 import { useToast } from '@/hooks/use-toast';
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
@@ -285,19 +286,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   
   const deletePlaylist = async (playlistId: string): Promise<{ success: boolean; message: string; }> => {
     const playlist = getPlaylistById(playlistId);
-    if (!playlist) return { success: false, message: 'Playlist not found.' };
+    if (!playlist || !currentUser) return { success: false, message: 'Playlist or user not found.' };
 
     if (playlist.public) {
-        if (!currentUser || currentUser.id !== playlist.ownerId) {
-            return { success: false, message: 'Permission denied. You are not the owner.' };
-        }
-      try {
-        await deleteDoc(doc(db, "communityPlaylists", playlistId));
-        return { success: true, message: 'Playlist deleted successfully.' };
-      } catch (error: any) {
-        console.error("Error deleting public playlist:", error);
-        return { success: false, message: error.message || 'Failed to delete public playlist.' };
-      }
+        const result = await deletePublicPlaylist({
+          playlistId: playlistId,
+          userId: currentUser.id
+        });
+        return result;
     } else {
       // It's a private playlist, remove from local state
       setUserData(prev => ({
