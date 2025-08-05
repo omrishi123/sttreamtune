@@ -20,8 +20,15 @@ const isNewerVersion = (version1: string, version2: string) => {
         return false;
     }
 
-    const parts1 = version1.split('.').map(Number);
-    const parts2 = version2.split('.').map(Number);
+    const parts1 = version1.split('.').map(part => parseInt(part, 10));
+    const parts2 = version2.split('.').map(part => parseInt(part, 10));
+    
+    // Check for non-numeric parts which would result in NaN
+    if (parts1.some(isNaN) || parts2.some(isNaN)) {
+        console.error('Non-numeric version parts detected:', { version1, version2 });
+        return false;
+    }
+
     const len = Math.max(parts1.length, parts2.length);
 
     for (let i = 0; i < len; i++) {
