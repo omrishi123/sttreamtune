@@ -64,7 +64,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           <UpdateDialog 
             isOpen={showUpdateDialog} 
             updateUrl={updateUrl} 
-            version={latestVersion} 
+            latestVersion={latestVersion} 
           />
         </PlayerLayout>
       </PlayerProvider>

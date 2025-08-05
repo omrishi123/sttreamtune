@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,10 +11,6 @@ const CURRENT_VERSION = pjson.version;
 /**
  * A robust version comparison function.
  * Returns true if version2 is strictly greater than version1.
- * Examples:
- * isNewerVersion('1.0.1', '1.0.2') // true
- * isNewerVersion('1.0.2', '1.0.2') // false
- * isNewerVersion('1.1.0', '1.0.2') // false
  */
 const isNewerVersion = (version1: string, version2: string) => {
     // Ensure inputs are valid strings
@@ -60,8 +57,7 @@ export function useAppUpdate() {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // Ensure we are reading the correct field from Firestore.
-          const remoteVersion = data.latestVersion; 
+          const remoteVersion = data.latestVersion;
           const url = data.updateUrl;
           
           if (remoteVersion && url && isNewerVersion(CURRENT_VERSION, remoteVersion)) {

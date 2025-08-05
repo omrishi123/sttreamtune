@@ -17,10 +17,10 @@ import { Button } from '@/components/ui/button';
 interface UpdateDialogProps {
   isOpen: boolean;
   updateUrl: string | null;
-  version: string | null;
+  latestVersion: string | null;
 }
 
-export function UpdateDialog({ isOpen, updateUrl, version }: UpdateDialogProps) {
+export function UpdateDialog({ isOpen, updateUrl, latestVersion }: UpdateDialogProps) {
     const [open, setOpen] = useState(isOpen);
 
     useEffect(() => {
@@ -40,7 +40,7 @@ export function UpdateDialog({ isOpen, updateUrl, version }: UpdateDialogProps) 
           <AlertDialogHeader>
             <AlertDialogTitle>Update Available</AlertDialogTitle>
             <AlertDialogDescription>
-              A new version ({version}) of StreamTune is available. Please update to the latest version for the best experience.
+              A new version ({latestVersion}) of StreamTune is available. Please update to the latest version for the best experience.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
