@@ -49,13 +49,24 @@ export const signUp = async (email: string, password: string, name: string, phot
   const user = userCredential.user;
 
   if (user) {
-    await updateProfile(user, {
-      displayName: name,
-    });
+    // We create a profile object that we will use to update
+    const profileUpdates: { displayName?: string; photoURL?: string } = {};
 
+    if (name) {
+      profileUpdates.displayName = name;
+    }
+    
+    // If a photo data URL was provided (from web or native), we use it.
+    if (photoDataUrl) {
+      profileUpdates.photoURL = photoDataUrl;
+    }
+
+    // Now, update the profile in Firebase Authentication in one go.
+    await updateProfile(user, profileUpdates);
+
+    // We can still use localStorage as a quick-access cache if desired,
+    // but the primary source of truth is now the Firebase Auth profile.
     if (photoDataUrl && typeof window !== 'undefined') {
-      // Save the received Base64 Data URL to localStorage.
-      // The native app provides this data, or the web file input creates it.
       window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
     }
   }
@@ -85,17 +96,20 @@ export const updateUserProfile = async (name: string, photoDataUrl: string | nul
     throw new Error("No user is signed in.");
   }
 
-  const profileUpdates: { displayName?: string } = {};
+  const profileUpdates: { displayName?: string, photoURL?: string } = {};
 
   if (name && name !== user.displayName) {
     profileUpdates.displayName = name;
   }
   
-  if (photoDataUrl && typeof window !== 'undefined') {
-    // Save the new photo Data URL to localStorage.
-    window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
+  if (photoDataUrl) {
+    // If a new photo is provided, we'll update it.
+    profileUpdates.photoURL = photoDataUrl;
+    if (typeof window !== 'undefined') {
+      // Also update localStorage for immediate UI changes.
+      window.localStorage.setItem(`photoURL-${user.uid}`, photoDataUrl);
+    }
   }
-
 
   if (Object.keys(profileUpdates).length > 0) {
       await updateProfile(user, profileUpdates);
