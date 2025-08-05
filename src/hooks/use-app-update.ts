@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,16 +7,24 @@ import pjson from '../../package.json';
 
 const CURRENT_VERSION = pjson.version;
 
-// A robust version comparison function.
-// Returns true if version2 is greater than version1.
+/**
+ * A robust version comparison function.
+ * Returns true if version2 is strictly greater than version1.
+ * Examples:
+ * isNewerVersion('1.0.1', '1.0.2') // true
+ * isNewerVersion('1.0.2', '1.0.2') // false
+ * isNewerVersion('1.1.0', '1.0.2') // false
+ */
 const isNewerVersion = (version1: string, version2: string) => {
+    // Ensure inputs are valid strings
     if (typeof version1 !== 'string' || typeof version2 !== 'string') {
         return false;
     }
+
     const parts1 = version1.split('.').map(v => parseInt(v, 10));
     const parts2 = version2.split('.').map(v => parseInt(v, 10));
 
-    // Ensure all parts are numbers
+    // Ensure all parts are valid numbers
     if (parts1.some(isNaN) || parts2.some(isNaN)) {
         return false;
     }
@@ -31,7 +38,7 @@ const isNewerVersion = (version1: string, version2: string) => {
         if (p1 > p2) return false;
     }
     
-    // a === b, so not newer
+    // Versions are identical
     return false;
 }
 
@@ -41,6 +48,11 @@ export function useAppUpdate() {
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
   useEffect(() => {
+    // This check ensures the update logic ONLY runs inside the native Android app.
+    if (typeof window.Android === 'undefined') {
+      return;
+    }
+
     const checkForUpdates = async () => {
       try {
         const configRef = doc(db, 'app-config', 'version');
