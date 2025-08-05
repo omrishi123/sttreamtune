@@ -203,7 +203,8 @@ export default function PlaylistPage() {
 
 
   const isOwner = currentUser && playlist && playlist.public && playlist.ownerId === currentUser.id;
-  const isPotentiallyBroken = currentUser && playlist && playlist.public && playlist.owner === currentUser.name && playlist.ownerId !== currentUser.id;
+  const isPotentiallyBroken = currentUser && currentUser.id !== 'guest' && playlist && playlist.public && playlist.ownerId !== currentUser.id;
+
 
   return (
     <div className="space-y-8">
@@ -242,7 +243,7 @@ export default function PlaylistPage() {
              {isPotentiallyBroken && (
                 <Button size="lg" variant="destructive" onClick={handleRepairPlaylist} disabled={isRepairing}>
                     {isRepairing ? <Icons.spinner className="mr-2 h-5 w-5 animate-spin" /> : <Wrench className="mr-2 h-5 w-5" />}
-                    {isRepairing ? "Repairing..." : "Repair"}
+                    {isRepairing ? "Repairing..." : "Take Ownership"}
                 </Button>
              )}
              {isOwner && (

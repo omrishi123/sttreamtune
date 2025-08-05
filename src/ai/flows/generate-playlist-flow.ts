@@ -105,7 +105,7 @@ const generatePlaylistFlow = ai.defineFlow(
       public: input.isPublic,
       trackIds: foundTracks.map(track => track.id),
       coverArt: coverArtUrl, // Use the first track's artwork or a placeholder.
-      ownerId: input.userId,
+      ownerId: input.userId, // Ensure the ownerId is always set
       'data-ai-hint': suggestion.coverArtPrompt,
     };
     

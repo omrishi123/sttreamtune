@@ -105,7 +105,7 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
         trackIds: tracks.map(t => t.id),
         public: isPublic,
         owner: user.name,
-        ownerId: user.id
+        ownerId: user.id, // Ensure ownerId is always set
       };
 
 
