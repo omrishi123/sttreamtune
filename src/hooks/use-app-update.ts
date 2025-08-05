@@ -8,11 +8,20 @@ import pjson from '../../package.json';
 
 const CURRENT_VERSION = pjson.version;
 
-// A simple version comparison function.
+// A robust version comparison function.
 // Returns true if version2 is greater than version1.
 const isNewerVersion = (version1: string, version2: string) => {
-    const parts1 = version1.split('.').map(Number);
-    const parts2 = version2.split('.').map(Number);
+    if (typeof version1 !== 'string' || typeof version2 !== 'string') {
+        return false;
+    }
+    const parts1 = version1.split('.').map(v => parseInt(v, 10));
+    const parts2 = version2.split('.').map(v => parseInt(v, 10));
+
+    // Ensure all parts are numbers
+    if (parts1.some(isNaN) || parts2.some(isNaN)) {
+        return false;
+    }
+
     const len = Math.max(parts1.length, parts2.length);
 
     for (let i = 0; i < len; i++) {
@@ -21,6 +30,8 @@ const isNewerVersion = (version1: string, version2: string) => {
         if (p2 > p1) return true;
         if (p1 > p2) return false;
     }
+    
+    // a === b, so not newer
     return false;
 }
 
@@ -46,9 +57,6 @@ export function useAppUpdate() {
              setShowUpdateDialog(true);
           }
         } else {
-            // You can create this document in your Firestore console
-            // Collection: 'app-config', Document ID: 'version'
-            // Fields: latestVersion (string), updateUrl (string)
             console.log("No update configuration found in Firestore.");
         }
       } catch (error) {
