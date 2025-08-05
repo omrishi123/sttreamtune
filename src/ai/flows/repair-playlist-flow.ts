@@ -12,11 +12,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { googleAI } from '@genkit-ai/googleai';
-
-// Initialize Genkit with a dummy plugin to allow defining a flow.
-// This flow doesn't call an AI model, but needs the structure.
-ai.plugin(googleAI());
 
 const RepairPlaylistInputSchema = z.object({
   playlistId: z.string().describe('The ID of the playlist document in Firestore to repair.'),
