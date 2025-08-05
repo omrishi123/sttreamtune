@@ -10,24 +10,23 @@ const CURRENT_VERSION = pjson.version;
 /**
  * A robust version comparison function.
  * Returns true if version2 is strictly greater than version1.
+ * Handles different lengths and non-numeric parts.
  */
 const isNewerVersion = (version1: string, version2: string) => {
-    if (typeof version1 !== 'string' || typeof version2 !== 'string') {
+    // Basic validation
+    if (typeof version1 !== 'string' || typeof version2 !== 'string' || !version1 || !version2) {
+        console.error('Invalid versions provided for comparison:', version1, version2);
         return false;
     }
 
-    const parts1 = version1.split('.').map(v => parseInt(v, 10));
-    const parts2 = version2.split('.').map(v => parseInt(v, 10));
-
-    if (parts1.some(isNaN) || parts2.some(isNaN)) {
-        return false;
-    }
-
+    const parts1 = version1.split('.');
+    const parts2 = version2.split('.');
     const len = Math.max(parts1.length, parts2.length);
 
     for (let i = 0; i < len; i++) {
-        const p1 = parts1[i] || 0;
-        const p2 = parts2[i] || 0;
+        const p1 = parseInt(parts1[i], 10) || 0;
+        const p2 = parseInt(parts2[i], 10) || 0;
+
         if (p2 > p1) return true;
         if (p1 > p2) return false;
     }
@@ -55,8 +54,17 @@ export function useAppUpdate() {
           const data = docSnap.data();
           const remoteVersion = data.latestVersion;
           const url = data.updateUrl;
+
+          // --- LOGGING FOR DEBUGGING ---
+          console.log(`[UpdateCheck] Current App Version: ${CURRENT_VERSION}`);
+          console.log(`[UpdateCheck] Remote Version from Firebase: ${remoteVersion}`);
           
-          if (remoteVersion && url && isNewerVersion(CURRENT_VERSION, remoteVersion)) {
+          const newVersionAvailable = isNewerVersion(CURRENT_VERSION, remoteVersion);
+          console.log(`[UpdateCheck] Is newer version available? ${newVersionAvailable}`);
+          // --- END LOGGING ---
+          
+          if (remoteVersion && url && newVersionAvailable) {
+             console.log('[UpdateCheck] Triggering update dialog.');
              setLatestVersion(remoteVersion);
              setUpdateUrl(url);
              setShowUpdateDialog(true);
