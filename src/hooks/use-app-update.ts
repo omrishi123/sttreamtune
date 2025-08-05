@@ -63,15 +63,10 @@ export function useAppUpdate() {
           const remoteVersion = data.latestVersion;
           const url = data.updateUrl;
           
-          console.log(`[AppUpdate] Current Version: ${CURRENT_VERSION}, Remote Version: ${remoteVersion}`);
-
           if (remoteVersion && url && isNewerVersion(CURRENT_VERSION, remoteVersion)) {
-             console.log('[AppUpdate] New version found! Showing dialog.');
              setLatestVersion(remoteVersion);
              setUpdateUrl(url);
              setShowUpdateDialog(true);
-          } else {
-             console.log('[AppUpdate] No new version found or versions are equal.');
           }
         } else {
             console.log("No update configuration found in Firestore.");
