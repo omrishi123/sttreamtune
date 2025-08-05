@@ -106,6 +106,7 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
          // to the first track's artwork by the flow.
          const publicPlaylistData = {
           ...playlistToSave,
+          ownerId: user.id, // Ensure ownerId is always set correctly
           tracks: result.tracks,
           createdAt: serverTimestamp(),
          }
