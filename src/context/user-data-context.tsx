@@ -6,6 +6,8 @@ import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, writeBatch, deleteDoc } from "firebase/firestore";
+import { removeTrackFromPublicPlaylist } from '@/ai/flows/update-playlist-flow';
+import { useToast } from '@/hooks/use-toast';
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
 
@@ -21,7 +23,7 @@ interface UserDataContextType extends UserData {
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description: string, isPublic: boolean) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, trackId: string) => void;
-  removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
+  removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<{ success: boolean; message: string; }>;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
   addTrackToCache: (track: Track) => void;
@@ -72,6 +74,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
   const [communityPlaylists, setCommunityPlaylists] = useState<Playlist[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const { toast } = useToast();
 
   // Subscribe to auth changes
   useEffect(() => {
@@ -250,33 +253,22 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
   const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
     const playlist = getPlaylistById(playlistId);
-    if (!playlist) return;
+    if (!playlist || !currentUser) return;
 
-    // For public playlists in Firestore
+    // For public playlists in Firestore - use the secure flow
     if (playlist.public) {
-      const playlistRef = doc(db, 'communityPlaylists', playlistId);
-      // Find the full track object to remove it from the 'tracks' array
-      const trackToRemove = playlist.tracks?.find(t => t.id === trackId);
-      if (!trackToRemove) {
-        console.error("Track not found in the public playlist's embedded tracks array.");
-        // As a fallback, still try to remove the ID
-         try {
-            await updateDoc(playlistRef, {
-                trackIds: arrayRemove(trackId),
-            });
-        } catch (error) {
-            console.error("Error removing track ID from public playlist (fallback):", error);
-        }
-        return;
-      }
-      try {
-        await updateDoc(playlistRef, {
-            tracks: arrayRemove(trackToRemove),
-            trackIds: arrayRemove(trackId)
+        const result = await removeTrackFromPublicPlaylist({
+            playlistId: playlistId,
+            trackIdToRemove: trackId,
+            userId: currentUser.id
         });
-      } catch (error) {
-        console.error("Error removing track from public playlist:", error);
-      }
+        if (!result.success) {
+            toast({
+                variant: 'destructive',
+                title: 'Update Failed',
+                description: result.message
+            });
+        }
     } 
     // For private playlists in local storage
     else {
