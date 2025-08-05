@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +12,6 @@ const CURRENT_VERSION = pjson.version;
  * Returns true if version2 is strictly greater than version1.
  */
 const isNewerVersion = (version1: string, version2: string) => {
-    // Ensure inputs are valid strings
     if (typeof version1 !== 'string' || typeof version2 !== 'string') {
         return false;
     }
@@ -21,7 +19,6 @@ const isNewerVersion = (version1: string, version2: string) => {
     const parts1 = version1.split('.').map(v => parseInt(v, 10));
     const parts2 = version2.split('.').map(v => parseInt(v, 10));
 
-    // Ensure all parts are valid numbers
     if (parts1.some(isNaN) || parts2.some(isNaN)) {
         return false;
     }
@@ -35,7 +32,6 @@ const isNewerVersion = (version1: string, version2: string) => {
         if (p1 > p2) return false;
     }
     
-    // Versions are identical
     return false;
 }
 
