@@ -199,9 +199,9 @@ export default function PlaylistPage() {
   };
 
   // User can edit if it's a private playlist, or if it's a public playlist they own.
-  const canEdit = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : true);
-  // A playlist is broken if it's public and the ownerId is missing.
-  const isBroken = currentUser && playlist.public && !playlist.ownerId && currentUser.id !== 'guest';
+  const canEdit = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : !playlist.public);
+  // A playlist is broken if it's public, has no ownerId, and the user is logged in (not a guest).
+  const isBroken = currentUser?.id !== 'guest' && playlist.public && !playlist.ownerId;
 
 
   return (
