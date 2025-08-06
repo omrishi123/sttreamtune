@@ -30,6 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
 
@@ -199,7 +200,7 @@ export default function PlaylistPage() {
   };
 
   // User can edit if it's a private playlist, or if it's a public playlist they own.
-  const canEdit = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : !playlist.public);
+  const canEdit = currentUser && playlist && (!playlist.public || playlist.ownerId === currentUser.id);
   // A playlist is broken if it's public, has no ownerId, and the user is logged in (not a guest).
   const isBroken = currentUser?.id !== 'guest' && playlist.public && !playlist.ownerId;
 
