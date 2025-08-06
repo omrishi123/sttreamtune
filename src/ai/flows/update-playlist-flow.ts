@@ -56,20 +56,22 @@ const updatePlaylistFlow = ai.defineFlow(
             return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
         }
 
+        // Find the full track object to remove from the 'tracks' array
         const trackToRemove = playlistData.tracks?.find(t => t.id === trackIdToRemove);
         
-        if (!trackToRemove) {
-            // Fallback if the track object isn't found, just try to remove the ID.
-            await updateDoc(playlistRef, {
-                trackIds: arrayRemove(trackIdToRemove),
-            });
-             return { success: true, message: 'Track ID removed from playlist.' };
+        const updates: any = {
+            trackIds: arrayRemove(trackIdToRemove), // Always remove the ID from the trackIds array
+        };
+
+        if (trackToRemove) {
+            // If the track object is found, remove it from the tracks array as well
+            updates.tracks = arrayRemove(trackToRemove);
+        } else {
+             // If we can't find the track object, we should still proceed with removing the ID
+             console.warn(`Track object with id ${trackIdToRemove} not found in playlist ${playlistId}, but removing from trackIds.`);
         }
 
-        await updateDoc(playlistRef, {
-            tracks: arrayRemove(trackToRemove),
-            trackIds: arrayRemove(trackIdToRemove),
-        });
+        await updateDoc(playlistRef, updates);
 
         return { success: true, message: 'Track successfully removed from playlist.' };
     } catch (error: any) {

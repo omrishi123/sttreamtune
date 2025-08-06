@@ -110,6 +110,7 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
           tracks: result.tracks,
           createdAt: serverTimestamp(),
          }
+         // Firestore will generate an ID, we don't need to add it to local state as the listener will pick it up
          await addDoc(collection(db, "communityPlaylists"), publicPlaylistData);
       } else {
         // For private playlists, add the version with the (potentially AI-generated) cover art
