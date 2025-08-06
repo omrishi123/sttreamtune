@@ -7,7 +7,7 @@ import { getTracksForPlaylist, getYoutubePlaylistDetails } from "@/ai/flows/get-
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play, Share2, MoreHorizontal, Trash2 } from "lucide-react";
+import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, Wrench } from "lucide-react";
 import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState, useCallback } from "react";
@@ -30,8 +30,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
 
 const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
 
@@ -46,6 +46,7 @@ export default function PlaylistPage() {
   const [playlist, setPlaylist] = useState<Playlist | undefined | null>(undefined);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRepairing, setIsRepairing] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
@@ -172,7 +173,36 @@ export default function PlaylistPage() {
     }
   };
 
-  const isOwner = currentUser && playlist && playlist.public && playlist.ownerId === currentUser.id;
+  const handleRepairPlaylist = async () => {
+    if (!playlist || !currentUser || currentUser.id === 'guest') return;
+    setIsRepairing(true);
+    try {
+      const result = await repairPlaylist({ playlistId: playlist.id, userId: currentUser.id });
+      if (result.success) {
+        toast({
+          title: "Playlist Repaired!",
+          description: "You now have full control over this playlist.",
+        });
+        fetchPlaylistData(); // Re-fetch data to update the UI
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Repair Failed",
+        description: error.message || "Could not repair the playlist. Please try again.",
+      });
+    } finally {
+      setIsRepairing(false);
+    }
+  };
+
+  // User can edit if it's a private playlist, or if it's a public playlist they own.
+  const canEdit = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : true);
+  // A playlist is broken if it's public and the ownerId is missing.
+  const isBroken = currentUser && playlist.public && !playlist.ownerId && currentUser.id !== 'guest';
+
 
   return (
     <div className="space-y-8">
@@ -208,7 +238,13 @@ export default function PlaylistPage() {
                 <Share2 className="mr-2 h-5 w-5"/>
                 Share
              </Button>
-             {isOwner && (
+             {isBroken && (
+                <Button size="lg" variant="destructive" onClick={handleRepairPlaylist} disabled={isRepairing}>
+                  <Wrench className="mr-2 h-5 w-5"/>
+                  {isRepairing ? 'Repairing...' : 'Repair'}
+                </Button>
+              )}
+             {canEdit && (
                 <AlertDialog>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
