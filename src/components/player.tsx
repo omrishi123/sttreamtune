@@ -45,7 +45,8 @@ export function Player() {
     progress,
     handleSeek,
     currentTime,
-    duration
+    duration,
+    setSleepTimer,
   } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
@@ -70,13 +71,11 @@ export function Player() {
     }
   };
 
-  const handleSetSleepTimer = (duration: number, label: string) => {
-    if (window.Android?.setSleepTimer) {
-      window.Android.setSleepTimer(duration);
-    }
+  const handleSetSleepTimer = (durationMillis: number, label: string) => {
+    setSleepTimer(durationMillis);
     toast({
-      title: "Sleep Timer Set",
-      description: `Playback will stop in ${label}.`,
+      title: label === 'Off' ? "Sleep Timer Off" : "Sleep Timer Set",
+      description: label !== 'Off' ? `Playback will stop in ${label}.` : `The sleep timer has been turned off.`,
     });
   };
   
@@ -246,7 +245,7 @@ export function Player() {
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
                  <DropdownMenuItem onClick={() => {
                   const remainingTime = (duration - currentTime) * 1000;
-                  handleSetSleepTimer(remainingTime, "end of song");
+                  handleSetSleepTimer(remainingTime > 0 ? remainingTime : 0, "end of song");
                 }}>
                   End of song
                 </DropdownMenuItem>

@@ -4,7 +4,6 @@
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect, useCallback } from 'react';
 import type { Track, Playlist } from '@/lib/types';
 import YouTube from 'react-youtube';
-import { useToast } from "@/hooks/use-toast";
 
 // Extend the window type to include our optional AndroidBridge and callbacks
 declare global {
@@ -37,6 +36,7 @@ interface PlayerContextType {
   clearQueue: () => void;
   currentTime: number;
   duration: number;
+  setSleepTimer: (durationInMillis: number) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -53,19 +53,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   
+  const [sleepTimerId, setSleepTimerId] = useState<NodeJS.Timeout | null>(null);
   const playerRef = useRef<YouTube | null>(null);
   const queueRef = useRef(queue);
-  const isPlayingRef = useRef(isPlaying);
-  const { toast } = useToast();
   
   useEffect(() => {
     queueRef.current = queue;
   }, [queue]);
   
-  useEffect(() => {
-    isPlayingRef.current = isPlaying;
-  }, [isPlaying]);
-
 
   const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => {
       if (typeof state.isPlaying === 'boolean') {
@@ -95,8 +90,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     window.updateFromNative = handleNativeUpdate;
     return () => {
       delete (window as any).updateFromNative;
+      if (sleepTimerId) clearTimeout(sleepTimerId);
     };
-  }, [handleNativeUpdate]);
+  }, [handleNativeUpdate, sleepTimerId]);
 
   // This effect handles the automatic timeline progress
   useEffect(() => {
@@ -310,6 +306,28 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       event.target.playVideo();
     }
   }
+
+  const setSleepTimer = (durationInMillis: number) => {
+    // Always clear any existing web-based timer
+    if (sleepTimerId) {
+      clearTimeout(sleepTimerId);
+      setSleepTimerId(null);
+    }
+
+    // Use native timer if available
+    if (window.Android?.setSleepTimer) {
+      window.Android.setSleepTimer(durationInMillis);
+      return;
+    }
+
+    // Fallback to web-based timer
+    if (durationInMillis > 0) {
+      const newTimerId = setTimeout(() => {
+        pause();
+      }, durationInMillis);
+      setSleepTimerId(newTimerId);
+    }
+  };
   
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -329,7 +347,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     removeTrackFromQueue,
     clearQueue,
     currentTime,
-    duration
+    duration,
+    setSleepTimer
   };
 
   if (!isMounted) {
