@@ -110,7 +110,8 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
 
 
       if(isPublic) {
-        // Firestore will generate an ID, we don't need to add to local state as the listener will pick it up
+        // Firestore will generate an ID. We don't save this locally because the
+        // real-time listener in UserDataProvider will automatically add it.
         await addDoc(collection(db, "communityPlaylists"), {
           ...importedPlaylistData,
           tracks: tracks, // Embed full track objects

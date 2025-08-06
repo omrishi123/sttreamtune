@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to securely update a public playlist.
@@ -11,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Playlist } from '@/lib/types';
+import type { Playlist, Track } from '@/lib/types';
 
 const UpdatePlaylistInputSchema = z.object({
   playlistId: z.string().describe('The ID of the playlist document in Firestore.'),
