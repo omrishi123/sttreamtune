@@ -12,28 +12,133 @@ import { useUserData } from "@/context/user-data-context";
 import { PlaylistCard } from "@/components/playlist-card";
 import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Sparkles } from "lucide-react";
-import { Playlist, User } from "@/lib/types";
+import { Plus, Upload, Sparkles, Smartphone } from "lucide-react";
+import { Playlist, User, Track } from "@/lib/types";
 import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
 import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
 import { onAuthChange } from '@/lib/auth';
+import { TrackList } from '@/components/track-list';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePlayer } from '@/context/player-context';
 
-const PlaylistGrid = ({ playlists }: { playlists: Playlist[] }) => {
-    if (playlists.length === 0) {
+// Extend the window type to include our optional AndroidBridge and the new callback
+declare global {
+  interface Window {
+    Android?: {
+      getLocalTracks: () => void;
+    };
+    updateLocalTracks?: (jsonString: string) => void;
+  }
+}
+
+
+const PlaylistGrid = ({ playlists, title }: { playlists: Playlist[], title?: string }) => {
+    if (playlists.length === 0 && !title) {
         return (
             <div className="text-center py-10 col-span-full">
                 <p className="text-muted-foreground">No playlists in this section.</p>
             </div>
         );
     }
+     if (playlists.length === 0 && title) {
+        return null;
+    }
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4">
-            {playlists.map((playlist) => (
-                <PlaylistCard key={playlist.id} playlist={playlist} />
-            ))}
+        <div className="mt-8">
+            {title && <h2 className="text-xl font-bold font-headline mb-4">{title}</h2>}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4">
+                {playlists.map((playlist) => (
+                    <PlaylistCard key={playlist.id} playlist={playlist} />
+                ))}
+            </div>
         </div>
     );
 };
+
+const LocalMusicTab = () => {
+    const [localTracks, setLocalTracks] = useState<Track[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isNative, setIsNative] = useState(false);
+    const { setQueueAndPlay } = usePlayer();
+
+    useEffect(() => {
+        setIsNative(!!window.Android?.getLocalTracks);
+
+        window.updateLocalTracks = (jsonString: string) => {
+            try {
+                const tracks = JSON.parse(jsonString);
+                const formattedTracks: Track[] = tracks.map((t: any) => ({
+                    id: t.uri, // Use URI as a unique ID for local files
+                    youtubeVideoId: '', // Not a youtube video
+                    title: t.title || 'Unknown Title',
+                    artist: t.artist || 'Unknown Artist',
+                    album: t.album || 'Unknown Album',
+                    artwork: t.artwork || 'https://i.postimg.cc/SswWC87w/streamtune.png',
+                    duration: Math.floor(t.duration / 1000), // Convert ms to seconds
+                    isLocal: true,
+                }));
+                setLocalTracks(formattedTracks);
+            } catch (error) {
+                console.error("Failed to parse local tracks:", error);
+            }
+            setIsLoading(false);
+        };
+        
+        if (window.Android?.getLocalTracks) {
+            window.Android.getLocalTracks();
+        } else {
+            setIsLoading(false);
+        }
+
+        return () => {
+            delete window.updateLocalTracks;
+        }
+    }, []);
+    
+    const localFilesPlaylist: Playlist = {
+        id: "local-files",
+        name: "Local Music",
+        description: "Music on this device",
+        owner: "You",
+        public: false,
+        trackIds: localTracks.map(t => t.id),
+        tracks: localTracks,
+        coverArt: "https://placehold.co/300x300.png",
+        'data-ai-hint': 'smartphone music'
+    };
+
+    if (!isNative) {
+        return (
+            <div className="text-center py-16 text-muted-foreground bg-muted/50 rounded-lg mt-6">
+                <Smartphone className="mx-auto h-12 w-12 mb-4" />
+                <h3 className="text-lg font-semibold text-foreground">Local Playback Not Available</h3>
+                <p className="mt-2 max-w-md mx-auto">This feature is only available in the StreamTune Android app. Install the app to play music directly from your device.</p>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return <div className="mt-6 space-y-2">
+            {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>;
+    }
+
+    if (localTracks.length === 0) {
+        return (
+            <div className="text-center py-16 text-muted-foreground bg-muted/50 rounded-lg mt-6">
+                <h3 className="text-lg font-semibold text-foreground">No Music Found</h3>
+                <p>We couldn't find any music files on your device.</p>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="mt-6">
+            <TrackList tracks={localTracks} playlist={localFilesPlaylist} />
+        </div>
+    );
+};
+
 
 export default function LibraryPage() {
   const { playlists: userPrivatePlaylists, likedSongs, getTrackById, communityPlaylists } = useUserData();
@@ -116,31 +221,29 @@ export default function LibraryPage() {
       <Tabs defaultValue="playlists">
         <TabsList>
           <TabsTrigger value="playlists">Playlists</TabsTrigger>
+          <TabsTrigger value="device">On this Device</TabsTrigger>
           <TabsTrigger value="artists" disabled>Artists</TabsTrigger>
           <TabsTrigger value="albums" disabled>Albums</TabsTrigger>
         </TabsList>
+
         <TabsContent value="playlists" className="mt-6 space-y-8">
           <PlaylistGrid playlists={defaultPlaylists} />
           
-          {currentUser?.id !== 'guest' && (
+          {currentUser?.id !== 'guest' ? (
               <>
-                <div className="mt-8">
-                    <h2 className="text-xl font-bold font-headline mb-4">Your Public Playlists</h2>
-                    <PlaylistGrid playlists={userPublicPlaylists} />
-                </div>
-
-                <div className="mt-8">
-                    <h2 className="text-xl font-bold font-headline mb-4">Your Private Playlists</h2>
-                    <PlaylistGrid playlists={processedUserPrivatePlaylists} />
-                </div>
+                <PlaylistGrid playlists={userPublicPlaylists} title="Your Public Playlists" />
+                <PlaylistGrid playlists={processedUserPrivatePlaylists} title="Your Private Playlists" />
               </>
-          )}
-
-           {currentUser?.id === 'guest' && (
+          ) : (
              <PlaylistGrid playlists={processedUserPrivatePlaylists} />
-           )}
+          )}
           
         </TabsContent>
+
+        <TabsContent value="device">
+            <LocalMusicTab />
+        </TabsContent>
+
       </Tabs>
     </div>
   );

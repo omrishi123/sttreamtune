@@ -10,6 +10,7 @@ export interface Track {
   artwork: string;
   duration: number; // in seconds
   'data-ai-hint'?: string;
+  isLocal?: boolean; // To distinguish between youtube and local tracks
 }
 
 export interface Playlist {

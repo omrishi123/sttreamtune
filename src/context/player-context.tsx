@@ -10,6 +10,7 @@ declare global {
   interface Window {
     Android?: {
       startPlayback: (playlistJson: string, currentIndex: number) => void;
+      startLocalPlayback: (playlistJson: string, currentIndex: number) => void;
       play: () => void;
       pause: () => void;
       seekTo: (positionInSeconds: number) => void;
@@ -79,7 +80,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           const newTrack = currentQueue[state.newSongIndex];
           if (newTrack) {
               setCurrentTrack(newTrack);
-              setCurrentTime(0);
+              // Reset time for new track, unless native provides it
+              setCurrentTime(state.currentTime !== undefined ? state.currentTime : 0);
               setDuration(newTrack.duration);
           }
       }
@@ -97,7 +99,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   // This effect handles the automatic timeline progress
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
-    if (isPlaying && duration > 0) {
+    if (isPlaying && duration > 0 && !isNativePlayback) {
       timer = setInterval(() => {
         setCurrentTime((prevTime) => {
           if (prevTime + 1 >= duration) {
@@ -113,7 +115,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         clearInterval(timer);
       }
     };
-  }, [isPlaying, duration]);
+  }, [isPlaying, duration, isNativePlayback]);
 
 
   const updateMediaSession = () => {
@@ -161,7 +163,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [currentTrack, isNativePlayback]);
 
 
-  const playSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
+  const playYoutubeSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
       const currentIndex = currentQueue.findIndex(t => t.id === trackToPlay.id);
       if (currentIndex === -1) return;
 
@@ -173,15 +175,31 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       }));
 
       const playlistJson = JSON.stringify(playlistForNative);
-
+      
       if (window.Android?.startPlayback) {
           setIsNativePlayback(true);
-          window.Android.startPlayback(
-            playlistJson,
-            currentIndex
-          );
+          window.Android.startPlayback(playlistJson, currentIndex);
       }
   };
+  
+  const playLocalSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
+      const currentIndex = currentQueue.findIndex(t => t.id === trackToPlay.id);
+      if (currentIndex === -1) return;
+
+      const playlistForNative = currentQueue.map(t => ({
+          uri: t.id, // The URI is used as the ID for local files
+          title: t.title,
+          artist: t.artist,
+      }));
+
+      const playlistJson = JSON.stringify(playlistForNative);
+      
+      if (window.Android?.startLocalPlayback) {
+          setIsNativePlayback(true);
+          window.Android.startLocalPlayback(playlistJson, currentIndex);
+      }
+  };
+
 
   const play = (track?: Track) => {
     const trackToPlay = track || currentTrack || queue[0];
@@ -212,32 +230,27 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setIsPlaying(false);
     }
   };
-
-  const playNext = () => {
+  
+  const playNextPrev = (direction: 'next' | 'prev') => {
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    const nextIndex = (currentIndex + 1) % queue.length;
+    const nextIndex = direction === 'next' 
+        ? (currentIndex + 1) % queue.length
+        : (currentIndex - 1 + queue.length) % queue.length;
+    
     const nextTrack = queue[nextIndex];
 
-    if (isNativePlayback) {
-        playSongInApp(nextTrack, queue);
+    if (nextTrack.isLocal) {
+        playLocalSongInApp(nextTrack, queue);
+    } else if (window.Android) {
+        playYoutubeSongInApp(nextTrack, queue);
     } else {
         play(nextTrack);
     }
-  };
+  }
 
-  const playPrev = () => {
-    if (!currentTrack) return;
-    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
-    const prevTrack = queue[prevIndex];
-    
-    if (isNativePlayback) {
-        playSongInApp(prevTrack, queue);
-    } else {
-        play(prevTrack);
-    }
-  };
+  const playNext = () => playNextPrev('next');
+  const playPrev = () => playNextPrev('prev');
   
   const setQueueAndPlay = (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
     const newQueue = [...tracks];
@@ -253,8 +266,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setDuration(trackToPlay.duration);
     setCurrentTime(0);
 
-    if (window.Android?.startPlayback) {
-      playSongInApp(trackToPlay, newQueue);
+    if (trackToPlay.isLocal) {
+        playLocalSongInApp(trackToPlay, newQueue);
+    } else if (window.Android?.startPlayback) {
+      playYoutubeSongInApp(trackToPlay, newQueue);
     } else {
       setIsNativePlayback(false);
       play(trackToPlay);
@@ -358,7 +373,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlayerContext.Provider value={value}>
         {children}
-         {currentTrack && !isNativePlayback && (
+         {currentTrack && !currentTrack.isLocal && !isNativePlayback && (
             <YouTube
                 key={currentTrack.id}
                 ref={playerRef}
