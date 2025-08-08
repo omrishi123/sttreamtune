@@ -24,8 +24,11 @@ export default function DevicePage() {
     const [isNative, setIsNative] = useState(false);
 
     useEffect(() => {
-        setIsNative(!!window.Android?.getLocalTracks);
+        // Check if the native bridge exists
+        const nativeBridgeExists = !!window.Android?.getLocalTracks;
+        setIsNative(nativeBridgeExists);
 
+        // Define the callback function that the native app will call
         window.updateLocalTracks = (jsonString: string) => {
             try {
                 const tracks = JSON.parse(jsonString);
@@ -36,7 +39,7 @@ export default function DevicePage() {
                     artist: t.artist || 'Unknown Artist',
                     album: t.album || 'Unknown Album',
                     artwork: t.artwork || 'https://i.postimg.cc/SswWC87w/streamtune.png',
-                    duration: Math.floor(t.duration / 1000), // Convert ms to seconds
+                    duration: t.duration ? Math.floor(t.duration / 1000) : 0, // Convert ms to seconds
                     isLocal: true,
                 }));
                 setLocalTracks(formattedTracks);
@@ -46,12 +49,16 @@ export default function DevicePage() {
             setIsLoading(false);
         };
         
-        if (window.Android?.getLocalTracks) {
+        // If the native bridge is available, call it to get the tracks.
+        // This should be done here, when the component mounts.
+        if (nativeBridgeExists) {
             window.Android.getLocalTracks();
         } else {
+            // If not a native environment, stop loading.
             setIsLoading(false);
         }
 
+        // Cleanup the callback function when the component unmounts
         return () => {
             delete window.updateLocalTracks;
         }
