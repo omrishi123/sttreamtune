@@ -13,7 +13,6 @@ import {
   PlusCircle,
   User as UserIcon,
   LogOut,
-  Smartphone,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -71,7 +70,6 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     { href: "/", label: "Home", icon: Home },
     { href: "/search", label: "Search", icon: Search },
     { href: "/library", label: "Library", icon: Library },
-    { href: "/device", label: "Device", icon: Smartphone },
     { href: "/community", label: "Community", icon: Users },
   ];
   

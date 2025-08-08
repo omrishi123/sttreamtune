@@ -30,6 +30,16 @@ const isNewerVersion = (version1: string, version2: string) => {
     return false;
 }
 
+// Extend the window type to include our optional AndroidBridge
+declare global {
+  interface Window {
+    Android?: {
+      getAppVersion: () => string;
+    };
+  }
+}
+
+
 export function useAppUpdate() {
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [updateUrl, setUpdateUrl] = useState<string | null>(null);
@@ -57,10 +67,8 @@ export function useAppUpdate() {
         }
 
         // Check if the native bridge exists
-        // @ts-ignore - This is a custom interface we expect the Android app to provide
         if (window.Android && typeof window.Android.getAppVersion === 'function') {
             // New App Logic: Native bridge exists, get the real APK version
-            // @ts-ignore
             const currentApkVersion = window.Android.getAppVersion();
             
             if (isNewerVersion(currentApkVersion, remoteVersion)) {
@@ -69,13 +77,9 @@ export function useAppUpdate() {
                 setShowUpdateDialog(true);
             }
         } else {
-            // Old App Logic: Native bridge does NOT exist.
-            // This means it's an old version of the app that needs to be updated.
-            // We immediately show the pop-up to force an update.
-            console.log("Native bridge 'getAppVersion' not found. Forcing update for old client.");
-            setLatestVersion(remoteVersion);
-            setUpdateUrl(url);
-            setShowUpdateDialog(true);
+            // This is a PWA or a browser, so we don't show an update dialog.
+            // Update logic is only for the native Android app.
+            console.log("Not a native app environment. Skipping update check.");
         }
 
       } catch (error) {

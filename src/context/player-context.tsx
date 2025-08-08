@@ -10,7 +10,6 @@ declare global {
   interface Window {
     Android?: {
       startPlayback: (playlistJson: string, currentIndex: number) => void;
-      startLocalPlayback: (playlistJson: string, currentIndex: number) => void;
       play: () => void;
       pause: () => void;
       seekTo: (positionInSeconds: number) => void;
@@ -181,24 +180,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           window.Android.startPlayback(playlistJson, currentIndex);
       }
   };
-  
-  const playLocalSongInApp = (trackToPlay: Track, currentQueue: Track[]) => {
-      const currentIndex = currentQueue.findIndex(t => t.id === trackToPlay.id);
-      if (currentIndex === -1) return;
-
-      const playlistForNative = currentQueue.map(t => ({
-          uri: t.id, // The URI is used as the ID for local files
-          title: t.title,
-          artist: t.artist,
-      }));
-
-      const playlistJson = JSON.stringify(playlistForNative);
-      
-      if (window.Android?.startLocalPlayback) {
-          setIsNativePlayback(true);
-          window.Android.startLocalPlayback(playlistJson, currentIndex);
-      }
-  };
 
 
   const play = (track?: Track) => {
@@ -240,9 +221,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     
     const nextTrack = queue[nextIndex];
 
-    if (nextTrack.isLocal) {
-        playLocalSongInApp(nextTrack, queue);
-    } else if (window.Android) {
+    if (window.Android) {
         playYoutubeSongInApp(nextTrack, queue);
     } else {
         play(nextTrack);
@@ -266,9 +245,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setDuration(trackToPlay.duration);
     setCurrentTime(0);
 
-    if (trackToPlay.isLocal) {
-        playLocalSongInApp(trackToPlay, newQueue);
-    } else if (window.Android?.startPlayback) {
+    if (window.Android?.startPlayback) {
       playYoutubeSongInApp(trackToPlay, newQueue);
     } else {
       setIsNativePlayback(false);
@@ -373,7 +350,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlayerContext.Provider value={value}>
         {children}
-         {currentTrack && !currentTrack.isLocal && !isNativePlayback && (
+         {currentTrack && !isNativePlayback && (
             <YouTube
                 key={currentTrack.id}
                 ref={playerRef}
