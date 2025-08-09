@@ -13,11 +13,11 @@ import { Play } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const liveCategories = [
+    { name: 'Indian News', query: 'indian news live' },
     { name: 'Live Music', query: 'live music performance' },
     { name: 'DJ Sets', query: 'live dj set' },
     { name: 'Full Concerts', query: 'full concert live' },
     { name: '24/7 Radio', query: '24/7 live radio music' },
-    { name: 'Indian News', query: 'indian news live' },
 ];
 
 const LiveStreamCard = ({ stream, onPlay }: { stream: LiveStreamSearchOutput[0], onPlay: (stream: LiveStreamSearchOutput[0]) => void }) => (
