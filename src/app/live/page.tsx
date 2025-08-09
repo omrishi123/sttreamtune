@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -16,6 +17,7 @@ const liveCategories = [
     { name: 'DJ Sets', query: 'live dj set' },
     { name: 'Full Concerts', query: 'full concert live' },
     { name: '24/7 Radio', query: '24/7 live radio music' },
+    { name: 'Indian News', query: 'indian news live' },
 ];
 
 const LiveStreamCard = ({ stream, onPlay }: { stream: LiveStreamSearchOutput[0], onPlay: (stream: LiveStreamSearchOutput[0]) => void }) => (
