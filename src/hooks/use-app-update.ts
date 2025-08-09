@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import packageJson from '../../package.json';
 
 /**
  * A robust version comparison function.
@@ -31,22 +30,13 @@ const isNewerVersion = (version1: string, version2: string) => {
     return false;
 }
 
-// Extend the window type to include our optional AndroidBridge
-declare global {
-  interface Window {
-    Android?: {
-      getAppVersion: () => string;
-    };
-  }
-}
-
-
 export function useAppUpdate() {
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [updateUrl, setUpdateUrl] = useState<string | null>(null);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
   useEffect(() => {
+    // This function will handle all the logic
     const checkForUpdates = async () => {
       try {
         const configRef = doc(db, 'app-config', 'version');
@@ -66,21 +56,23 @@ export function useAppUpdate() {
             return;
         }
 
-        let currentVersion: string | undefined;
-
-        // Try to get version from native Android app first
+        // Check if the native bridge exists
+        // @ts-ignore - This is a custom interface we expect the Android app to provide
         if (window.Android && typeof window.Android.getAppVersion === 'function') {
-            currentVersion = window.Android.getAppVersion();
-        } 
-        
-        // If not in native, or if native call fails, fall back to package.json
-        if (!currentVersion) {
-            currentVersion = packageJson.version;
-        }
-        
-        console.log(`Current version: ${currentVersion}, Latest version: ${remoteVersion}`);
-
-        if (isNewerVersion(currentVersion, remoteVersion)) {
+            // New App Logic: Native bridge exists, get the real APK version
+            // @ts-ignore
+            const currentApkVersion = window.Android.getAppVersion();
+            
+            if (isNewerVersion(currentApkVersion, remoteVersion)) {
+                setLatestVersion(remoteVersion);
+                setUpdateUrl(url);
+                setShowUpdateDialog(true);
+            }
+        } else {
+            // Old App Logic: Native bridge does NOT exist.
+            // This means it's an old version of the app that needs to be updated.
+            // We immediately show the pop-up to force an update.
+            console.log("Native bridge 'getAppVersion' not found. Forcing update for old client.");
             setLatestVersion(remoteVersion);
             setUpdateUrl(url);
             setShowUpdateDialog(true);
@@ -91,9 +83,7 @@ export function useAppUpdate() {
       }
     };
 
-    // Delay check slightly to ensure native bridge is initialized
-    const timer = setTimeout(checkForUpdates, 1000);
-    return () => clearTimeout(timer);
+    checkForUpdates();
   }, []);
 
   return { showUpdateDialog, updateUrl, latestVersion };
