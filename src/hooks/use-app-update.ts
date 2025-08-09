@@ -68,7 +68,7 @@ export function useAppUpdate() {
 
         let currentVersion: string | undefined;
 
-        // Check if we are in a native Android environment first
+        // Try to get version from native Android app first
         if (window.Android && typeof window.Android.getAppVersion === 'function') {
             currentVersion = window.Android.getAppVersion();
         } 
