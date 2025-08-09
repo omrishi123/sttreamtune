@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import packageJson from '../../package.json';
 
 /**
  * A robust version comparison function.
@@ -46,7 +47,6 @@ export function useAppUpdate() {
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
   useEffect(() => {
-    // This function will handle all the logic
     const checkForUpdates = async () => {
       try {
         const configRef = doc(db, 'app-config', 'version');
@@ -66,20 +66,22 @@ export function useAppUpdate() {
             return;
         }
 
-        // Check if the native bridge exists
+        let currentVersion: string;
+
+        // Check if we are in a native Android environment
         if (window.Android && typeof window.Android.getAppVersion === 'function') {
-            // New App Logic: Native bridge exists, get the real APK version
-            const currentApkVersion = window.Android.getAppVersion();
-            
-            if (isNewerVersion(currentApkVersion, remoteVersion)) {
-                setLatestVersion(remoteVersion);
-                setUpdateUrl(url);
-                setShowUpdateDialog(true);
-            }
+            currentVersion = window.Android.getAppVersion();
         } else {
-            // This is a PWA or a browser, so we don't show an update dialog.
-            // Update logic is only for the native Android app.
-            console.log("Not a native app environment. Skipping update check.");
+            // Fallback for PWA/web environment
+            currentVersion = packageJson.version;
+        }
+        
+        console.log(`Current version: ${currentVersion}, Latest version: ${remoteVersion}`);
+
+        if (isNewerVersion(currentVersion, remoteVersion)) {
+            setLatestVersion(remoteVersion);
+            setUpdateUrl(url);
+            setShowUpdateDialog(true);
         }
 
       } catch (error) {
