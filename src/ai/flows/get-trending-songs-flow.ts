@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A utility to fetch trending music videos from YouTube.
@@ -45,7 +46,7 @@ export async function getTrendingSongs(): Promise<TrendingSongsOutput> {
   url.searchParams.append('part', 'snippet,contentDetails');
   url.searchParams.append('chart', 'mostPopular');
   url.searchParams.append('regionCode', 'IN');
-  url.search_params.append('videoCategoryId', '10'); // Music category
+  url.searchParams.append('videoCategoryId', '10'); // Music category
   url.searchParams.append('maxResults', '20');
   url.searchParams.append('key', YOUTUBE_API_KEY);
 
