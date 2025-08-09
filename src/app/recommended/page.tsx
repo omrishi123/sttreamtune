@@ -20,30 +20,31 @@ export default function RecommendedPage() {
     const { addTracksToCache } = useUserData();
     const { toast } = useToast();
 
-    const fetchTrendingSongs = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const results = await getTrendingSongs();
-            addTracksToCache(results);
-            setTrendingTracks(results);
-        } catch (error: any) {
-            console.error('Failed to fetch trending songs:', error);
-            const isApiError = error.message?.includes('403');
-            toast({
-                variant: 'destructive',
-                title: isApiError ? 'YouTube API Error' : 'Fetch Failed',
-                description: isApiError
-                    ? "The request was forbidden. Please check your YouTube API key and ensure the 'YouTube Data API v3' is enabled."
-                    : 'Could not fetch trending songs.',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    }, [toast, addTracksToCache]);
-
     useEffect(() => {
+        const fetchTrendingSongs = async () => {
+            setIsLoading(true);
+            try {
+                const results = await getTrendingSongs();
+                addTracksToCache(results);
+                setTrendingTracks(results);
+            } catch (error: any) {
+                console.error('Failed to fetch trending songs:', error);
+                const isApiError = error.message?.includes('403');
+                toast({
+                    variant: 'destructive',
+                    title: isApiError ? 'YouTube API Error' : 'Fetch Failed',
+                    description: isApiError
+                        ? "The request was forbidden. Please check your YouTube API key and ensure the 'YouTube Data API v3' is enabled."
+                        : 'Could not fetch trending songs.',
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         fetchTrendingSongs();
-    }, [fetchTrendingSongs]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Empty dependency array ensures this runs only once
 
     return (
         <div className="space-y-8">
