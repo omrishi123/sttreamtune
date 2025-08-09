@@ -66,13 +66,15 @@ export function useAppUpdate() {
             return;
         }
 
-        let currentVersion: string;
+        let currentVersion: string | undefined;
 
-        // Check if we are in a native Android environment
+        // Check if we are in a native Android environment first
         if (window.Android && typeof window.Android.getAppVersion === 'function') {
             currentVersion = window.Android.getAppVersion();
-        } else {
-            // Fallback for PWA/web environment
+        } 
+        
+        // If not in native, or if native call fails, fall back to package.json
+        if (!currentVersion) {
             currentVersion = packageJson.version;
         }
         
@@ -89,7 +91,9 @@ export function useAppUpdate() {
       }
     };
 
-    checkForUpdates();
+    // Delay check slightly to ensure native bridge is initialized
+    const timer = setTimeout(checkForUpdates, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   return { showUpdateDialog, updateUrl, latestVersion };
