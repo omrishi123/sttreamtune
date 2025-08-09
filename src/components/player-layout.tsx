@@ -14,6 +14,7 @@ import {
   User as UserIcon,
   LogOut,
   Radio,
+  Flame,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -71,6 +72,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     { href: "/", label: "Home", icon: Home },
     { href: "/search", label: "Search", icon: Search },
     { href: "/live", label: "Live", icon: Radio },
+    { href: "/recommended", label: "Recommended", icon: Flame },
     { href: "/library", label: "Library", icon: Library },
     { href: "/community", label: "Community", icon: Users },
   ];
