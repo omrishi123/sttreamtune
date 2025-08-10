@@ -207,20 +207,20 @@ export default function PlaylistPage() {
 
   return (
     <div className="space-y-8">
-       <header className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+       <header className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
         <Image
           src={imgSrc || playlist.coverArt}
           alt={playlist.name}
           width={200}
           height={200}
-          className="rounded-lg shadow-lg aspect-square object-cover w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] flex-shrink-0"
+          className="rounded-lg shadow-lg aspect-square object-cover w-[150px] h-[150px] sm:w-[175px] sm:h-[175px] md:w-[200px] md:h-[200px] flex-shrink-0"
           priority
           data-ai-hint={playlist['data-ai-hint']}
           onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
         />
-        <div className="space-y-2 min-w-0">
+        <div className="space-y-3 min-w-0">
           <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-          <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tighter break-words">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-headline tracking-tighter break-words">
             {playlist.name}
           </h1>
           {playlist.description && <p className="text-muted-foreground text-sm break-words">{playlist.description}</p>}
@@ -230,7 +230,7 @@ export default function PlaylistPage() {
             {" \u2022 "}
             {tracks.length} songs, about {totalMinutes} min
           </p>
-          <div className="flex items-center justify-center sm:justify-start gap-2 pt-2">
+          <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 pt-2">
              <Button size="lg" onClick={handlePlayPlaylist}>
                 <Play className="mr-2 h-5 w-5"/>
                 Play
