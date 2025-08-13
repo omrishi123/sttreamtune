@@ -53,8 +53,13 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { communityPlaylists } = useUserData();
 
+  const featuredPlaylists = useMemo(() => {
+    return communityPlaylists.filter(p => p.isFeatured);
+  }, [communityPlaylists]);
+
   const recentCommunityPlaylists = useMemo(() => {
-    return communityPlaylists.slice(0, 6);
+    // Exclude featured playlists from the "recent" section to avoid duplication
+    return communityPlaylists.filter(p => !p.isFeatured).slice(0, 6);
   }, [communityPlaylists]);
 
 
@@ -106,6 +111,14 @@ export default function HomePage() {
             </DropdownMenuContent>
           </DropdownMenu>
       </div>
+      
+      {featuredPlaylists.length > 0 && (
+         <PlaylistSection 
+            title="Featured Playlists" 
+            playlists={featuredPlaylists}
+            viewAllLink="/community"
+          />
+      )}
 
       {recentCommunityPlaylists.length > 0 && (
          <PlaylistSection 

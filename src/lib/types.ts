@@ -25,6 +25,7 @@ export interface Playlist {
   'data-ai-hint'?: string;
   isLikedSongs?: boolean;
   tracks?: Track[]; // For public playlists, embed full track objects
+  isFeatured?: boolean; // For featuring playlists
 }
 
 export interface User {
@@ -32,6 +33,7 @@ export interface User {
   name: string;
   email: string;
   photoURL?: string;
+  isAdmin?: boolean; // Add isAdmin flag
 }
 
 export interface UserData {

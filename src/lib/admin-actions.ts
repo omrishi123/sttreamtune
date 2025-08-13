@@ -1,0 +1,101 @@
+
+'use server';
+
+import {
+  collection,
+  getDocs,
+  getDoc,
+  query,
+  orderBy,
+  limit,
+  doc,
+  updateDoc,
+  deleteDoc,
+  setDoc,
+} from 'firebase/firestore';
+import { db } from './firebase';
+import type { User, Playlist } from './types';
+import { revalidatePath } from 'next/cache';
+
+// ========== DASHBOARD ==========
+export async function getAdminStats() {
+  const usersRef = collection(db, 'users');
+  const playlistsRef = collection(db, 'communityPlaylists');
+
+  const usersSnapshot = await getDocs(usersRef);
+  const playlistsSnapshot = await getDocs(playlistsRef);
+
+  const latestSignupsQuery = query(usersRef, orderBy('email'), limit(5)); // Firestore doesn't have a reliable "createdAt" for auth users
+  const latestPlaylistsQuery = query(
+    playlistsRef,
+    orderBy('createdAt', 'desc'),
+    limit(5)
+  );
+
+  const [latestSignupsSnapshot, latestPlaylistsSnapshot] = await Promise.all([
+    getDocs(latestSignupsQuery),
+    getDocs(latestPlaylistsQuery),
+  ]);
+
+  const latestSignups = latestSignupsSnapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as User)
+  );
+  const latestPlaylists = latestPlaylistsSnapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as Playlist)
+  );
+
+  return {
+    userCount: usersSnapshot.size,
+    publicPlaylistCount: playlistsSnapshot.size,
+    latestSignups,
+    latestPlaylists,
+  };
+}
+
+// ========== USERS ==========
+export async function getAllUsers(): Promise<User[]> {
+  const usersSnapshot = await getDocs(collection(db, 'users'));
+  return usersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as User));
+}
+
+// ========== PLAYLISTS ==========
+export async function getAllPublicPlaylists(): Promise<Playlist[]> {
+  const q = query(collection(db, 'communityPlaylists'), orderBy('createdAt', 'desc'));
+  const playlistsSnapshot = await getDocs(q);
+  return playlistsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Playlist));
+}
+
+export async function toggleFeaturedStatus(id: string, newStatus: boolean) {
+  const playlistRef = doc(db, 'communityPlaylists', id);
+  await updateDoc(playlistRef, { isFeatured: newStatus });
+  revalidatePath('/admin/playlists');
+  revalidatePath('/'); // Revalidate homepage as well
+}
+
+export async function deletePlaylist(id: string) {
+  const playlistRef = doc(db, 'communityPlaylists', id);
+  await deleteDoc(playlistRef);
+  revalidatePath('/admin/playlists');
+}
+
+// ========== SETTINGS ==========
+export async function getAppConfig() {
+  const configRef = doc(db, 'app-config', 'version');
+  const docSnap = await getDoc(configRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data() as { latestVersion: string; updateUrl: string };
+  } else {
+    // Return default/empty values if not found
+    return { latestVersion: '', updateUrl: '' };
+  }
+}
+
+export async function updateAppConfig(config: {
+  latestVersion: string;
+  updateUrl: string;
+}) {
+  const configRef = doc(db, 'app-config', 'version');
+  await setDoc(configRef, config, { merge: true }); // Use set with merge to create if it doesn't exist
+  revalidatePath('/admin/settings');
+}
