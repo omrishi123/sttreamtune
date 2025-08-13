@@ -88,7 +88,7 @@ export default function HomePage() {
             Listen Now
           </h1>
           <p className="text-muted-foreground mt-2">
-            Top picks for you. Updated daily.
+            Top picks for you. Updated daily. Test.
           </p>
         </div>
          <DropdownMenu>

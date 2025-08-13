@@ -25,7 +25,7 @@ export interface Playlist {
   'data-ai-hint'?: string;
   isLikedSongs?: boolean;
   tracks?: Track[]; // For public playlists, embed full track objects
-  isFeatured?: boolean; // For featuring playlists
+  isFeatured?: boolean;
 }
 
 export interface User {
