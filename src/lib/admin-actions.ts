@@ -41,8 +41,8 @@ export async function getAdminStats() {
       latestPlaylistsQuery.get(),
     ]);
 
-    const latestSignups = latestSignupsSnapshot.docs.map(serializeFirestoreData) as User[];
-    const latestPlaylists = latestPlaylistsSnapshot.docs.map(serializeFirestoreData) as Playlist[];
+    const latestSignups = latestSignupsSnapshot.docs.map(doc => serializeFirestoreData(doc) as User).filter(Boolean);
+    const latestPlaylists = latestPlaylistsSnapshot.docs.map(doc => serializeFirestoreData(doc) as Playlist).filter(Boolean);
 
     return {
       userCount: usersSnapshot.size,
@@ -73,8 +73,11 @@ export async function getAllPublicPlaylists(): Promise<Playlist[]> {
   }
   const q = adminDb.collection('communityPlaylists').orderBy('createdAt', 'desc');
   const playlistsSnapshot = await q.get();
+  // No need to map here anymore, we will process on the client page
+  // to ensure we have the correct document ID.
   return playlistsSnapshot.docs.map(doc => serializeFirestoreData(doc) as Playlist).filter(Boolean);
 }
+
 
 export async function toggleFeaturedStatus(id: string, newStatus: boolean) {
   if (!adminDb) {
