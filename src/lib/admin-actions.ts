@@ -1,21 +1,26 @@
 
 'use server';
 
-import type { User, Playlist } from './types';
+import type { User, Playlist, Track } from './types';
 import { revalidatePath } from 'next/cache';
 import adminDb from './firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 // Helper function to safely convert Firestore Timestamps to strings
 const serializeFirestoreData = (doc: admin.firestore.DocumentData) => {
     const data = doc.data();
     if (!data) return null;
     
+    // Create a new object to avoid modifying the original data object
+    const serializedData: { [key: string]: any } = { id: doc.id };
     for (const key in data) {
         if (data[key] && typeof data[key].toDate === 'function') {
-            data[key] = data[key].toDate().toISOString();
+            serializedData[key] = data[key].toDate().toISOString();
+        } else {
+            serializedData[key] = data[key];
         }
     }
-    return { id: doc.id, ...data };
+    return serializedData;
 };
 
 
@@ -89,6 +94,20 @@ export async function deletePlaylist(id: string) {
   await playlistRef.delete();
   revalidatePath('/admin/playlists');
 }
+
+export async function removeTrackFromPlaylistAdmin(playlistId: string, track: Track) {
+    if (!adminDb) {
+        throw new Error("Firebase Admin is not initialized.");
+    }
+    const playlistRef = adminDb.collection('communityPlaylists').doc(playlistId);
+    
+    await playlistRef.update({
+        tracks: FieldValue.arrayRemove(track),
+        trackIds: FieldValue.arrayRemove(track.id)
+    });
+    revalidatePath('/admin/playlists');
+}
+
 
 // ========== SETTINGS ==========
 export async function getAppConfig() {
