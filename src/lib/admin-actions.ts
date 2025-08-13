@@ -78,7 +78,8 @@ export async function getAllPublicPlaylists(): Promise<Playlist[]> {
   }
   const q = adminDb.collection('communityPlaylists').orderBy('createdAt', 'desc');
   const playlistsSnapshot = await q.get();
-  return playlistsSnapshot.docs.map(doc => serializeFirestoreData(doc) as Playlist).filter(Boolean);
+  // Ensure the Firestore document ID is passed as `id`
+  return playlistsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Playlist);
 }
 
 
@@ -101,28 +102,44 @@ export async function deletePlaylist(id: string) {
   revalidatePath('/admin/playlists');
 }
 
-export async function removeTrackFromPlaylistAdmin(playlistId: string, track: Track) {
+export async function removeTrackFromPlaylistAdmin(playlistId: string, trackToRemove: Track) {
     if (!adminDb) {
         throw new Error("Firebase Admin is not initialized.");
     }
     const playlistRef = adminDb.collection('communityPlaylists').doc(playlistId);
     
-    // The track object in Firestore might have Timestamp objects if it came from there.
-    // To ensure the object matches for removal, we must remove it exactly as it is stored.
-    // However, since we serialize on the way out, a simple object comparison with the client-side
-    // object should be sufficient for arrayRemove. If issues persist, we'd need to fetch
-    // the document first and find the exact track object to remove.
-    const trackToRemove = {
-      ...track,
-      // Ensure any potential non-serializable fields are handled if necessary
-    };
+    try {
+        await adminDb.runTransaction(async (transaction) => {
+            const playlistDoc = await transaction.get(playlistRef);
+            if (!playlistDoc.exists) {
+                throw new Error("Playlist not found.");
+            }
 
-    await playlistRef.update({
-        tracks: FieldValue.arrayRemove(trackToRemove),
-        trackIds: FieldValue.arrayRemove(trackToRemove.id)
-    });
-    revalidatePath(`/admin/playlists`);
-    revalidatePath(`/playlists/${playlistId}`);
+            const playlistData = playlistDoc.data() as Playlist;
+            
+            // Find the exact track object to remove from the 'tracks' array
+            const fullTrackToRemove = playlistData.tracks?.find(t => t.id === trackToRemove.id);
+
+            const updates: { [key: string]: any } = {
+                // Always remove the ID from the trackIds array
+                trackIds: FieldValue.arrayRemove(trackToRemove.id)
+            };
+
+            // If the track object is found in the 'tracks' array, remove it
+            if (fullTrackToRemove) {
+                updates.tracks = FieldValue.arrayRemove(fullTrackToRemove);
+            }
+
+            transaction.update(playlistRef, updates);
+        });
+
+        revalidatePath(`/admin/playlists`);
+        revalidatePath(`/playlists/${playlistId}`);
+    } catch (error: any) {
+        console.error("Error removing track from playlist:", error);
+        // Re-throw the error so Next.js can report it, which gives us the 500 error.
+        throw new Error(`Failed to remove track: ${error.message}`);
+    }
 }
 
 
