@@ -83,8 +83,10 @@ export const signUp = async (email: string, password: string, name: string, phot
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
+  // This is the critical fix: update the profile *before* syncing to Firestore.
   if (user) {
     await updateProfile(user, { displayName: name });
+    // Now that the displayName is set, syncUserToFirestore will work correctly.
     await syncUserToFirestore(user);
 
     if (photoDataUrl && typeof window !== 'undefined') {
