@@ -3,6 +3,7 @@
 
 import type { User, Playlist, Track } from './types';
 import { revalidatePath } from 'next/cache';
+import admin from 'firebase-admin'; // Import the firebase-admin library
 import adminDb from './firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -16,7 +17,7 @@ const serializeFirestoreData = (doc: admin.firestore.DocumentSnapshot): object |
         const value = data[key];
         if (value instanceof admin.firestore.Timestamp) {
             serializedData[key] = value.toDate().toISOString();
-        } else if (FieldValue.isEqual(value)) {
+        } else if (value instanceof FieldValue) {
             // FieldValues can't be serialized, so we skip them or handle as needed
             continue;
         }
