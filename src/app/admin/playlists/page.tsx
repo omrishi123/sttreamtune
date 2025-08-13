@@ -6,12 +6,17 @@ import { PlaylistsTable } from './_components/playlists-table';
 import React, { useEffect, useState } from 'react';
 import type { Playlist } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 
 
 function PlaylistsPageSkeleton() {
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold mb-4">Community Playlists</h2>
       <div className="border rounded-lg p-4">
         <Skeleton className="h-8 w-64 mb-4" />
         <div className="space-y-2">
@@ -51,12 +56,20 @@ export default function AdminPlaylistsPage() {
   }
 
   if (error) {
-    return <div className="text-destructive">{error}</div>;
+    return (
+       <Card className="bg-destructive/10 border-destructive">
+            <CardHeader>
+                <CardTitle className="text-destructive">Error</CardTitle>
+                <CardDescription className="text-destructive">
+                    {error}
+                </CardDescription>
+            </CardHeader>
+        </Card>
+    );
   }
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Community Playlists</h2>
       <PlaylistsTable initialPlaylists={playlists} />
     </div>
   );
