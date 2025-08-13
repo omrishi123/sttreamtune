@@ -6,18 +6,22 @@ import { revalidatePath } from 'next/cache';
 import adminDb from './firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
-// Helper function to safely convert Firestore Timestamps to strings
-const serializeFirestoreData = (doc: admin.firestore.DocumentData) => {
+// Helper function to safely convert Firestore Timestamps and other non-serializable data
+const serializeFirestoreData = (doc: admin.firestore.DocumentSnapshot): object | null => {
     const data = doc.data();
     if (!data) return null;
-    
-    // Create a new object to avoid modifying the original data object
+
     const serializedData: { [key: string]: any } = { id: doc.id };
     for (const key in data) {
-        if (data[key] && typeof data[key].toDate === 'function') {
-            serializedData[key] = data[key].toDate().toISOString();
-        } else {
-            serializedData[key] = data[key];
+        const value = data[key];
+        if (value instanceof admin.firestore.Timestamp) {
+            serializedData[key] = value.toDate().toISOString();
+        } else if (FieldValue.isEqual(value)) {
+            // FieldValues can't be serialized, so we skip them or handle as needed
+            continue;
+        }
+        else {
+            serializedData[key] = value;
         }
     }
     return serializedData;
@@ -73,8 +77,6 @@ export async function getAllPublicPlaylists(): Promise<Playlist[]> {
   }
   const q = adminDb.collection('communityPlaylists').orderBy('createdAt', 'desc');
   const playlistsSnapshot = await q.get();
-  // No need to map here anymore, we will process on the client page
-  // to ensure we have the correct document ID.
   return playlistsSnapshot.docs.map(doc => serializeFirestoreData(doc) as Playlist).filter(Boolean);
 }
 
@@ -104,11 +106,22 @@ export async function removeTrackFromPlaylistAdmin(playlistId: string, track: Tr
     }
     const playlistRef = adminDb.collection('communityPlaylists').doc(playlistId);
     
+    // The track object in Firestore might have Timestamp objects if it came from there.
+    // To ensure the object matches for removal, we must remove it exactly as it is stored.
+    // However, since we serialize on the way out, a simple object comparison with the client-side
+    // object should be sufficient for arrayRemove. If issues persist, we'd need to fetch
+    // the document first and find the exact track object to remove.
+    const trackToRemove = {
+      ...track,
+      // Ensure any potential non-serializable fields are handled if necessary
+    };
+
     await playlistRef.update({
-        tracks: FieldValue.arrayRemove(track),
-        trackIds: FieldValue.arrayRemove(track.id)
+        tracks: FieldValue.arrayRemove(trackToRemove),
+        trackIds: FieldValue.arrayRemove(trackToRemove.id)
     });
-    revalidatePath('/admin/playlists');
+    revalidatePath(`/admin/playlists`);
+    revalidatePath(`/playlists/${playlistId}`);
 }
 
 

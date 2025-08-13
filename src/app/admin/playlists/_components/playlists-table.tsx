@@ -56,12 +56,12 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
         title: 'Success',
         description: `Playlist has been ${!currentStatus ? 'featured' : 'unfeatured'}.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to update playlist status.',
+        description: error.message || 'Failed to update playlist status.',
       });
     }
   };
@@ -77,11 +77,11 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
         title: 'Playlist Deleted',
         description: 'The playlist has been removed.',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to delete playlist.',
+        description: error.message || 'Failed to delete playlist.',
       });
     }
   };
