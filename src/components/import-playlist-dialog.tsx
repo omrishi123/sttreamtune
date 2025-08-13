@@ -36,6 +36,7 @@ import { onAuthChange } from '@/lib/auth';
 import type { User, Playlist } from '@/lib/types';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { nanoid } from 'nanoid';
 
 function extractPlaylistId(url: string): string | null {
   const regex = /[?&]list=([^&]+)/;
@@ -102,6 +103,7 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
 
       const importedPlaylistData: Omit<Playlist, 'id'> & { id?: string } = {
         ...playlistDetails,
+        id: `yt-${playlistId}`, // Keep original YT id for reference, but it won't be the doc ID for public
         trackIds: tracks.map(t => t.id),
         public: isPublic,
         owner: user.name,
@@ -118,7 +120,7 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
           createdAt: serverTimestamp(),
         });
       } else {
-        const finalPlaylist = { ...importedPlaylistData, id: `pl-yt-${playlistId}`};
+        const finalPlaylist = { ...importedPlaylistData, id: `pl-yt-${nanoid(10)}`};
         addPlaylist(finalPlaylist as Playlist);
       }
 
