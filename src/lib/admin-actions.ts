@@ -18,14 +18,18 @@ import type { User, Playlist } from './types';
 import { revalidatePath } from 'next/cache';
 
 // ========== DASHBOARD ==========
+// This function can now be called from the client-side as well.
 export async function getAdminStats() {
   const usersRef = collection(db, 'users');
   const playlistsRef = collection(db, 'communityPlaylists');
 
-  const usersSnapshot = await getDocs(usersRef);
-  const playlistsSnapshot = await getDocs(playlistsRef);
+  const usersQuery = query(usersRef, limit(1000)); // Firestore limit
+  const playlistsQuery = query(playlistsRef, limit(1000));
 
-  const latestSignupsQuery = query(usersRef, orderBy('email'), limit(5)); // Firestore doesn't have a reliable "createdAt" for auth users
+  const usersSnapshot = await getDocs(usersQuery);
+  const playlistsSnapshot = await getDocs(playlistsQuery);
+
+  const latestSignupsQuery = query(usersRef, orderBy('email'), limit(5)); // No reliable timestamp for auth users
   const latestPlaylistsQuery = query(
     playlistsRef,
     orderBy('createdAt', 'desc'),
