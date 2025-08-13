@@ -3,7 +3,7 @@
 
 import type { User, Playlist, Track } from './types';
 import { revalidatePath } from 'next/cache';
-import admin from 'firebase-admin'; // Import the firebase-admin library
+import admin from 'firebase-admin';
 import adminDb from './firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -78,8 +78,8 @@ export async function getAllPublicPlaylists(): Promise<Playlist[]> {
   }
   const q = adminDb.collection('communityPlaylists').orderBy('createdAt', 'desc');
   const playlistsSnapshot = await q.get();
-  // Ensure the Firestore document ID is passed as `id`
-  return playlistsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Playlist);
+  // Ensure the Firestore document ID is passed as `id` and all data is serialized
+  return playlistsSnapshot.docs.map(doc => serializeFirestoreData(doc) as Playlist).filter(Boolean);
 }
 
 
