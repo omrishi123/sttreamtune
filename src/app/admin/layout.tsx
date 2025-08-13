@@ -1,8 +1,9 @@
 
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { onAuthChange } from '@/lib/auth';
+import { notFound, usePathname } from 'next/navigation';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from '@/lib/types';
@@ -22,26 +23,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { getAuth } from 'firebase/auth';
-
-async function checkAdminStatus(): Promise<boolean> {
-  const auth = getAuth();
-  const firebaseUser = auth.currentUser;
-
-  if (!firebaseUser) {
-    return false;
-  }
-
-  const userDocRef = doc(db, 'users', firebaseUser.uid);
-  const userDoc = await getDoc(userDocRef);
-
-  if (userDoc.exists()) {
-    const userData = userDoc.data() as User;
-    return userData.isAdmin === true;
-  }
-
-  return false;
-}
+import { onAuthChange } from '@/lib/auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -50,14 +33,47 @@ const navItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const isAdmin = await checkAdminStatus();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const pathname = usePathname();
 
-  if (!isAdmin) {
+  useEffect(() => {
+    const unsubscribe = onAuthChange(async (user) => {
+      if (!user || user.id === 'guest') {
+        setIsAdmin(false);
+        return;
+      }
+
+      const userDocRef = doc(db, 'users', user.id);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as User;
+        setIsAdmin(userData.isAdmin === true);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (isAdmin === null) {
+    return (
+       <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <Icons.logo className="h-12 w-12 animate-pulse" />
+          <p className="text-muted-foreground">Checking admin privileges...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin === false) {
     notFound();
   }
 
@@ -78,7 +94,10 @@ export default async function AdminLayout({
                 <TooltipTrigger asChild>
                   <Link
                     href={item.href}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                       pathname === item.href && "bg-accent text-accent-foreground"
+                    )}
                   >
                     <item.icon className="h-5 w-5" />
                     <span className="sr-only">{item.label}</span>
