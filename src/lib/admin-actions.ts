@@ -23,11 +23,9 @@ export async function getAdminStats() {
     const usersRef = collection(db, 'users');
     const playlistsRef = collection(db, 'communityPlaylists');
 
-    const usersQuery = query(usersRef);
-    const playlistsQuery = query(playlistsRef);
-
-    const usersSnapshot = await getDocs(usersQuery);
-    const playlistsSnapshot = await getDocs(playlistsQuery);
+    // These queries will be executed with the server's admin privileges
+    const usersSnapshot = await getDocs(usersRef);
+    const playlistsSnapshot = await getDocs(playlistsRef);
 
     const latestSignupsQuery = query(usersRef, orderBy('email', 'desc'), limit(5));
     const latestPlaylistsQuery = query(
@@ -56,7 +54,6 @@ export async function getAdminStats() {
     };
   } catch (error: any) {
       console.error("Error fetching admin stats:", error);
-      // Re-throw the error to be caught by the calling component
       throw new Error("Failed to fetch admin stats. Check server logs and Firestore rules.");
   }
 }
