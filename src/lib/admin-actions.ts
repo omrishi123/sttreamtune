@@ -18,43 +18,49 @@ import type { User, Playlist } from './types';
 import { revalidatePath } from 'next/cache';
 
 // ========== DASHBOARD ==========
-// This function can now be called from the client-side as well.
 export async function getAdminStats() {
-  const usersRef = collection(db, 'users');
-  const playlistsRef = collection(db, 'communityPlaylists');
+  try {
+    const usersRef = collection(db, 'users');
+    const playlistsRef = collection(db, 'communityPlaylists');
 
-  const usersQuery = query(usersRef, limit(1000)); // Firestore limit
-  const playlistsQuery = query(playlistsRef, limit(1000));
+    const usersQuery = query(usersRef);
+    const playlistsQuery = query(playlistsRef);
 
-  const usersSnapshot = await getDocs(usersQuery);
-  const playlistsSnapshot = await getDocs(playlistsQuery);
+    const usersSnapshot = await getDocs(usersQuery);
+    const playlistsSnapshot = await getDocs(playlistsQuery);
 
-  const latestSignupsQuery = query(usersRef, orderBy('email'), limit(5)); // No reliable timestamp for auth users
-  const latestPlaylistsQuery = query(
-    playlistsRef,
-    orderBy('createdAt', 'desc'),
-    limit(5)
-  );
+    const latestSignupsQuery = query(usersRef, orderBy('email', 'desc'), limit(5));
+    const latestPlaylistsQuery = query(
+      playlistsRef,
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
 
-  const [latestSignupsSnapshot, latestPlaylistsSnapshot] = await Promise.all([
-    getDocs(latestSignupsQuery),
-    getDocs(latestPlaylistsQuery),
-  ]);
+    const [latestSignupsSnapshot, latestPlaylistsSnapshot] = await Promise.all([
+      getDocs(latestSignupsQuery),
+      getDocs(latestPlaylistsQuery),
+    ]);
 
-  const latestSignups = latestSignupsSnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as User)
-  );
-  const latestPlaylists = latestPlaylistsSnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as Playlist)
-  );
+    const latestSignups = latestSignupsSnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as User)
+    );
+    const latestPlaylists = latestPlaylistsSnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Playlist)
+    );
 
-  return {
-    userCount: usersSnapshot.size,
-    publicPlaylistCount: playlistsSnapshot.size,
-    latestSignups,
-    latestPlaylists,
-  };
+    return {
+      userCount: usersSnapshot.size,
+      publicPlaylistCount: playlistsSnapshot.size,
+      latestSignups,
+      latestPlaylists,
+    };
+  } catch (error: any) {
+      console.error("Error fetching admin stats:", error);
+      // Re-throw the error to be caught by the calling component
+      throw new Error("Failed to fetch admin stats. Check server logs and Firestore rules.");
+  }
 }
+
 
 // ========== USERS ==========
 export async function getAllUsers(): Promise<User[]> {
@@ -100,6 +106,6 @@ export async function updateAppConfig(config: {
   updateUrl: string;
 }) {
   const configRef = doc(db, 'app-config', 'version');
-  await setDoc(configRef, config, { merge: true }); // Use set with merge to create if it doesn't exist
+  await setDoc(configRef, config, { merge: true });
   revalidatePath('/admin/settings');
 }
