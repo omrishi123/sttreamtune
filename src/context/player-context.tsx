@@ -202,12 +202,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const pause = () => {
-    if (isNativePlayback) {
-      if (window.Android?.pause) {
-        window.Android.pause();
-        setIsPlaying(false);
-      }
+    // **THE FIX IS HERE**
+    // Always prefer the native `pause` command if the bridge exists.
+    // This ensures notifications work correctly on all Android versions.
+    if (window.Android?.pause) {
+      window.Android.pause();
+      setIsPlaying(false);
     } else {
+      // Fallback for web-only or non-native environments
       setIsPlaying(false);
     }
   };
