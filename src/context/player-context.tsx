@@ -108,7 +108,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         setCurrentTime((prevTime) => {
           if (prevTime + 1 >= duration) {
             clearInterval(timer);
-            return duration;
+            // Don't auto-set to duration, let the onEnd event handle it
+            // to avoid race conditions with playing next song
+            return prevTime;
           }
           return prevTime + 1;
         });
@@ -146,18 +148,23 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const syncPlayers = (action: 'play' | 'pause' | 'seek', time?: number) => {
-    const audioPlayer = playerRef.current?.getInternalPlayer();
-    const videoPlayer = videoPlayerRef.current?.getInternalPlayer();
+    if(isNativePlayback) return;
+    try {
+        const audioPlayer = playerRef.current?.getInternalPlayer();
+        const videoPlayer = videoPlayerRef.current?.getInternalPlayer();
 
-    if (action === 'play') {
-      audioPlayer?.playVideo();
-      videoPlayer?.playVideo();
-    } else if (action === 'pause') {
-      audioPlayer?.pauseVideo();
-      videoPlayer?.pauseVideo();
-    } else if (action === 'seek' && time !== undefined) {
-      audioPlayer?.seekTo(time, true);
-      videoPlayer?.seekTo(time, true);
+        if (action === 'play') {
+            audioPlayer?.playVideo();
+            if (isNowPlayingOpen) videoPlayer?.playVideo();
+        } else if (action === 'pause') {
+            audioPlayer?.pauseVideo();
+            videoPlayer?.pauseVideo();
+        } else if (action === 'seek' && time !== undefined) {
+            audioPlayer?.seekTo(time, true);
+            videoPlayer?.seekTo(time, true);
+        }
+    } catch (error) {
+        console.error("Error syncing players:", error);
     }
   };
 
@@ -177,7 +184,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     }
     
-  }, [isMounted, isReady, isPlaying, isNativePlayback]);
+  }, [isMounted, isReady, isPlaying, isNativePlayback, isNowPlayingOpen]);
   
   useEffect(() => {
     updateMediaSession();
@@ -217,7 +224,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       if (currentTrack?.id !== trackToPlay.id) {
         setCurrentTime(0);
         setCurrentTrack(trackToPlay);
-        setIsReady(false);
+        setDuration(trackToPlay.duration);
+        setIsReady(false); // Set to false to wait for the new track to be ready
       }
       setIsPlaying(true);
     }
@@ -263,10 +271,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
-    setCurrentTrack(trackToPlay);
-    setDuration(trackToPlay.duration);
-    setCurrentTime(0);
-
+    
     if (window.Android?.startPlayback) {
       playYoutubeSongInApp(trackToPlay, newQueue);
     } else {
@@ -285,11 +290,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const handleStateChange = (event: any) => {
     if (isNativePlayback) return;
-
+    // This is the main audio player
     if (event.data === YouTube.PlayerState.PLAYING) {
       if(!isPlaying) setIsPlaying(true);
-    } else if (event.data === YouTube.PlayerState.PAUSED || event.data === YouTube.PlayerState.BUFFERING) {
-      // Intentionally do not set isPlaying to false here to allow our controls to be the source of truth
+    } else if (event.data === YouTube.PlayerState.PAUSED) {
+      // Allow our controls to be the source of truth, but if youtube pauses, we pause.
+      if(isPlaying) setIsPlaying(false);
     } else if (event.data === YouTube.PlayerState.ENDED) {
         playNext();
     }
@@ -312,9 +318,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const handleReady = (event: any) => {
     if (isNativePlayback) return;
     setIsReady(true);
-    if(isPlaying) {
-      syncPlayers('play');
-    }
   }
 
   const setSleepTimer = (durationInMillis: number) => {
@@ -386,7 +389,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                 }}
                 onStateChange={handleStateChange}
                 onReady={handleReady}
-                onEnd={playNext}
                 className="hidden"
             />
         )}

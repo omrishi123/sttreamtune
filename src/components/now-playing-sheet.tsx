@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import YouTube from 'react-youtube';
 import {
@@ -40,14 +40,23 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
   } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache } = useUserData();
 
+  const [isSheetReady, setIsSheetReady] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
+
   useEffect(() => {
     const videoPlayer = videoPlayerRef.current?.getInternalPlayer();
+    if (!videoPlayer) return;
+
     if (isOpen) {
-        if(isPlaying) videoPlayer?.playVideo();
+        if(isPlaying) videoPlayer.playVideo();
+        else videoPlayer.pauseVideo();
+        // Sync time when opening
+        videoPlayer.seekTo(currentTime, true);
     } else {
-        videoPlayer?.pauseVideo();
+        videoPlayer.pauseVideo();
     }
-  }, [isOpen, isPlaying, videoPlayerRef]);
+  }, [isOpen, isPlaying, currentTime, videoPlayerRef]);
+
 
   if (!currentTrack) {
     return null;
@@ -75,12 +84,23 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
   };
 
   const handleReady = (event: any) => {
-    if (isPlaying) {
+    setIsSheetReady(true);
+    // Don't autoplay here, let the useEffect handle it based on global state
+    event.target.seekTo(currentTime, true);
+    if(isPlaying) {
         event.target.playVideo();
     }
-    if (currentTime > 0) {
-        event.target.seekTo(currentTime, true);
-    }
+  }
+
+  const handleSliderChange = (value: number[]) => {
+      // We only update the visual state while dragging
+      // The actual seek happens on commit
+      setIsSeeking(true);
+  }
+  
+  const handleSliderCommit = (value: number[]) => {
+      handleSeek(value);
+      setIsSeeking(false);
   }
 
   return (
@@ -107,7 +127,6 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
                         playerVars: {
                             autoplay: isPlaying ? 1 : 0,
                             controls: 0,
-                            start: Math.floor(currentTime),
                         },
                     }}
                     onReady={handleReady}
@@ -126,7 +145,8 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
              <div className="space-y-1">
                 <Slider
                     value={[progress]}
-                    onValueChange={handleSeek}
+                    onValueChange={handleSliderChange}
+                    onValueCommit={handleSliderCommit}
                     className="w-full"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -168,4 +188,3 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
     </Sheet>
   );
 }
-
