@@ -212,7 +212,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
               </DropdownMenu>
             </SidebarFooter>
           </Sidebar>
-          <SidebarInset className="overflow-y-auto bg-background pb-32 md:pb-24">
+          <SidebarInset className="overflow-y-auto bg-background pb-48 md:pb-24">
             <header className="p-4 md:hidden flex items-center justify-between">
                  <Link
                     href="/"
