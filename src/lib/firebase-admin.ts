@@ -1,19 +1,23 @@
 import admin from 'firebase-admin';
 
-// This is a server-only file. It should not be imported into client components.
+const serviceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+};
 
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
+      credential: admin.credential.cert(serviceAccount),
     });
+    console.log("Firebase Admin SDK initialized successfully.");
   } catch (error: any) {
-    console.error('Firebase admin initialization error', error.stack);
+    console.error('Firebase admin initialization error:', error.message);
+    // Prevent the app from crashing if initialization fails but log the error.
   }
 }
 
-export default admin.firestore();
+const adminDb = admin.apps.length ? admin.firestore() : null;
+
+export default adminDb;
