@@ -14,6 +14,7 @@ import {
   VolumeX,
   Heart,
   Timer,
+  Youtube,
 } from "lucide-react";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
@@ -33,6 +34,7 @@ import { useUserData } from "@/context/user-data-context";
 import { cn } from "@/lib/utils";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { useToast } from "@/hooks/use-toast";
+import { NowPlayingSheet } from "./now-playing-sheet";
 
 export function Player() {
   const { 
@@ -47,6 +49,8 @@ export function Player() {
     currentTime,
     duration,
     setSleepTimer,
+    isNowPlayingOpen,
+    setIsNowPlayingOpen,
   } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
@@ -155,7 +159,12 @@ export function Player() {
             <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8">
               <SkipForward className="h-5 w-5" />
             </Button>
-            <QueueSheet />
+             <div className="flex items-center">
+                <QueueSheet />
+                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => setIsNowPlayingOpen(true)}>
+                    <Youtube className="h-5 w-5" />
+                </Button>
+             </div>
         </div>
 
         {/* Bottom Row: Progress Bar */}
@@ -168,6 +177,7 @@ export function Player() {
             />
             <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
         </div>
+        <NowPlayingSheet isOpen={isNowPlayingOpen} onOpenChange={setIsNowPlayingOpen} />
       </footer>
     )
   }
@@ -270,9 +280,13 @@ export function Player() {
               />
             </PopoverContent>
           </Popover>
+          <Button variant="ghost" size="icon" onClick={() => setIsNowPlayingOpen(true)}>
+              <Youtube className="h-5 w-5" />
+          </Button>
           <QueueSheet />
         </div>
       </div>
+      <NowPlayingSheet isOpen={isNowPlayingOpen} onOpenChange={setIsNowPlayingOpen} />
     </footer>
   );
 }

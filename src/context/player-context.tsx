@@ -37,6 +37,9 @@ interface PlayerContextType {
   currentTime: number;
   duration: number;
   setSleepTimer: (durationInMillis: number) => void;
+  isNowPlayingOpen: boolean;
+  setIsNowPlayingOpen: (isOpen: boolean) => void;
+  videoPlayerRef: React.RefObject<YouTube | null>;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -49,12 +52,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isNativePlayback, setIsNativePlayback] = useState(false);
+  const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   
   const [sleepTimerId, setSleepTimerId] = useState<NodeJS.Timeout | null>(null);
   const playerRef = useRef<YouTube | null>(null);
+  const videoPlayerRef = useRef<YouTube | null>(null);
   const queueRef = useRef(queue);
   
   useEffect(() => {
@@ -140,17 +145,34 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  const syncPlayers = (action: 'play' | 'pause' | 'seek', time?: number) => {
+    const audioPlayer = playerRef.current?.getInternalPlayer();
+    const videoPlayer = videoPlayerRef.current?.getInternalPlayer();
+
+    if (action === 'play') {
+      audioPlayer?.playVideo();
+      videoPlayer?.playVideo();
+    } else if (action === 'pause') {
+      audioPlayer?.pauseVideo();
+      videoPlayer?.pauseVideo();
+    } else if (action === 'seek' && time !== undefined) {
+      audioPlayer?.seekTo(time, true);
+      videoPlayer?.seekTo(time, true);
+    }
+  };
+
+
   useEffect(() => {
     if (!isMounted) return;
 
     if (isPlaying && !isNativePlayback) {
-      if (isReady && playerRef.current) {
-        playerRef.current.getInternalPlayer()?.playVideo();
+      if (isReady) {
+        syncPlayers('play');
       }
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     } else if(!isPlaying && !isNativePlayback) {
-      if (isReady && playerRef.current) {
-        playerRef.current?.getInternalPlayer()?.pauseVideo();
+      if (isReady) {
+        syncPlayers('pause');
       }
        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     }
@@ -202,15 +224,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const pause = () => {
-    // **THE FIX IS HERE**
-    // Always prefer the native `pause` command if the bridge exists.
-    // This ensures notifications work correctly on all Android versions.
-    if (window.Android?.pause) {
-      window.Android.pause();
-      setIsPlaying(false);
+    if (isNativePlayback) {
+        if(window.Android?.pause) {
+            window.Android.pause();
+            setIsPlaying(false);
+        }
     } else {
-      // Fallback for web-only or non-native environments
-      setIsPlaying(false);
+        setIsPlaying(false);
     }
   };
   
@@ -223,7 +243,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     
     const nextTrack = queue[nextIndex];
 
-    if (window.Android) {
+    if (isNativePlayback) {
         playYoutubeSongInApp(nextTrack, queue);
     } else {
         play(nextTrack);
@@ -286,18 +306,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           }
           return;
       }
-      
-      const player = playerRef.current?.getInternalPlayer();
-      if(player && currentTrack) {
-          player.seekTo(seekTimeInSeconds, true);
-      }
+      syncPlayers('seek', seekTimeInSeconds);
   }
   
   const handleReady = (event: any) => {
     if (isNativePlayback) return;
     setIsReady(true);
     if(isPlaying) {
-      event.target.playVideo();
+      syncPlayers('play');
     }
   }
 
@@ -342,7 +358,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     clearQueue,
     currentTime,
     duration,
-    setSleepTimer
+    setSleepTimer,
+    isNowPlayingOpen,
+    setIsNowPlayingOpen,
+    videoPlayerRef,
   };
 
   if (!isMounted) {
