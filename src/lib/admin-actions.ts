@@ -68,9 +68,19 @@ export async function getAllUsers(): Promise<User[]> {
   if (!adminDb) {
     throw new Error("Firebase Admin is not initialized.");
   }
-  const usersSnapshot = await adminDb.collection('users').get();
+  const usersSnapshot = await adminDb.collection('users').orderBy('email', 'asc').get();
   return usersSnapshot.docs.map(doc => serializeFirestoreData(doc) as User).filter(Boolean);
 }
+
+export async function updateUserRole(userId: string, isAdmin: boolean) {
+  if (!adminDb) {
+    throw new Error("Firebase Admin is not initialized.");
+  }
+  const userRef = adminDb.collection('users').doc(userId);
+  await userRef.update({ isAdmin });
+  revalidatePath('/admin/users');
+}
+
 
 // ========== PLAYLISTS ==========
 export async function getAllPublicPlaylists(): Promise<Playlist[]> {
