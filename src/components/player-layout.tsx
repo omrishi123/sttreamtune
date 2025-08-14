@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
@@ -15,6 +15,7 @@ import {
   LogOut,
   Radio,
   Flame,
+  ShieldCheck,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -68,14 +69,29 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     router.refresh();
   };
 
-  const navItems = [
+  const [navItems, setNavItems] = useState([
     { href: "/", label: "Home", icon: Home },
     { href: "/search", label: "Search", icon: Search },
     { href: "/live", label: "Live", icon: Radio },
     { href: "/recommended", label: "Recommended", icon: Flame },
     { href: "/library", label: "Library", icon: Library },
     { href: "/community", label: "Community", icon: Users },
-  ];
+  ]);
+
+  useEffect(() => {
+    if (user?.isAdmin) {
+      setNavItems(prev => {
+        if (prev.some(item => item.href === '/admin')) {
+          return prev;
+        }
+        return [
+          ...prev,
+          { href: "/admin", label: "Admin", icon: ShieldCheck }
+        ];
+      });
+    }
+  }, [user]);
+
   
   const currentUserPlaylists = userPlaylists;
 

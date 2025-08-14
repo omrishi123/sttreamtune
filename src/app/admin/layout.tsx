@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { notFound, usePathname } from 'next/navigation';
+import { notFound, usePathname, useRouter } from 'next/navigation';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from '@/lib/types';
@@ -14,6 +14,8 @@ import {
   Settings,
   ShieldCheck,
   LayoutDashboard,
+  PanelLeft,
+  ChevronLeft,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
@@ -25,6 +27,21 @@ import {
 } from '@/components/ui/tooltip';
 import { onAuthChange } from '@/lib/auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -33,6 +50,13 @@ const navItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
+function getBreadcrumb(path: string) {
+    const parts = path.split('/').filter(Boolean);
+    if(parts.length === 1) return 'Dashboard';
+    const lastPart = parts[parts.length - 1];
+    return lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
+}
+
 export default function AdminLayout({
   children,
 }: {
@@ -40,6 +64,8 @@ export default function AdminLayout({
 }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const breadcrumb = getBreadcrumb(pathname);
 
   useEffect(() => {
     const unsubscribe = onAuthChange(async (user) => {
@@ -107,10 +133,78 @@ export default function AdminLayout({
               </Tooltip>
             ))}
           </nav>
+           <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  <span className="sr-only">Back to App</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Back to App</TooltipContent>
+            </Tooltip>
+          </nav>
         </aside>
         <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
           <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-            <h1 className="text-xl font-semibold">Admin Panel</h1>
+             <Sheet>
+              <SheetTrigger asChild>
+                <Button size="icon" variant="outline" className="sm:hidden">
+                  <PanelLeft className="h-5 w-5" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="sm:max-w-xs">
+                <nav className="grid gap-6 text-lg font-medium">
+                  <Link
+                    href="/"
+                    className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                  >
+                    <Icons.logo className="h-5 w-5 transition-all group-hover:scale-110" />
+                    <span className="sr-only">StreamTune</span>
+                  </Link>
+                  {navItems.map(item => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground",
+                        pathname === item.href && "text-foreground"
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  ))}
+                  <Link
+                    href="/"
+                    className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                    Back to App
+                  </Link>
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <Breadcrumb className="hidden md:flex">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/admin">Admin</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{breadcrumb}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <div className="ml-auto flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => router.push('/')}>Back to App</Button>
+            </div>
           </header>
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             {children}
