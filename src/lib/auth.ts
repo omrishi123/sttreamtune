@@ -10,6 +10,7 @@ import {
   signInWithPopup,
   updateProfile,
   sendPasswordResetEmail,
+  signInWithCredential,
 } from 'firebase/auth';
 import { auth, db } from './firebase';
 import type { User } from '@/lib/types';
@@ -109,6 +110,16 @@ export const logout = () => {
 };
 
 export const signInWithGoogle = async () => {
+  // Check if the native Android interface is available
+  // @ts-ignore
+  if (window.Android && typeof window.Android.signInWithGoogle === 'function') {
+    // @ts-ignore
+    window.Android.signInWithGoogle();
+    // Native app will handle the sign-in and call back to handleGoogleSignInFromNative
+    return;
+  }
+
+  // Fallback for web browsers
   const provider = new GoogleAuthProvider();
   const result = await signInWithPopup(auth, provider);
   if (result.user) {
@@ -116,6 +127,29 @@ export const signInWithGoogle = async () => {
   }
   return result;
 }
+
+export const handleGoogleSignInFromNative = async (idToken: string) => {
+    try {
+        const credential = GoogleAuthProvider.credential(idToken);
+        const userCredential = await signInWithCredential(auth, credential);
+        if (userCredential.user) {
+            await syncUserToFirestore(userCredential.user);
+        }
+        return userCredential;
+    } catch (error) {
+        console.error("Firebase sign-in with credential failed:", error);
+        // We can optionally expose an error handler to the native app too
+        // For now, we'll just log it. The native side should also handle errors.
+        throw error;
+    }
+};
+
+// Expose the function to the window object so the native app can call it
+if (typeof window !== 'undefined') {
+  // @ts-ignore
+  window.handleGoogleSignInFromNative = handleGoogleSignInFromNative;
+}
+
 
 export const sendPasswordReset = (email: string) => {
   return sendPasswordResetEmail(auth, email);

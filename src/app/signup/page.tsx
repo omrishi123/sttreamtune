@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
-import { signUp, signInWithGoogle } from "@/lib/auth";
+import { signUp, signInWithGoogle, handleGoogleSignInFromNative } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 
@@ -26,8 +26,10 @@ declare global {
   interface Window {
     Android?: {
       chooseProfileImage: () => void;
+      signInWithGoogle: () => void;
     };
     updateProfileImage?: (imageDataUrl: string) => void;
+    handleGoogleSignInFromNative?: (token: string) => Promise<any>;
   }
 }
 
@@ -43,18 +45,41 @@ export default function SignupPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // This effect handles the callback from the native Android app
   useEffect(() => {
-    // Define the callback function that the native app will call
+    // Define the callback function that the native app will call for profile images
     window.updateProfileImage = (imageDataUrl: string) => {
       setPhotoDataUrl(imageDataUrl); // Store the raw data for submission
       setPhotoPreview(imageDataUrl); // Update the preview
     };
+    
+    // A function to handle the native sign-in result and redirect
+    const processNativeSignIn = async (idToken: string) => {
+        setIsGoogleLoading(true);
+        try {
+            await handleGoogleSignInFromNative(idToken);
+            router.push('/');
+            router.refresh();
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Google Sign-In Failed",
+                description: "Could not sign in with the provided Google account.",
+            });
+            setIsGoogleLoading(false);
+        }
+        // No finally block for setIsLoading(false) because the page will redirect on success
+    };
 
-    // Cleanup the function when the component unmounts
+    // Expose the Google Sign-In function to the window object for the native app to call.
+    window.handleGoogleSignInFromNative = processNativeSignIn;
+
+    // Cleanup the functions when the component unmounts
     return () => {
       delete window.updateProfileImage;
+      delete window.handleGoogleSignInFromNative;
     };
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, [router, toast]);
 
 
   // This function is for the web file input fallback
@@ -102,9 +127,13 @@ export default function SignupPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
+      // This will now either trigger the native flow or the web popup
       await signInWithGoogle();
-      router.push('/');
-      router.refresh();
+      // For the web flow, we redirect here. For native, the useEffect handles it.
+      if (!window.Android) {
+        router.push('/');
+        router.refresh();
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -114,7 +143,9 @@ export default function SignupPage() {
           : error.message,
       });
     } finally {
-      setIsGoogleLoading(false);
+      if (!window.Android) {
+          setIsGoogleLoading(false);
+      }
     }
   };
 

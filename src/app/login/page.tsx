@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
-import { login, signInWithGoogle, sendPasswordReset } from "@/lib/auth";
+import { login, signInWithGoogle, sendPasswordReset, handleGoogleSignInFromNative } from "@/lib/auth";
+
+// Extend the window object to include our native callback handler
+declare global {
+  interface Window {
+    handleGoogleSignInFromNative?: (token: string) => Promise<any>;
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,6 +33,36 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // This effect handles the callback from the native Android app
+  useEffect(() => {
+    // A function to handle the native sign-in result and redirect
+    const processNativeSignIn = async (idToken: string) => {
+        setIsGoogleLoading(true);
+        try {
+            await handleGoogleSignInFromNative(idToken);
+            router.push('/');
+            router.refresh();
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Google Sign-In Failed",
+                description: "Could not sign in with the provided Google account.",
+            });
+            setIsGoogleLoading(false);
+        }
+        // No finally block for setIsLoading(false) because the page will redirect on success
+    };
+
+    // Expose the function to the window object for the native app to call.
+    window.handleGoogleSignInFromNative = processNativeSignIn;
+
+    // Cleanup the function when the component unmounts
+    return () => {
+      delete window.handleGoogleSignInFromNative;
+    };
+  }, [router, toast]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,9 +85,14 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
+      // This will now either trigger the native flow or the web popup
       await signInWithGoogle();
-      router.push('/');
-      router.refresh();
+      // For the web flow, we redirect here. For native, the useEffect handles it.
+      // @ts-ignore
+      if (!window.Android) {
+        router.push('/');
+        router.refresh();
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -60,7 +102,10 @@ export default function LoginPage() {
           : error.message,
       });
     } finally {
-      setIsGoogleLoading(false);
+      // @ts-ignore
+      if (!window.Android) {
+          setIsGoogleLoading(false);
+      }
     }
   };
   
