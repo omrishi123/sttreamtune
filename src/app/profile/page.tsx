@@ -25,6 +25,48 @@ declare global {
   }
 }
 
+// Function to resize and compress the image
+const resizeImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 256;
+        const MAX_HEIGHT = 256;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          return reject(new Error('Could not get canvas context'));
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8)); // Compress to JPEG with 80% quality
+      };
+      img.onerror = reject;
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -50,9 +92,23 @@ export default function ProfilePage() {
 
   useEffect(() => {
     // Define the callback function that the native app will call
-    window.updateProfileImage = (imageDataUrl: string) => {
-      setPhotoDataUrl(imageDataUrl); // Store the raw data for submission
-      setPhotoPreview(imageDataUrl); // Update the preview
+    window.updateProfileImage = async (imageDataUrl: string) => {
+      try {
+        // Since we get a data URL, we need to convert it to a Blob/File to resize it
+        const response = await fetch(imageDataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+        const compressedDataUrl = await resizeImage(file);
+        setPhotoDataUrl(compressedDataUrl);
+        setPhotoPreview(compressedDataUrl);
+      } catch (error) {
+        console.error("Error processing native image:", error);
+        toast({
+          variant: "destructive",
+          title: "Image Processing Failed",
+          description: "Could not process the selected image.",
+        });
+      }
     };
 
     // Cleanup the function when the component unmounts
@@ -61,20 +117,25 @@ export default function ProfilePage() {
         delete window.updateProfileImage;
       }
     };
-  }, []); 
+  }, [toast]); 
 
 
   // This function is for the web file input fallback
-  const handleWebPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleWebPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        setPhotoDataUrl(dataUrl); // Store the raw data for submission
-        setPhotoPreview(dataUrl); // Update the preview
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedDataUrl = await resizeImage(file);
+        setPhotoDataUrl(compressedDataUrl);
+        setPhotoPreview(compressedDataUrl);
+      } catch (error) {
+        console.error("Error resizing image:", error);
+        toast({
+          variant: "destructive",
+          title: "Image Processing Failed",
+          description: "Could not process the selected image.",
+        });
+      }
     }
   };
   
