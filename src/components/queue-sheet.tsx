@@ -36,20 +36,26 @@ export function QueueSheet() {
   const handleOnDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    // We need to account for the "Now Playing" track which is not in the draggable list
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-    
-    // Find the original indices in the main queue
+    // The list that is draggable is the main queue minus the "Now Playing" track
     const draggableTracks = queue.filter(track => track.id !== currentTrack?.id);
-    const draggedTrack = draggableTracks[sourceIndex];
+    const sourceIndexInDraggableList = result.source.index;
+    const destinationIndexInDraggableList = result.destination.index;
+    
+    const [reorderedItem] = draggableTracks.splice(sourceIndexInDraggableList, 1);
+    draggableTracks.splice(destinationIndexInDraggableList, 0, reorderedItem);
 
-    const originalSourceIndex = queue.findIndex(t => t.id === draggedTrack.id);
-    // The target track is the one at the destination in the visible list
-    const targetTrackInDraggableList = draggableTracks[destinationIndex];
-    const originalDestinationIndex = queue.findIndex(t => t.id === targetTrackInDraggableList.id);
+    // Reconstruct the full queue with the "Now Playing" track at the top
+    const newFullQueue = currentTrack ? [currentTrack, ...draggableTracks] : draggableTracks;
+    
+    // Find the original index of the item that was moved
+    const originalSourceIndex = queue.findIndex(t => t.id === result.draggableId);
+    // Find the new index of that same item in our reconstructed queue
+    const newDestinationIndex = newFullQueue.findIndex(t => t.id === result.draggableId);
 
-    reorderQueue(originalSourceIndex, originalDestinationIndex);
+    // Call the reorder function with the correct indices relative to the original full queue
+    if (originalSourceIndex !== -1 && newDestinationIndex !== -1) {
+        reorderQueue(originalSourceIndex, newDestinationIndex);
+    }
   };
 
   const getDraggableTracks = React.useMemo(() => 
@@ -85,7 +91,7 @@ export function QueueSheet() {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+                    <p className="text-sm text-muted-foreground truncate">{currentTrack.artist}</p>
                   </div>
                 </div>
               </div>
@@ -120,7 +126,7 @@ export function QueueSheet() {
                                 />
                                 <div className="flex-1 min-w-0">
                                   <p className="font-semibold text-sm truncate">{track.title}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                                  <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
                                 </div>
                                 <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => removeTrackFromQueue(track.id)}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
