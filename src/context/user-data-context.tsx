@@ -16,6 +16,10 @@ interface CachedTracks {
   [key: string]: Track;
 }
 
+interface CachedPlaylists {
+  [key: string]: Playlist;
+}
+
 interface UserDataContextType extends UserData {
   communityPlaylists: Playlist[];
   isLiked: (trackId: string) => boolean;
@@ -30,6 +34,7 @@ interface UserDataContextType extends UserData {
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
   addPlaylist: (playlist: Playlist) => void;
+  addFetchedPlaylistToCache: (playlist: Playlist) => void; // New function
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
@@ -73,6 +78,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
+  const [fetchedPlaylistsCache, setFetchedPlaylistsCache] = useState<CachedPlaylists>({}); // New cache for fetched playlists
   const [communityPlaylists, setCommunityPlaylists] = useState<Playlist[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
@@ -84,6 +90,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       if (user) {
         setUserData(getInitialUserData(user.id));
         setTrackCache(getInitialTrackCache());
+        setFetchedPlaylistsCache({}); // Clear fetched playlist cache on user change
       } else {
         // Handle logout case
         setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [] });
@@ -150,6 +157,10 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       setTrackCache(prev => ({ ...prev, ...newTracks }));
     }
   };
+  
+  const addFetchedPlaylistToCache = (playlist: Playlist) => {
+    setFetchedPlaylistsCache(prev => ({...prev, [playlist.id]: playlist}));
+  }
 
   const isLiked = (trackId: string) => {
     return userData.likedSongs.includes(trackId);
@@ -335,10 +346,16 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       };
     }
     
+    // Check local/private playlists first
     const userPlaylist = userData.playlists.find(p => p.id === playlistId);
     if (userPlaylist) return userPlaylist;
 
-    return communityPlaylists.find(p => p.id === playlistId);
+    // Check firestore/community playlists next
+    const communityPlaylist = communityPlaylists.find(p => p.id === playlistId);
+    if (communityPlaylist) return communityPlaylist;
+
+    // Finally, check the temporary cache for fetched YT playlists
+    return fetchedPlaylistsCache[playlistId];
   }
 
   const value: UserDataContextType = {
@@ -356,6 +373,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     addTrackToCache,
     addTracksToCache,
     addPlaylist,
+    addFetchedPlaylistToCache,
   };
 
   if (!isInitialized) {

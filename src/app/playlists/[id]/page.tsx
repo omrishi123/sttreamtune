@@ -40,7 +40,7 @@ export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist } = useUserData();
+  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist, addFetchedPlaylistToCache } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
@@ -63,12 +63,15 @@ export default function PlaylistPage() {
     let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
     let fetchedTracks: Track[] = [];
 
-    if (foundPlaylist?.public && foundPlaylist.tracks) { // Public playlist from firestore
-        fetchedTracks = foundPlaylist.tracks;
-        addTracksToCache(fetchedTracks);
-    } else if (foundPlaylist) { // Private playlist
-        fetchedTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
-    } else { // External YouTube playlist not in our system
+    // If the playlist is already found (from cache, local storage, or firestore)...
+    if (foundPlaylist) {
+        if (foundPlaylist.public && foundPlaylist.tracks) { // Public playlist from firestore
+            fetchedTracks = foundPlaylist.tracks;
+            addTracksToCache(fetchedTracks);
+        } else { // Private or cached playlist
+            fetchedTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
+        }
+    } else { // External YouTube playlist not in our system, so we fetch it
       try {
         const ytPlaylistDetails = await getYoutubePlaylistDetails({ playlistId: id });
         if (ytPlaylistDetails) {
@@ -76,8 +79,11 @@ export default function PlaylistPage() {
           addTracksToCache(fetchedTracks);
           foundPlaylist = {
             ...ytPlaylistDetails,
-            trackIds: fetchedTracks.map(t => t.id)
+            trackIds: fetchedTracks.map(t => t.id),
+            tracks: fetchedTracks // Also store full tracks for caching
           };
+          // Add the newly fetched playlist to the context's cache
+          addFetchedPlaylistToCache(foundPlaylist);
         }
       } catch (error) {
         console.error("Failed to fetch from YouTube", error);
@@ -93,7 +99,7 @@ export default function PlaylistPage() {
       setPlaylist(null); // Not found
     }
     setIsLoading(false);
-  }, [id, getPlaylistById, getTrackById, addTracksToCache]);
+  }, [id, getPlaylistById, getTrackById, addTracksToCache, addFetchedPlaylistToCache]);
 
 
   useEffect(() => {
