@@ -22,11 +22,16 @@ import {
   Draggable,
   DropResult,
 } from "react-beautiful-dnd";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Track } from "@/lib/types";
 
 export function QueueSheet() {
   const { queue, currentTrack, removeTrackFromQueue, clearQueue, reorderQueue } = usePlayer();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleOnDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -88,49 +93,51 @@ export function QueueSheet() {
             
             <Separator className="my-4"/>
             
-            <DragDropContext onDragEnd={handleOnDragEnd}>
-              <Droppable droppableId="queue">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef}>
-                    {getDraggableTracks.length > 0 ? (
-                      getDraggableTracks.map((track: Track, index: number) => (
-                        <Draggable key={track.id} draggableId={track.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`flex items-center gap-3 p-2 group rounded-md mb-2 transition-shadow ${snapshot.isDragging ? 'shadow-lg bg-accent' : ''}`}
-                            >
-                               <div {...provided.dragHandleProps} className="text-muted-foreground cursor-grab active:cursor-grabbing">
-                                <GripVertical className="h-5 w-5" />
+            {isClient ? (
+              <DragDropContext onDragEnd={handleOnDragEnd}>
+                <Droppable droppableId="queue">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      {getDraggableTracks.length > 0 ? (
+                        getDraggableTracks.map((track: Track, index: number) => (
+                          <Draggable key={track.id} draggableId={track.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`flex items-center gap-3 p-2 group rounded-md mb-2 transition-shadow ${snapshot.isDragging ? 'shadow-lg bg-accent' : ''}`}
+                              >
+                                 <div {...provided.dragHandleProps} className="text-muted-foreground cursor-grab active:cursor-grabbing">
+                                  <GripVertical className="h-5 w-5" />
+                                </div>
+                                <Image
+                                  src={track.artwork}
+                                  alt={track.title}
+                                  width={40}
+                                  height={40}
+                                  className="rounded-md"
+                                  data-ai-hint={track['data-ai-hint']}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm truncate">{track.title}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => removeTrackFromQueue(track.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
                               </div>
-                              <Image
-                                src={track.artwork}
-                                alt={track.title}
-                                width={40}
-                                height={40}
-                                className="rounded-md"
-                                data-ai-hint={track['data-ai-hint']}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm truncate">{track.title}</p>
-                                <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
-                              </div>
-                              <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => removeTrackFromQueue(track.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">The queue is empty.</p>
-                    )}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                            )}
+                          </Draggable>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">The queue is empty.</p>
+                      )}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            ) : null}
           </ScrollArea>
         </div>
          {getDraggableTracks.length > 0 && (
