@@ -40,6 +40,7 @@ interface PlayerContextType {
   isNowPlayingOpen: boolean;
   setIsNowPlayingOpen: (isOpen: boolean) => void;
   videoPlayerRef: React.RefObject<YouTube | null>;
+  reorderQueue: (sourceIndex: number, destinationIndex: number) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -284,6 +285,15 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueState(prev => prev.filter(track => track.id !== trackId));
   };
 
+  const reorderQueue = (sourceIndex: number, destinationIndex: number) => {
+    setQueueState(prev => {
+      const newQueue = Array.from(prev);
+      const [removed] = newQueue.splice(sourceIndex, 1);
+      newQueue.splice(destinationIndex, 0, removed);
+      return newQueue;
+    });
+  };
+
   const clearQueue = () => {
     setQueueState(currentTrack ? [currentTrack] : []);
   };
@@ -365,6 +375,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     isNowPlayingOpen,
     setIsNowPlayingOpen,
     videoPlayerRef,
+    reorderQueue,
   };
 
   if (!isMounted) {
