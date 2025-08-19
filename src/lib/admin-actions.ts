@@ -98,15 +98,15 @@ async function findPlaylistDocumentRef(id: string): Promise<admin.firestore.Docu
     }
     if (!id) return null;
 
-    // 1. Try to get the document directly using the provided ID.
+    // 1. Try to get the document directly using the provided ID, as this is the most common case.
     const directRef = adminDb.collection('communityPlaylists').doc(id);
     const docSnap = await directRef.get();
     if (docSnap.exists) {
         return directRef;
     }
 
-    // 2. Fallback for legacy playlists: Query the collection where the `id` field matches.
-    const q = adminDb.collection('communityPlaylists').where('id', '==', id);
+    // 2. Fallback for legacy or imported playlists: Query the collection where the `id` field matches.
+    const q = adminDb.collection('communityPlaylists').where('id', '==', id).limit(1);
     const querySnapshot = await q.get();
 
     if (!querySnapshot.empty) {
