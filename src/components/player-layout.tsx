@@ -16,8 +16,10 @@ import {
   Radio,
   Flame,
   ShieldCheck,
+  Moon,
+  Sun,
 } from "lucide-react";
-
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/auth";
 import { Icons } from "@/components/icons";
@@ -45,6 +47,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { User as AppUser, Playlist } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -62,6 +68,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { playlists: userPlaylists } = useUserData();
+  const { setTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -212,6 +219,26 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                      <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                      <span>Toggle theme</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={() => setTheme("light")}>
+                          Light
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("dark")}>
+                          Dark
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("system")}>
+                          System
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
                    {!isGuest && (
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
@@ -253,6 +280,26 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                         <UserIcon className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                       </DropdownMenuItem>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                          <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                          <span>Toggle theme</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={() => setTheme("light")}>
+                              Light
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTheme("dark")}>
+                              Dark
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTheme("system")}>
+                              System
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
                       {!isGuest && (
                         <DropdownMenuItem onClick={handleLogout}>
                           <LogOut className="mr-2 h-4 w-4" />

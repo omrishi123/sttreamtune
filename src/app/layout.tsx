@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { PlayerProvider } from '@/context/player-context';
 import { LayoutProvider } from '@/components/layout-provider';
 import { UserDataProvider } from '@/context/user-data-context';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'StreamTune',
@@ -37,9 +38,16 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased dark">
-        <LayoutProvider>{children}</LayoutProvider>
-        <Toaster />
+      <body className="font-body antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <LayoutProvider>{children}</LayoutProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
