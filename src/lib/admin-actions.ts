@@ -149,12 +149,15 @@ export async function removeTrackFromPlaylistAdmin(playlistId: string, trackToRe
             }
 
             const playlistData = playlistDoc.data() as Playlist;
+            // Find the full track object in the `tracks` array to ensure we remove the correct one.
             const fullTrackToRemove = playlistData.tracks?.find(t => t.id === trackToRemove.id);
 
             const updates: { [key: string]: any } = {
+                // Always remove the ID from the `trackIds` array.
                 trackIds: FieldValue.arrayRemove(trackToRemove.id)
             };
 
+            // If the full track object was found, remove it from the `tracks` array.
             if (fullTrackToRemove) {
                 updates.tracks = FieldValue.arrayRemove(fullTrackToRemove);
             }
