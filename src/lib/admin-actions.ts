@@ -103,8 +103,7 @@ async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.Do
         return playlistRef; // The provided ID was the correct Firestore Document ID
     }
 
-    // Fallback: If not found, query by the legacy YouTube ID format.
-    // This handles playlists imported before the ID generation was fixed.
+    // Fallback: If not found, query by the legacy YouTube ID or other custom ID formats.
     const querySnapshot = await adminDb.collection('communityPlaylists').where('id', '==', id).limit(1).get();
     if (!querySnapshot.empty) {
         return querySnapshot.docs[0].ref;
@@ -165,7 +164,7 @@ export async function removeTrackFromPlaylistAdmin(playlistId: string, trackToRe
 
         revalidatePath(`/admin/playlists`);
         revalidatePath(`/playlists/${playlistId}`);
-    } catch (error: any) {
+    } catch (error: any) => {
         console.error("Error removing track from playlist:", error);
         throw new Error(`Failed to remove track: ${error.message}`);
     }
