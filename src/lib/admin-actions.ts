@@ -164,7 +164,7 @@ export async function removeTrackFromPlaylistAdmin(playlistId: string, trackToRe
 
         revalidatePath(`/admin/playlists`);
         revalidatePath(`/playlists/${playlistId}`);
-    } catch (error: any) => {
+    } catch (error: any) {
         console.error("Error removing track from playlist:", error);
         throw new Error(`Failed to remove track: ${error.message}`);
     }
