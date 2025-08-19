@@ -15,14 +15,14 @@ export const tracks: Track[] = [
 ];
 
 export const playlists: Playlist[] = [
-  { id: 'pl-1', name: 'Workout Hits', description: 'High-energy tracks to keep you motivated.', coverArt: 'https://i.postimg.cc/RFrL88g1/workout.jpg', trackIds: ['3', '7', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'gym workout' },
-  { id: 'pl-2', name: 'Chill Focus', description: 'Instrumental beats for concentration.', coverArt: 'https://i.postimg.cc/pLhCgJgN/chill.jpg', trackIds: ['2', '4', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'person studying' },
-  { id: 'pl-3', name: 'Top 100', description: 'The most popular tracks right now.', coverArt: 'https://i.postimg.cc/Kz4T9Msm/top100.jpg', trackIds: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'music chart' },
-  { id: 'pl-4', name: 'Cosmic Dreams', description: 'Embark on a journey through sound.', coverArt: 'https://i.postimg.cc/13f0j124/cosmic.jpg', trackIds: ['1', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'galaxy stars' },
-  { id: 'pl-5', name: 'Nature Walk', description: 'Calm and soothing sounds of nature.', coverArt: 'https://i.postimg.cc/Y0b9n5YQ/nature.jpg', trackIds: ['2', '4', '6', '9'], public: true, owner: 'StreamTune', 'data-ai-hint': 'forest path' },
+  { id: 'pl-1', name: 'Workout Hits', description: 'High-energy tracks to keep you motivated.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['3', '7', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'gym workout' },
+  { id: 'pl-2', name: 'Chill Focus', description: 'Instrumental beats for concentration.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['2', '4', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'person studying' },
+  { id: 'pl-3', name: 'Top 100', description: 'The most popular tracks right now.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], public: true, owner: 'StreamTune', 'data-ai-hint': 'music chart' },
+  { id: 'pl-4', name: 'Cosmic Dreams', description: 'Embark on a journey through sound.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['1', '8'], public: true, owner: 'StreamTune', 'data-ai-hint': 'galaxy stars' },
+  { id: 'pl-5', name: 'Nature Walk', description: 'Calm and soothing sounds of nature.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['2', '4', '6', '9'], public: true, owner: 'StreamTune', 'data-ai-hint': 'forest path' },
   { id: 'pl-6', name: 'Liked Songs', description: 'Your collection of favorite tracks.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['1', '5', '9'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'glowing heart' },
-  { id: 'pl-7', name: 'My Roadtrip', description: 'Songs for the open road.', coverArt: 'https://i.postimg.cc/J4Yp440h/roadtrip.jpg', trackIds: ['3', '5', '7'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'car roadtrip' },
-  { id: 'pl-8', name: 'Morning Coffee', description: 'Acoustic and mellow tunes.', coverArt: 'https://i.postimg.cc/26L2m0sN/coffee.jpg', trackIds: ['4', '10'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'morning coffee' },
+  { id: 'pl-7', name: 'My Roadtrip', description: 'Songs for the open road.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['3', '5', '7'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'car roadtrip' },
+  { id: 'pl-8', name: 'Morning Coffee', description: 'Acoustic and mellow tunes.', coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png', trackIds: ['4', '10'], public: false, owner: 'Jane Doe', 'data-ai-hint': 'morning coffee' },
 ];
 
 export const userPlaylists = playlists.filter(p => !p.public);
@@ -35,7 +35,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEEqCMJSiYZ-KTtEjzVy0YvK",
           "name": "Best of Bollywood Hindi Love Songs ",
           "description": "Listen to all the trending songs of the week in this playlist!",
-          "coverArt": "https://i.postimg.cc/T3ffg09f/hqdefault-1.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -44,7 +44,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6NmK47v6tpOcxurcxdW-hZa",
           "name": "Latest Bollywood Songs 2025",
           "description": "Trending songs are the most popular songs that are being listened to by a large number of people.",
-          "coverArt": "https://i.postimg.cc/WbYp1G6g/hqdefault-2.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -53,7 +53,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEGrOA88bJtxgfKaN2HPhkNS",
           "name": "Bollywood Top 50",
           "description": "Presenting the Top 50 songs of the week for all the Bollywood fans.",
-          "coverArt": "https://i.postimg.cc/D0kYxLKL/hqdefault-3.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -67,7 +67,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6MnOoKQGmYNY2OoCOP3GRfm",
           "name": "Hindi New Song 2025",
           "description": "Hindi New Song 2025.",
-          "coverArt": "https://i.postimg.cc/T2Fz0y2m/hqdefault-4.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -76,7 +76,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEF-J_tIORZ6xE_OXkGuKjjY",
           "name": "Party Songs",
           "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
-          "coverArt": "https://i.postimg.cc/PryCgLh4/hqdefault-5.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -85,7 +85,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6M1xUjj8HxTxskouWx48SNw",
           "name": "Bollywood Songs ",
           "description": "Shiva is one of the principal deities of Hinduism.",
-          "coverArt": "https://i.postimg.cc/y8XnSg4R/hqdefault-6.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -99,7 +99,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLwgf_2_aBmU1kYCWHfvX9kVhKoof35qzg",
           "name": "Bollywood Dance",
           "description": "",
-          "coverArt": "https://i.postimg.cc/x8hRkKDX/hqdefault-7.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -108,7 +108,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL1gfuz7ZYcaM2Z7sCGOWORCF0CGmonzOv",
           "name": "Spotify Playlist",
           "description": "",
-          "coverArt": "https://i.postimg.cc/WbYp1G6g/hqdefault-2.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -117,7 +117,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6NYoMAN0XncJu4tvibirSmN",
           "name": "Punjabi Song Playlist",
           "description": "Sad songs are songs that make you feel sad.",
-          "coverArt": "https://i.postimg.cc/T3ffg09f/hqdefault-1.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -131,7 +131,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLEK4199_zBwCqNxwJygffUonzfROKn0Kh",
           "name": "Punjabi Hits",
           "description": "",
-          "coverArt": "https://i.postimg.cc/Vv4f7d4b/hqdefault-8.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -140,7 +140,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLf0EVMk_zZgYD7bfe6KDmRtf58M9EjOEn",
           "name": "Punjabi Hits SPOTIFY",
           "description": "",
-          "coverArt": "https://i.postimg.cc/d0gXn6kG/hqdefault-9.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -149,7 +149,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLNCA1T91UH31M7mN8iKSxMwwWB_mkzwT6",
           "name": "Punjabi Songs",
           "description": "Punjabi songs are the most popular songs in India.",
-          "coverArt": "https://i.postimg.cc/y8B4W8s4/hqdefault-10.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -158,7 +158,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLmfcCDSUSykbw9ewtVgSDKazPDwoTBm8E",
           "name": "Punjabi Hits",
           "description": "",
-          "coverArt": "https://i.postimg.cc/8z7pCfYj/hqdefault-11.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -167,7 +167,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLdYKFelfD72exdwCQ6XzPzJDvc91tCpKm",
           "name": "Romantic Songs PUNJABI",
           "description": "A playlist of romantic songs from Bollywood.",
-          "coverArt": "https://i.postimg.cc/T3ffg09f/hqdefault-1.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -176,7 +176,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLyORnIW1xT6xk8134gbFnvDrD6mXiIlrF",
           "name": "Pop",
           "description": "Pop music is a genre of popular music that originated in its modern form during the mid-1950s in the United States and the United Kingdom.",
-          "coverArt": "https://i.postimg.cc/y8XnSg4R/hqdefault-6.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -190,7 +190,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL-oM5qTjmK2vxdTsj2Xghu5fjxhtuMaxo",
           "name": "punjabi songs 2025",
           "description": "Arijit Singh is an Indian singer and music composer.",
-          "coverArt": "https://i.postimg.cc/bN1d3K7p/hqdefault-12.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -199,7 +199,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLFFyMei_d85XaYHYUy8gFt_TQ7LqBNgEv",
           "name": " Punjabi Songs 2025 ",
           "description": "Neha Kakkar Singh is an Indian singer.",
-          "coverArt": "https://i.postimg.cc/zX8QYQJ4/hqdefault-13.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -208,7 +208,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLFFyMei_d85X5UuHRCJ63jcl84x--WGLu",
           "name": "PUNJABI HITS",
           "description": "Jubin Nautiyal is an Indian playback singer and performer.",
-          "coverArt": "https://i.postimg.cc/zX8QYQJ4/hqdefault-13.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -217,7 +217,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLO7-VO1D0_6N2ePPlPE9NKCgUBA15aOk2",
           "name": "English Songs",
           "description": "Sonu Nigam is an Indian singer, music director and actor.",
-          "coverArt": "https://i.postimg.cc/prX6L10G/hqdefault-14.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -226,7 +226,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLDIoUOhQQPlXzhp-83rECoLaV6BwFtNC4",
           "name": "English Songs",
           "description": "Lata Mangeshkar was an Indian playback singer and occasional music composer.",
-          "coverArt": "https://i.postimg.cc/66M5521H/hqdefault-15.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -235,7 +235,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLTo6svdhIL1cxS4ffGueFpVCF756ip-ab",
           "name": "TikTok Songs 2025",
           "description": "Kishore Kumar was an Indian playback singer and actor.",
-          "coverArt": "https://i.postimg.cc/k47M3fJ9/hqdefault-16.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -249,7 +249,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEE0jGfUgUMvzeWAaMPcqHL9",
           "name": "Nonstop Ram Bhajans",
           "description": "Listen to all the trending songs of the week in this playlist!",
-          "coverArt": "https://i.postimg.cc/J00P2wM4/hqdefault-17.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "T-Series Bhakti Sagar"
@@ -258,7 +258,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLFPJRCFRDARRXCaWKpL5tuyWzz_B_ntwE",
           "name": "Shree Krishna Govind",
           "description": "Shree Krishna Govind Hare Murari.",
-          "coverArt": "https://i.postimg.cc/Y9S9fJd3/hqdefault-18.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "Jubin Nautiyal"
@@ -267,7 +267,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL2iMjy7LPXAGbh13EK99NSka47D4Vu2bt",
           "name": "Hanuman Chalisa",
           "description": "Hanuman is a Hindu god and a divine vanara companion of the god Rama.",
-          "coverArt": "https://i.postimg.cc/50tZf1y8/hqdefault-19.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "T-Series Bhakti Sagar"
@@ -276,7 +276,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL20B425742CB4BCCD",
           "name": "Top Krishna Bhajans",
           "description": "The best bhajans dedicated to Lord Krishna.",
-          "coverArt": "https://i.postimg.cc/9M9Y5j7P/hqdefault-20.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "Art of Living"
@@ -285,7 +285,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLyXHXSHxLqKxWA9_JhSjMpXQabvHBvzis",
           "name": "Sunderkand Path",
           "description": "Musical rendition of the Sunderkand.",
-          "coverArt": "https://i.postimg.cc/hGj9SgS7/hqdefault-21.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "Shemaroo Bhakti"
@@ -294,7 +294,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL109z4jBDfVksX38sA3le--iT-JzfBNcw",
           "name": "Shiv Bhajans",
           "description": "Devotional songs for Lord Shiva.",
-          "coverArt": "https://i.postimg.cc/Pq0wBqGv/hqdefault-22.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "Shemaroo Bhakti"
@@ -303,7 +303,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLIdZRpy-6dcVeLLaxMkQbvaFXQlKugMhH",
           "name": "Ganesh Bhajans",
           "description": "A collection of devotional songs for Lord Ganesha.",
-          "coverArt": "https://i.postimg.cc/t4G3r92C/hqdefault-23.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "Shemaroo Bhakti"
@@ -317,7 +317,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL0Z67tlyTaWo-c_QyUnhsoa4cUwceCmRu",
           "name": "Independence Day Special",
           "description": "Patriotic songs to celebrate the spirit of the nation.",
-          "coverArt": "https://i.postimg.cc/59W9Zg9Z/hqdefault-24.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "T-Series"
@@ -326,7 +326,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLtp23GqaHmiAJgvaHYI3UULaqgcVOKwNd",
           "name": "Best Patriotic Songs",
           "description": "A collection of the most popular patriotic songs.",
-          "coverArt": "https://i.postimg.cc/sxZ4z4d5/hqdefault-25.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "Various Artists"
@@ -335,7 +335,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL9bw4S5ePsEHil8ve8D0fRLf4ewqZ6hNZ",
           "name": "Top Indian Patriotic Songs",
           "description": "Feel the pride with these top patriotic songs from India.",
-          "coverArt": "https://i.postimg.cc/2j5T0WGG/hqdefault-26.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "T-Series"
@@ -349,7 +349,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PL5A5QJkW7MkvYslAbg7_rFij8yVEeiEwF",
           "name": "Shrimad Bhagavad Gita",
           "description": "Listen to all chapters of the sacred scripture.",
-          "coverArt": "https://i.postimg.cc/0jYfXQYt/hqdefault-27.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "GEETHANJALI"
@@ -363,7 +363,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLNCA1T91UH313UXRVbc-kgLul6PG6qjEJ",
           "name": "Bhojpuri Songs 2025",
           "description": "",
-          "coverArt": "https://i.postimg.cc/y8B4W8s4/hqdefault-10.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -372,7 +372,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLWJCstrm0l02WSdUBNcwAR6fJWQIqr5OE",
           "name": "Bhojpuri Songs 2025 songs",
           "description": "",
-          "coverArt": "https://i.postimg.cc/d0gXn6kG/hqdefault-9.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -381,7 +381,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLJ3M6AoVR-gYDJqZoVGvLfY8Fd3gBaZW9",
           "name": "Worldwide Records Bhojpuri",
           "description": "",
-          "coverArt": "https://i.postimg.cc/135z2Zzt/hqdefault-28.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -390,7 +390,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLJ3M6AoVR-gZMysByi-wXsMGNCefYqI1_",
           "name": "Worldwide Records Bhojpuri ",
           "description": "",
-          "coverArt": "https://i.postimg.cc/Xv7Xf0gM/hqdefault-29.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -399,7 +399,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLJ3M6AoVR-gbI0Y8WWkIZFq2WLt1uj-nd",
           "name": "Bhojpuri ",
           "description": "",
-          "coverArt": "https://i.postimg.cc/bN1d3K7p/hqdefault-12.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -408,7 +408,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLY5D8wTRCsJdrvZb8H48QPKbSvPmrnO_B",
           "name": "Mix Bhojpuri Dj",
           "description": "",
-          "coverArt": "https://i.postimg.cc/k588XjG6/hqdefault-30.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
@@ -417,7 +417,7 @@ export const homePagePlaylists: { title: string, playlists: Playlist[] }[] = [
           "id": "PLqqxLEV7gl8VN3h_RFZEe82AyNgKS_FSB",
           "name": "Old Teth Nagpuri",
           "description": "Romantic songs are songs with lyrics about love and romance.",
-          "coverArt": "https://i.postimg.cc/q73D9G0C/hqdefault-31.jpg",
+          "coverArt": "https://i.postimg.cc/SswWC87w/streamtune.png",
           "trackIds": [],
           "public": true,
           "owner": "OM RISHI"
