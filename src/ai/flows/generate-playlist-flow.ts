@@ -20,6 +20,7 @@ const GeneratePlaylistInputSchema = z.object({
   userId: z.string().describe("The ID of the user creating the playlist."),
   userName: z.string().describe("The name of the user creating the playlist."),
   isPublic: z.boolean().describe("Whether the playlist should be public."),
+  playlistId: z.string().describe("A pre-generated unique ID for the playlist."),
 });
 export type GeneratePlaylistInput = z.infer<typeof GeneratePlaylistInputSchema>;
 
@@ -98,7 +99,7 @@ const generatePlaylistFlow = ai.defineFlow(
 
     // Step 5: Format the final playlist object
     const finalPlaylist = {
-      id: `pl-ai-${nanoid(10)}`,
+      id: input.playlistId, // Use the ID passed from the client
       name: suggestion.name,
       description: suggestion.description,
       owner: input.userName,

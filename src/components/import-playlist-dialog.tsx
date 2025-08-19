@@ -34,7 +34,7 @@ import { Icons } from './icons';
 import { Switch } from './ui/switch';
 import { onAuthChange } from '@/lib/auth';
 import type { User, Playlist } from '@/lib/types';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { nanoid } from 'nanoid';
 
@@ -100,28 +100,27 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
       
       const tracks = await getTracksForPlaylist(playlistId);
       addTracksToCache(tracks);
+      
+      const newPlaylistId = `pl-yt-${nanoid(10)}`;
 
-      const importedPlaylistData: Omit<Playlist, 'id'> & { id?: string } = {
+      const importedPlaylistData: Playlist = {
         ...playlistDetails,
-        id: `yt-${playlistId}`, // Keep original YT id for reference, but it won't be the doc ID for public
+        id: newPlaylistId, // Use the new, consistent ID
         trackIds: tracks.map(t => t.id),
         public: isPublic,
         owner: user.name,
         ownerId: user.id, // Ensure ownerId is always set
       };
 
-
       if(isPublic) {
-        // Firestore will generate an ID. We don't save this locally because the
-        // real-time listener in UserDataProvider will automatically add it.
-        await addDoc(collection(db, "communityPlaylists"), {
+        // Use setDoc with the pre-generated ID
+        await setDoc(doc(db, "communityPlaylists", newPlaylistId), {
           ...importedPlaylistData,
           tracks: tracks, // Embed full track objects
           createdAt: serverTimestamp(),
         });
       } else {
-        const finalPlaylist = { ...importedPlaylistData, id: `pl-yt-${nanoid(10)}`};
-        addPlaylist(finalPlaylist as Playlist);
+        addPlaylist(importedPlaylistData);
       }
 
       toast({

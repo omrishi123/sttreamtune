@@ -34,8 +34,9 @@ import { onAuthChange } from '@/lib/auth';
 import type { User, Playlist, Track } from '@/lib/types';
 import { Icons } from './icons';
 import { Switch } from './ui/switch';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { nanoid } from 'nanoid';
 
 export function GeneratePlaylistDialog({ children }: { children: React.ReactNode }) {
   const [prompt, setPrompt] = useState('');
@@ -80,11 +81,14 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
     setIsLoading(true);
 
     try {
+      const newPlaylistId = `pl-ai-${nanoid(10)}`;
+
       const result = await generatePlaylist({
         prompt,
         userId: user.id,
         userName: user.name,
         isPublic: isPublic,
+        playlistId: newPlaylistId, // Pass the generated ID to the flow
       });
 
       if (!result || !result.playlist || !result.tracks) {
@@ -102,17 +106,15 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       }
       
       if (isPublic) {
-         // For public playlists, we save to Firestore. The cover art is already set
-         // to the first track's artwork by the flow.
+         // For public playlists, we save to Firestore with the consistent ID.
          const publicPlaylistData = {
           ...playlistToSave,
-          ownerId: user.id, // Ensure ownerId is always set correctly
+          ownerId: user.id,
           tracks: result.tracks,
           createdAt: serverTimestamp(),
          }
-         // Firestore will generate an ID. We don't save this locally because the
-         // real-time listener in UserDataProvider will automatically add it.
-         await addDoc(collection(db, "communityPlaylists"), publicPlaylistData);
+         // Use setDoc with the pre-generated ID
+         await setDoc(doc(db, "communityPlaylists", newPlaylistId), publicPlaylistData);
       } else {
         // For private playlists, add the version with the (potentially AI-generated) cover art
         addPlaylist(playlistToSave);
