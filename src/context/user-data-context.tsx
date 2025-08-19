@@ -206,7 +206,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       public: isPublic,
       owner: currentUser.name, 
       ownerId: currentUser.id,
-      coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
+      coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
       'data-ai-hint': 'playlist cover',
     };
 
@@ -323,7 +323,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         id: LIKED_SONGS_PLAYLIST_ID,
         name: 'Liked Songs',
         description: `${userData.likedSongs.length} songs`,
-        coverArt: 'https://i.postimg.cc/SswWC87w/streamtune.png',
+        coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
         'data-ai-hint': 'glowing heart',
         trackIds: userData.likedSongs,
         public: false,
@@ -337,7 +337,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         id: 'recently-played',
         name: 'Recently Played',
         description: 'Tracks you\'ve listened to recently',
-        coverArt: 'https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg',
+        coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
         trackIds: userData.recentlyPlayed,
         public: false,
         owner: currentUser.name || "You",

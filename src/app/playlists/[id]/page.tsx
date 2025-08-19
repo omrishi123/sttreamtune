@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
 
-const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
+const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 
 export default function PlaylistPage() {
   const params = useParams();

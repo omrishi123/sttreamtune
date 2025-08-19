@@ -13,11 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
-interface PlaylistCardProps {
-  playlist: Playlist;
-}
-
-const FALLBACK_IMAGE_URL = "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg";
+const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 const PLACEHOLDER_IMAGE_URL = "https://i.postimg.cc/SswWC87w/streamtune.png";
 
 export function PlaylistCard({ playlist }: PlaylistCardProps) {

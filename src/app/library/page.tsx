@@ -65,7 +65,7 @@ export default function LibraryPage() {
     owner: "You",
     public: false,
     trackIds: likedSongs,
-    coverArt: getFirstTrackArtwork(likedSongs) || "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg",
+    coverArt: getFirstTrackArtwork(likedSongs) || "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif",
     'data-ai-hint': 'glowing heart',
     isLikedSongs: true,
   };
@@ -77,7 +77,7 @@ export default function LibraryPage() {
     owner: "You",
     public: false,
     trackIds: [],
-    coverArt: "https://c.saavncdn.com/237/Top-10-Sad-Songs-Hindi-Hindi-2021-20250124193408-500x500.jpg",
+    coverArt: "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif",
     'data-ai-hint': 'time clock',
   }
 
