@@ -92,7 +92,7 @@ export async function getAllPublicPlaylists(): Promise<Playlist[]> {
   return playlistsSnapshot.docs.map(doc => serializeFirestoreData(doc) as Playlist).filter(Boolean);
 }
 
-async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.DocumentReference | null> {
+async function findPlaylistDocumentRef(id: string): Promise<admin.firestore.DocumentReference | null> {
     if (!adminDb) {
         throw new Error("Firebase Admin is not initialized.");
     }
