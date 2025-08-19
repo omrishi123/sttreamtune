@@ -92,20 +92,25 @@ export async function getAllPublicPlaylists(): Promise<Playlist[]> {
   return playlistsSnapshot.docs.map(doc => serializeFirestoreData(doc) as Playlist).filter(Boolean);
 }
 
-async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData> | null> {
+async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.DocumentReference | null> {
     if (!adminDb) {
         throw new Error("Firebase Admin is not initialized.");
     }
-    const playlistRef = adminDb.collection('communityPlaylists').doc(id);
-    const docSnap = await playlistRef.get();
+    if (!id) return null;
 
+    // 1. Try to get the document directly using the provided ID.
+    const directRef = adminDb.collection('communityPlaylists').doc(id);
+    const docSnap = await directRef.get();
     if (docSnap.exists) {
-        return playlistRef; // The provided ID was the correct Firestore Document ID
+        return directRef;
     }
 
-    // Fallback: If not found, query by the legacy YouTube ID or other custom ID formats.
-    const querySnapshot = await adminDb.collection('communityPlaylists').where('id', '==', id).limit(1).get();
+    // 2. Fallback for legacy playlists: Query the collection where the `id` field matches.
+    const q = adminDb.collection('communityPlaylists').where('id', '==', id);
+    const querySnapshot = await q.get();
+
     if (!querySnapshot.empty) {
+        // Return the ref of the first document found.
         return querySnapshot.docs[0].ref;
     }
 
