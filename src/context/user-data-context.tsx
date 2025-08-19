@@ -301,7 +301,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
     if (playlist.public) {
         const result = await deletePublicPlaylist({
-          playlistId: playlistId,
+          playlistId: playlist.id, // Use playlist.id which can be the doc ID or the legacy ID
           userId: currentUser.id
         });
         return result;
