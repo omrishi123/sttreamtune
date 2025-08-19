@@ -152,15 +152,6 @@ export default function PlaylistPage() {
   const handleDeletePlaylist = async () => {
     if (!playlist) return;
 
-    if (currentUser?.id === 'guest') {
-       toast({
-            variant: "destructive",
-            title: "Login Required",
-            description: "You must be logged in to delete a playlist.",
-        });
-        return;
-    }
-
     const result = await deletePlaylist(playlist.id);
 
     if (result.success) {
@@ -223,6 +214,7 @@ export default function PlaylistPage() {
           priority
           data-ai-hint={playlist['data-ai-hint']}
           onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
+          unoptimized
         />
         <div className="space-y-3 min-w-0">
           <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>

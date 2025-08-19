@@ -30,6 +30,7 @@ const LiveStreamCard = ({ stream, onPlay }: { stream: LiveStreamSearchOutput[0],
                 height={168}
                 className="aspect-video object-cover transition-transform group-hover:scale-105"
                 data-ai-hint={stream['data-ai-hint']}
+                unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div 

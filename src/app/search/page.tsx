@@ -93,6 +93,7 @@ export default function SearchPage() {
                   height={48}
                   className="rounded-md"
                   data-ai-hint={track['data-ai-hint']}
+                  unoptimized
                 />
                 <div className="flex-1">
                   <p className="font-semibold">{track.title}</p>

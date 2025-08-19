@@ -129,7 +129,7 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
                       height="64"
                       src={playlist.coverArt}
                       width="64"
-                      unoptimized // Since these are external URLs
+                      unoptimized
                     />
                   </TableCell>
                   <TableCell className="font-medium">

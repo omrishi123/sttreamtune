@@ -39,6 +39,7 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
             className="aspect-square object-cover transition-transform group-hover:scale-105"
             data-ai-hint={playlist['data-ai-hint']}
             onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
+            unoptimized
           />
         </CardContent>
         <CardHeader className="p-3 flex-1">

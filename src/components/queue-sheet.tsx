@@ -88,6 +88,7 @@ export function QueueSheet() {
                     height={40}
                     className="rounded-md"
                     data-ai-hint={currentTrack['data-ai-hint']}
+                    unoptimized
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
@@ -123,6 +124,7 @@ export function QueueSheet() {
                                   height={40}
                                   className="rounded-md"
                                   data-ai-hint={track['data-ai-hint']}
+                                  unoptimized
                                 />
                                 <div className="flex-1 min-w-0">
                                   <p className="font-semibold text-sm truncate">{track.title}</p>
