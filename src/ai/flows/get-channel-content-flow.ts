@@ -114,6 +114,7 @@ export async function getChannelContent(input: GetChannelContentInput): Promise<
   // --- 3. Fetch All Public Playlists (conditional) ---
   if (input.importType === 'all' || input.importType === 'playlists') {
     let nextPageToken: string | undefined = undefined;
+    const rawPlaylists: any[] = [];
     do {
         const playlistsUrl = new URL('https://www.googleapis.com/youtube/v3/playlists');
         playlistsUrl.searchParams.append('part', 'snippet,contentDetails');
@@ -128,20 +129,29 @@ export async function getChannelContent(input: GetChannelContentInput): Promise<
         const playlistsData = await playlistsResponse.json();
 
         if (playlistsData.items) {
-            const fetchedPlaylists = playlistsData.items.map((item: any): Playlist => ({
-                id: item.id,
-                name: item.snippet.title,
-                description: item.snippet.description,
-                coverArt: item.snippet.thumbnails.high.url,
-                trackIds: [], // These will be fetched on demand when the playlist is clicked
-                public: true,
-                owner: channelDetails.snippet.title,
-                'data-ai-hint': 'youtube playlist'
-            }));
-            channelPlaylists.push(...fetchedPlaylists);
+          rawPlaylists.push(...playlistsData.items);
         }
         nextPageToken = playlistsData.nextPageToken;
     } while (nextPageToken);
+
+    // Now fetch tracks for each playlist
+    const playlistPromises = rawPlaylists.map(async (item: any) => {
+        const tracks = await getTracksForPlaylist(item.id);
+        const playlist: Playlist = {
+            id: item.id,
+            name: item.snippet.title,
+            description: item.snippet.description,
+            coverArt: item.snippet.thumbnails.high.url,
+            trackIds: tracks.map(t => t.id),
+            tracks: tracks,
+            public: true,
+            owner: channelDetails.snippet.title,
+            'data-ai-hint': 'youtube playlist'
+        };
+        return playlist;
+    });
+
+    channelPlaylists = await Promise.all(playlistPromises);
   }
 
 
