@@ -30,6 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
 
