@@ -47,8 +47,14 @@ const PlaylistGrid = ({ playlists, title }: { playlists: Playlist[], title?: str
 const ChannelGrid = ({ channels }: { channels: Channel[] }) => {
   if (channels.length === 0) {
     return (
-      <div className="text-center py-10 col-span-full">
+      <div className="text-center py-16 col-span-full space-y-4">
         <p className="text-muted-foreground">Import a channel to get started.</p>
+        <ImportChannelDialog>
+            <Button>
+                <Tv className="mr-2 h-4 w-4" />
+                Import Channel
+            </Button>
+        </ImportChannelDialog>
       </div>
     );
   }
