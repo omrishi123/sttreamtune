@@ -20,18 +20,57 @@ import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
 import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
 import { ImportChannelDialog } from "@/components/import-channel-dialog";
 import { onAuthChange } from '@/lib/auth';
+import { Card, CardContent } from '@/components/ui/card';
 
 const PlaylistGrid = ({ playlists, title }: { playlists: Playlist[], title?: string }) => {
-    if (playlists.length === 0 && !title) {
+    if (playlists.length === 0) {
+      if (title === "Your Public Playlists") {
+        return (
+           <div className="mt-8">
+            <h2 className="text-xl font-bold font-headline mb-4">{title}</h2>
+             <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50 col-span-full">
+                <CardContent className="p-0 space-y-4">
+                  <h3 className="font-semibold">Share your vibe with the community!</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Create a public playlist to see it appear here.
+                  </p>
+                  <div className="flex flex-col gap-2 items-center justify-center mt-4">
+                     <GeneratePlaylistDialog>
+                        <Button variant="outline" size="sm">
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Create with AI
+                        </Button>
+                    </GeneratePlaylistDialog>
+                    <ImportPlaylistDialog>
+                        <Button variant="outline" size="sm">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import from YouTube
+                        </Button>
+                    </ImportPlaylistDialog>
+                    <AddPlaylistDialog>
+                        <Button variant="outline" size="sm">
+                            <Plus className="h-4 w-4 mr-2" />
+                            New Playlist
+                        </Button>
+                    </AddPlaylistDialog>
+                  </div>
+                </CardContent>
+            </Card>
+          </div>
+        )
+      }
+
+      if (!title) {
         return (
             <div className="text-center py-10 col-span-full">
                 <p className="text-muted-foreground">No playlists in this section.</p>
             </div>
         );
+      }
+      // Return null for other titled sections that are empty
+      return null;
     }
-     if (playlists.length === 0 && title) {
-        return null;
-    }
+
     return (
         <div className="mt-8">
             {title && <h2 className="text-xl font-bold font-headline mb-4">{title}</h2>}
