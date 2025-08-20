@@ -4,60 +4,33 @@
 import React, { useState, useEffect } from 'react';
 import { useUserData } from '@/context/user-data-context';
 import { useToast } from '@/hooks/use-toast';
-import { generateRecommendations, GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
+import { GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
 import { TrackList } from '@/components/track-list';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-// Helper to get search history from localStorage
-const getSearchHistory = (): string[] => {
-    if (typeof window === 'undefined') return [];
-    try {
-        const history = localStorage.getItem('searchHistory');
-        return history ? JSON.parse(history) : [];
-    } catch (error) {
-        console.error("Failed to get search history:", error);
-        return [];
-    }
-}
+import { getCachedRecommendations, getSearchHistory } from '@/lib/recommendations';
 
 export default function RecommendedPage() {
     const [recommendedTracks, setRecommendedTracks] = useState<GenerateRecommendationsOutput>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { addTracksToCache } = useUserData();
-    const { toast } = useToast();
-    const [searchHistory, setSearchHistory] = useState<string[]>([]);
+    const [hasSearchHistory, setHasSearchHistory] = useState(false);
 
     useEffect(() => {
-        const history = getSearchHistory();
-        setSearchHistory(history);
-        
-        if (history.length === 0) {
-            setIsLoading(false);
-            return;
-        }
-
         const fetchRecommendations = async () => {
             setIsLoading(true);
-            try {
-                const results = await generateRecommendations({ history });
-                addTracksToCache(results);
-                setRecommendedTracks(results);
-            } catch (error: any) {
-                console.error('Failed to fetch recommendations:', error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Recommendation Failed',
-                    description: 'Could not fetch recommendations based on your history.',
-                });
-            } finally {
-                setIsLoading(false);
+            const history = getSearchHistory();
+            setHasSearchHistory(history.length > 0);
+            
+            if (history.length > 0) {
+                const { tracks } = await getCachedRecommendations();
+                setRecommendedTracks(tracks);
             }
+            
+            setIsLoading(false);
         };
 
         fetchRecommendations();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -76,7 +49,7 @@ export default function RecommendedPage() {
                      <div className="space-y-2">
                         {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
                     </div>
-                ) : searchHistory.length === 0 ? (
+                ) : !hasSearchHistory ? (
                     <div className="text-center py-16">
                         <h2 className="text-2xl font-semibold">Nothing to recommend yet!</h2>
                         <p className="text-muted-foreground mt-2">

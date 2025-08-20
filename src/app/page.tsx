@@ -1,9 +1,8 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import type { YoutubePlaylistsOutput } from '@/ai/flows/get-youtube-playlists-flow';
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Filter, ChevronRight } from "lucide-react";
 import { useUserData } from '@/context/user-data-context';
-import type { Playlist } from '@/lib/types';
+import type { Playlist, Track } from '@/lib/types';
+import { getCachedRecommendations } from '@/lib/recommendations';
+import { TrackList } from '@/components/track-list';
 
 
 interface PlaylistSectionProps {
@@ -52,6 +53,15 @@ const PlaylistSection: React.FC<PlaylistSectionProps> = ({ title, playlists, vie
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { communityPlaylists } = useUserData();
+  const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
+
+  useEffect(() => {
+      const fetchRecommendations = async () => {
+          const { tracks } = await getCachedRecommendations();
+          setRecommendedTracks(tracks);
+      };
+      fetchRecommendations();
+  }, []);
 
   const featuredPlaylists = useMemo(() => {
     return communityPlaylists.filter(p => p.isFeatured);
@@ -111,6 +121,21 @@ export default function HomePage() {
             </DropdownMenuContent>
           </DropdownMenu>
       </div>
+
+      {recommendedTracks.length > 0 && (
+          <section>
+              <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
+                  <Button asChild variant="ghost" size="sm">
+                      <Link href="/recommended">
+                          View all
+                          <ChevronRight className="h-4 w-4" />
+                      </Link>
+                  </Button>
+              </div>
+              <TrackList tracks={recommendedTracks.slice(0, 3)} />
+          </section>
+      )}
       
       {featuredPlaylists.length > 0 && (
          <PlaylistSection 
