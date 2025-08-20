@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getChannelContent } from '@/ai/flows/get-channel-content-flow';
 import { Icons } from './icons';
 import type { User } from '@/lib/types';
+import { onAuthChange } from '@/lib/auth';
 
 export function ImportChannelDialog({ children }: { children: React.ReactNode }) {
   const [url, setUrl] = useState('');
