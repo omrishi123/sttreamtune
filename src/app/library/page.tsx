@@ -22,7 +22,7 @@ import { ImportChannelDialog } from "@/components/import-channel-dialog";
 import { onAuthChange } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
 
-const PlaylistGrid = ({ playlists, title }: { playlists: Playlist[], title?: string }) => {
+const PlaylistGrid = ({ playlists, title, isGuestPrivateSection = false }: { playlists: Playlist[], title?: string, isGuestPrivateSection?: boolean }) => {
     if (playlists.length === 0) {
       if (title === "Your Public Playlists") {
         return (
@@ -57,6 +57,42 @@ const PlaylistGrid = ({ playlists, title }: { playlists: Playlist[], title?: str
                 </CardContent>
             </Card>
           </div>
+        )
+      }
+      
+      if (isGuestPrivateSection) {
+        return (
+            <div className="mt-8">
+              <h2 className="text-xl font-bold font-headline mb-4">Your Playlists</h2>
+              <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50 col-span-full">
+                  <CardContent className="p-0 space-y-4">
+                    <h3 className="font-semibold">Create your first playlist!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Playlists you create will appear here.
+                    </p>
+                    <div className="flex flex-col gap-2 items-center justify-center mt-4">
+                       <GeneratePlaylistDialog>
+                          <Button variant="outline" size="sm">
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Create with AI
+                          </Button>
+                      </GeneratePlaylistDialog>
+                      <ImportPlaylistDialog>
+                          <Button variant="outline" size="sm">
+                              <Upload className="h-4 w-4 mr-2" />
+                              Import from YouTube
+                          </Button>
+                      </ImportPlaylistDialog>
+                      <AddPlaylistDialog>
+                          <Button variant="outline" size="sm">
+                              <Plus className="h-4 w-4 mr-2" />
+                              New Playlist
+                          </Button>
+                      </AddPlaylistDialog>
+                    </div>
+                  </CardContent>
+              </Card>
+            </div>
         )
       }
 
@@ -172,6 +208,7 @@ export default function LibraryPage() {
   }, [communityPlaylists, currentUser]);
 
   const defaultPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist];
+  const isGuest = currentUser?.id === 'guest';
 
   return (
     <div className="space-y-4 md:space-y-8">
@@ -216,13 +253,16 @@ export default function LibraryPage() {
         <TabsContent value="playlists" className="mt-6 space-y-8">
           <PlaylistGrid playlists={defaultPlaylists} />
           
-          {currentUser?.id !== 'guest' ? (
-              <>
+          {isGuest ? (
+              <PlaylistGrid 
+                playlists={processedUserPrivatePlaylists} 
+                isGuestPrivateSection={true} 
+              />
+          ) : (
+             <>
                 <PlaylistGrid playlists={userPublicPlaylists} title="Your Public Playlists" />
                 <PlaylistGrid playlists={processedUserPrivatePlaylists} title="Your Private Playlists" />
               </>
-          ) : (
-             <PlaylistGrid playlists={processedUserPrivatePlaylists} />
           )}
           
         </TabsContent>
