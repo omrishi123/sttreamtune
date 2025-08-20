@@ -195,8 +195,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   
   const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false) => {
     if (!currentUser || currentUser.id === 'guest') {
-      console.error("Cannot create playlist: no user is logged in.");
-      return;
+      throw new Error("Cannot create playlist: no user is logged in.");
     }
     
     const newPlaylistData = {
@@ -205,7 +204,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       trackIds: [],
       public: isPublic,
       owner: currentUser.name, 
-      ownerId: currentUser.id,
+      ownerId: currentUser.id, // This is the crucial field for ownership
       coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
       'data-ai-hint': 'playlist cover',
     };
@@ -219,6 +218,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         });
       } catch (e) {
         console.error("Error adding document: ", e);
+        throw e; // re-throw to be caught by the dialog
       }
     } else {
         const newLocalPlaylist: Playlist = {
@@ -231,10 +231,13 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   
   const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
     const playlist = getPlaylistById(playlistId);
-    if (!playlist) return;
+    if (!playlist || !currentUser) return;
 
-    // For public playlists in Firestore
     if (playlist.public) {
+      if (playlist.ownerId !== currentUser.id) {
+          toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
+          return;
+      }
       const trackToAdd = getTrackById(trackId);
       if (!trackToAdd) {
         console.error("Cannot add a track that is not in cache to a public playlist.");
@@ -246,20 +249,27 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
           tracks: arrayUnion(trackToAdd),
           trackIds: arrayUnion(trackId)
         });
-      } catch (error) {
+        toast({ title: 'Added to playlist', description: `"${trackToAdd.title}" has been added.` });
+      } catch (error: any) {
         console.error("Error updating public playlist:", error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
       }
     } 
     // For private playlists in local storage
     else {
-      setUserData(prev => ({
-        ...prev,
-        playlists: prev.playlists.map(p =>
-          p.id === playlistId && !p.trackIds.includes(trackId)
-            ? { ...p, trackIds: [...p.trackIds, trackId] }
-            : p
-        ),
-      }));
+      setUserData(prev => {
+        const isTrackAlreadyInPlaylist = prev.playlists.find(p => p.id === playlistId)?.trackIds.includes(trackId);
+        if (isTrackAlreadyInPlaylist) {
+          toast({ title: 'Already in playlist', description: 'This song is already in the playlist.' });
+          return prev;
+        }
+        
+        const newPlaylists = prev.playlists.map(p =>
+          p.id === playlistId ? { ...p, trackIds: [...p.trackIds, trackId] } : p
+        );
+        toast({ title: 'Added to playlist', description: `Song has been added.` });
+        return { ...prev, playlists: newPlaylists };
+      });
     }
   };
 
@@ -274,8 +284,10 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             trackIdToRemove: trackId,
             userId: currentUser.id
         });
-        if (!result.success) {
-            toast({
+        if (result.success) {
+           toast({ title: "Track Removed", description: "The track has been removed from the playlist."});
+        } else {
+           toast({
                 variant: 'destructive',
                 title: 'Update Failed',
                 description: result.message
@@ -292,6 +304,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             : p
         ),
       }));
+      toast({ title: "Track Removed", description: "The track has been removed from the playlist."});
     }
   };
   
@@ -301,7 +314,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
     if (playlist.public) {
         const result = await deletePublicPlaylist({
-          playlistId: playlist.id, // Use playlist.id which can be the doc ID or the legacy ID
+          playlistId: playlist.id, 
           userId: currentUser.id
         });
         return result;

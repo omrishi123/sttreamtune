@@ -73,7 +73,7 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       });
       return;
     }
-     if (isPublic && user?.id === 'guest') {
+     if (isPublic && user.id === 'guest') {
        setShowLoginAlert(true);
        return;
     }

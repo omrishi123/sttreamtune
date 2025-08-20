@@ -75,11 +75,6 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
       return;
     }
     
-    if (isPublic && user?.id === 'guest') {
-       setShowLoginAlert(true);
-       return;
-    }
-
     if (!user) {
         toast({
             variant: 'destructive',
@@ -87,6 +82,11 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
             description: 'You must be logged in to import a playlist.',
         });
         return;
+    }
+    
+    if (isPublic && user.id === 'guest') {
+       setShowLoginAlert(true);
+       return;
     }
 
 

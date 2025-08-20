@@ -38,10 +38,10 @@ export function AddToPlaylistMenu({
   const editablePlaylists = useMemo(() => {
     if (!currentUser) return [];
 
-    // Playlists from local storage (always private and owned by current user)
+    // Filter private playlists (from localStorage)
     const userPrivatePlaylists = playlists; 
     
-    // Playlists from Firestore (public) that are owned by the current user
+    // Filter public playlists (from Firestore) owned by the current user
     const userPublicPlaylists = communityPlaylists.filter(p => p.ownerId === currentUser.id);
 
     return [...userPrivatePlaylists, ...userPublicPlaylists];
@@ -50,10 +50,7 @@ export function AddToPlaylistMenu({
   const handleAdd = (playlistId: string) => {
     addTrackToCache(track);
     addTrackToPlaylist(playlistId, track.id);
-    toast({
-      title: 'Added to playlist',
-      description: `"${track?.title}" has been added.`,
-    });
+    // The toast is now handled inside addTrackToPlaylist for better feedback
   };
 
   return (
