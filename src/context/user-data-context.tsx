@@ -1,7 +1,7 @@
 
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import type { User, UserData, Playlist, Track } from '@/lib/types';
+import type { User, UserData, Playlist, Track, Channel } from '@/lib/types';
 import { tracks as mockTracks } from '@/lib/mock-data';
 import { onAuthChange } from '@/lib/auth';
 import { db } from '@/lib/firebase';
@@ -34,20 +34,24 @@ interface UserDataContextType extends UserData {
   addTrackToCache: (track: Track) => void;
   addTracksToCache: (tracks: Track[]) => void;
   addPlaylist: (playlist: Playlist) => void;
-  addFetchedPlaylistToCache: (playlist: Playlist) => void; // New function
+  addFetchedPlaylistToCache: (playlist: Playlist) => void;
+  addChannel: (channel: Channel) => void;
+  getChannelById: (channelId: string) => Channel | undefined;
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
 
 const getInitialUserData = (userId: string): UserData => {
-  const defaults = { likedSongs: [], playlists: [], recentlyPlayed: [] };
+  const defaults = { likedSongs: [], playlists: [], recentlyPlayed: [], channels: [] };
   if (typeof window === 'undefined' || !window.localStorage) {
     return defaults;
   }
   try {
     const storedData = window.localStorage.getItem(`userData-${userId}`);
     if (storedData) {
-      return JSON.parse(storedData);
+      const parsedData = JSON.parse(storedData);
+      // Ensure channels array exists for backward compatibility
+      return { ...defaults, ...parsedData, channels: parsedData.channels || [] };
     }
   } catch (error) {
     console.error("Error reading user data from localStorage:", error);
@@ -76,7 +80,7 @@ const getInitialTrackCache = (): CachedTracks => {
 
 export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [] });
+  const [userData, setUserData] = useState<UserData>({ likedSongs: [], playlists: [], recentlyPlayed: [], channels: [] });
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
   const [fetchedPlaylistsCache, setFetchedPlaylistsCache] = useState<CachedPlaylists>({}); // New cache for fetched playlists
   const [communityPlaylists, setCommunityPlaylists] = useState<Playlist[]>([]);
@@ -93,7 +97,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         setFetchedPlaylistsCache({}); // Clear fetched playlist cache on user change
       } else {
         // Handle logout case
-        setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [] });
+        setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [], channels: [] });
       }
        setIsInitialized(true);
     });
@@ -380,6 +384,20 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return fetchedPlaylistsCache[playlistId];
   }
 
+  const addChannel = (channel: Channel) => {
+    setUserData(prev => {
+        const otherChannels = prev.channels.filter(c => c.id !== channel.id);
+        return {
+            ...prev,
+            channels: [channel, ...otherChannels]
+        }
+    });
+  };
+
+  const getChannelById = (channelId: string) => {
+    return userData.channels.find(c => c.id === channelId);
+  }
+
   const value: UserDataContextType = {
     ...userData,
     communityPlaylists,
@@ -396,6 +414,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     addTracksToCache,
     addPlaylist,
     addFetchedPlaylistToCache,
+    addChannel,
+    getChannelById,
   };
 
   if (!isInitialized) {

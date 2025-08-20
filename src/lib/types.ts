@@ -28,8 +28,16 @@ export interface Playlist {
   isFeatured?: boolean;
 }
 
+export interface Channel {
+  id: string; // YouTube Channel ID
+  name: string;
+  logo: string;
+  uploads: Track[];
+  playlists: Playlist[];
+}
+
 export interface User {
-  id: string;
+  id:string;
   name: string;
   email: string;
   photoURL?: string;
@@ -40,6 +48,7 @@ export interface UserData {
   likedSongs: string[];
   playlists: Playlist[];
   recentlyPlayed: string[];
+  channels: Channel[];
 }
 
 export const GeneratePlaylistResponseSchema = z.object({

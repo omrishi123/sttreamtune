@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import {
   Tabs,
   TabsContent,
@@ -12,10 +14,11 @@ import { useUserData } from "@/context/user-data-context";
 import { PlaylistCard } from "@/components/playlist-card";
 import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Sparkles } from "lucide-react";
-import { Playlist, User } from "@/lib/types";
+import { Plus, Upload, Sparkles, Tv } from "lucide-react";
+import { Playlist, User, Channel } from "@/lib/types";
 import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
 import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
+import { ImportChannelDialog } from "@/components/import-channel-dialog";
 import { onAuthChange } from '@/lib/auth';
 
 const PlaylistGrid = ({ playlists, title }: { playlists: Playlist[], title?: string }) => {
@@ -41,8 +44,40 @@ const PlaylistGrid = ({ playlists, title }: { playlists: Playlist[], title?: str
     );
 };
 
+const ChannelGrid = ({ channels }: { channels: Channel[] }) => {
+  if (channels.length === 0) {
+    return (
+      <div className="text-center py-10 col-span-full">
+        <p className="text-muted-foreground">Import a channel to get started.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4">
+        {channels.map((channel) => (
+          <Link href={`/channels/${channel.id}`} key={channel.id} className="group text-center">
+            <div className="aspect-square p-2">
+              <Image 
+                src={channel.logo} 
+                alt={channel.name} 
+                width={150} 
+                height={150} 
+                className="rounded-full aspect-square object-cover mx-auto transition-transform group-hover:scale-105"
+                unoptimized
+              />
+            </div>
+            <p className="text-sm font-semibold truncate group-hover:text-primary">{channel.name}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 export default function LibraryPage() {
-  const { playlists: userPrivatePlaylists, likedSongs, getTrackById, communityPlaylists } = useUserData();
+  const { playlists: userPrivatePlaylists, likedSongs, getTrackById, communityPlaylists, channels } = useUserData();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   useEffect(() => {
@@ -98,6 +133,12 @@ export default function LibraryPage() {
       <div className="flex justify-between items-center gap-2">
         <h1 className="text-2xl md:text-4xl font-bold font-headline tracking-tight">Your Library</h1>
         <div className="flex items-center gap-2">
+            <ImportChannelDialog>
+                <Button variant="outline" size="sm">
+                    <Tv className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Import Channel</span>
+                </Button>
+            </ImportChannelDialog>
            <GeneratePlaylistDialog>
               <Button variant="outline" size="sm">
                 <Sparkles className="h-4 w-4 sm:mr-2" />
@@ -122,6 +163,7 @@ export default function LibraryPage() {
       <Tabs defaultValue="playlists">
         <TabsList>
           <TabsTrigger value="playlists">Playlists</TabsTrigger>
+          <TabsTrigger value="channels">Channels</TabsTrigger>
           <TabsTrigger value="artists" disabled>Artists</TabsTrigger>
           <TabsTrigger value="albums" disabled>Albums</TabsTrigger>
         </TabsList>
@@ -139,7 +181,9 @@ export default function LibraryPage() {
           )}
           
         </TabsContent>
-
+        <TabsContent value="channels">
+          <ChannelGrid channels={channels} />
+        </TabsContent>
       </Tabs>
     </div>
   );
