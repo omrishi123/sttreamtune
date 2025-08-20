@@ -19,7 +19,7 @@ import { Filter, ChevronRight } from "lucide-react";
 import { useUserData } from '@/context/user-data-context';
 import type { Playlist, Track } from '@/lib/types';
 import { getCachedRecommendations } from '@/lib/recommendations';
-import { TrackList } from '@/components/track-list';
+import { TrackCard } from '@/components/track-card';
 
 
 interface PlaylistSectionProps {
@@ -133,7 +133,11 @@ export default function HomePage() {
                       </Link>
                   </Button>
               </div>
-              <TrackList tracks={recommendedTracks.slice(0, 3)} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {recommendedTracks.slice(0, 3).map(track => (
+                    <TrackCard key={track.id} track={track} tracklist={recommendedTracks} />
+                ))}
+              </div>
           </section>
       )}
       
