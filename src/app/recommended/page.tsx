@@ -1,50 +1,64 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { usePlayer } from '@/context/player-context';
+import React, { useState, useEffect } from 'react';
 import { useUserData } from '@/context/user-data-context';
 import { useToast } from '@/hooks/use-toast';
-import { getTrendingSongs, TrendingSongsOutput } from '@/ai/flows/get-trending-songs-flow';
-import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Play } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { generateRecommendations, GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
 import { TrackList } from '@/components/track-list';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
+// Helper to get search history from localStorage
+const getSearchHistory = (): string[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+        const history = localStorage.getItem('searchHistory');
+        return history ? JSON.parse(history) : [];
+    } catch (error) {
+        console.error("Failed to get search history:", error);
+        return [];
+    }
+}
 
 export default function RecommendedPage() {
-    const [trendingTracks, setTrendingTracks] = useState<TrendingSongsOutput>([]);
+    const [recommendedTracks, setRecommendedTracks] = useState<GenerateRecommendationsOutput>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { addTracksToCache } = useUserData();
     const { toast } = useToast();
+    const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
     useEffect(() => {
-        const fetchTrendingSongs = async () => {
+        const history = getSearchHistory();
+        setSearchHistory(history);
+        
+        if (history.length === 0) {
+            setIsLoading(false);
+            return;
+        }
+
+        const fetchRecommendations = async () => {
             setIsLoading(true);
             try {
-                const results = await getTrendingSongs();
+                const results = await generateRecommendations({ history });
                 addTracksToCache(results);
-                setTrendingTracks(results);
+                setRecommendedTracks(results);
             } catch (error: any) {
-                console.error('Failed to fetch trending songs:', error);
-                const isApiError = error.message?.includes('403');
+                console.error('Failed to fetch recommendations:', error);
                 toast({
                     variant: 'destructive',
-                    title: isApiError ? 'YouTube API Error' : 'Fetch Failed',
-                    description: isApiError
-                        ? "The request was forbidden. Please check your YouTube API key and ensure the 'YouTube Data API v3' is enabled."
-                        : 'Could not fetch trending songs.',
+                    title: 'Recommendation Failed',
+                    description: 'Could not fetch recommendations based on your history.',
                 });
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchTrendingSongs();
+        fetchRecommendations();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Empty dependency array ensures this runs only once
+    }, []);
 
     return (
         <div className="space-y-8">
@@ -53,7 +67,7 @@ export default function RecommendedPage() {
                     Recommended For You
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Discover the top trending songs in India right now.
+                    Based on your recent searches.
                 </p>
             </div>
 
@@ -62,8 +76,18 @@ export default function RecommendedPage() {
                      <div className="space-y-2">
                         {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
                     </div>
+                ) : searchHistory.length === 0 ? (
+                    <div className="text-center py-16">
+                        <h2 className="text-2xl font-semibold">Nothing to recommend yet!</h2>
+                        <p className="text-muted-foreground mt-2">
+                            Search for some songs to get personalized recommendations.
+                        </p>
+                        <Button asChild className="mt-4">
+                            <Link href="/search">Go to Search</Link>
+                        </Button>
+                    </div>
                 ) : (
-                    <TrackList tracks={trendingTracks} />
+                    <TrackList tracks={recommendedTracks} />
                 )}
             </section>
         </div>

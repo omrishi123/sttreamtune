@@ -11,6 +11,19 @@ import { usePlayer } from "@/context/player-context";
 import { useUserData } from "@/context/user-data-context";
 import { useToast } from "@/hooks/use-toast";
 
+const MAX_SEARCH_HISTORY = 5;
+
+// Helper to update search history in localStorage
+const updateSearchHistory = (query: string) => {
+    try {
+        const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+        const updatedHistory = [query, ...history.filter((item: string) => item !== query)].slice(0, MAX_SEARCH_HISTORY);
+        localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+    } catch (error) {
+        console.error("Failed to update search history:", error);
+    }
+}
+
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<YoutubeSearchOutput>([]);
@@ -34,6 +47,9 @@ export default function SearchPage() {
           title: "No results found",
           description: "Try a different search term.",
         });
+      } else {
+        // Add successful search to history
+        updateSearchHistory(query);
       }
     } catch (error: any) {
       console.error("Search failed:", error);
