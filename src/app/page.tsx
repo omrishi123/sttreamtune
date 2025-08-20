@@ -15,11 +15,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Filter, ChevronRight } from "lucide-react";
+import { Filter, ChevronRight, Music } from "lucide-react";
 import { useUserData } from '@/context/user-data-context';
 import type { Playlist, Track } from '@/lib/types';
 import { getCachedRecommendations } from '@/lib/recommendations';
 import { TrackCard } from '@/components/track-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 
 
 interface PlaylistSectionProps {
@@ -54,11 +56,14 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { communityPlaylists } = useUserData();
   const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
 
   useEffect(() => {
       const fetchRecommendations = async () => {
+          setLoadingRecommendations(true);
           const { tracks } = await getCachedRecommendations();
           setRecommendedTracks(tracks);
+          setLoadingRecommendations(false);
       };
       fetchRecommendations();
   }, []);
@@ -122,24 +127,44 @@ export default function HomePage() {
           </DropdownMenu>
       </div>
 
-      {recommendedTracks.length > 0 && (
-          <section>
-              <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
-                  <Button asChild variant="ghost" size="sm">
-                      <Link href="/recommended">
-                          View all
-                          <ChevronRight className="h-4 w-4" />
-                      </Link>
-                  </Button>
-              </div>
+      <section>
+          <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
+              {recommendedTracks.length > 0 && (
+                <Button asChild variant="ghost" size="sm">
+                    <Link href="/recommended">
+                        View all
+                        <ChevronRight className="h-4 w-4" />
+                    </Link>
+                </Button>
+              )}
+          </div>
+          {loadingRecommendations ? (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+             </div>
+          ) : recommendedTracks.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {recommendedTracks.slice(0, 3).map(track => (
                     <TrackCard key={track.id} track={track} tracklist={recommendedTracks} />
                 ))}
               </div>
-          </section>
-      )}
+          ) : (
+             <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50">
+                <CardContent className="p-0 space-y-3">
+                  <h3 className="font-semibold">Nothing to recommend yet!</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Search for some songs to get personalized recommendations.
+                  </p>
+                  <Button asChild size="sm" className="mt-4">
+                    <Link href="/search">Go to Search</Link>
+                  </Button>
+                </CardContent>
+            </Card>
+          )}
+      </section>
       
       {featuredPlaylists.length > 0 && (
          <PlaylistSection 
