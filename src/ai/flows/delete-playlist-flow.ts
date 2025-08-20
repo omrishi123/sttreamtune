@@ -37,7 +37,7 @@ async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.Do
     }
 
     // 2. Fallback for legacy playlists: Query the collection where the `id` field matches.
-    const q = query(collection(db, 'communityPlaylists'), where('id', '==', id), where('public', '==', true));
+    const q = query(collection(db, 'communityPlaylists'), where('id', '==', id));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -81,7 +81,11 @@ const deletePlaylistFlow = ai.defineFlow(
 
         // Security Check: Verify ownership before deleting
         if (playlistData.ownerId !== userId) {
-            return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
+            // Allow admin to override
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (!userDoc.exists() || !userDoc.data()?.isAdmin) {
+                return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
+            }
         }
 
         await deleteDoc(playlistRef);

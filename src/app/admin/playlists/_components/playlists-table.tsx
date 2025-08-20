@@ -41,9 +41,10 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Playlist, Track } from '@/lib/types';
-import { toggleFeaturedStatus, deletePlaylist } from '@/lib/admin-actions';
+import { toggleFeaturedStatus } from '@/lib/admin-actions';
 import { useToast } from '@/hooks/use-toast';
 import { ViewTracksDialog } from './view-tracks-dialog';
+import { useUserData } from '@/context/user-data-context';
 
 interface PlaylistsTableProps {
   initialPlaylists: Playlist[];
@@ -54,6 +55,7 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
   const [selectedPlaylist, setSelectedPlaylist] = React.useState<Playlist | null>(null);
   const [playlistToDelete, setPlaylistToDelete] = React.useState<Playlist | null>(null);
   const { toast } = useToast();
+  const { deletePlaylist: deleteUserPlaylist } = useUserData();
 
   const handleToggleFeatured = async (id: string, currentStatus: boolean) => {
     try {
@@ -80,12 +82,16 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
   const handleDeleteConfirm = async () => {
     if (!playlistToDelete) return;
     try {
-      await deletePlaylist(playlistToDelete.id);
-      setPlaylists((prev) => prev.filter((p) => p.id !== playlistToDelete.id));
-      toast({
-        title: 'Playlist Deleted',
-        description: `"${playlistToDelete.name}" has been removed.`,
-      });
+      const result = await deleteUserPlaylist(playlistToDelete.id);
+      if (result.success) {
+        setPlaylists((prev) => prev.filter((p) => p.id !== playlistToDelete.id));
+        toast({
+          title: 'Playlist Deleted',
+          description: `"${playlistToDelete.name}" has been removed.`,
+        });
+      } else {
+        throw new Error(result.message);
+      }
     } catch (error: any) {
       toast({
         variant: 'destructive',

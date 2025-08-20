@@ -234,7 +234,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (!playlist || !currentUser) return;
 
     if (playlist.public) {
-      if (playlist.ownerId !== currentUser.id) {
+      if (playlist.ownerId !== currentUser.id && !currentUser.isAdmin) {
           toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
           return;
       }
@@ -280,7 +280,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     // For public playlists in Firestore - use the secure flow
     if (playlist.public) {
         const result = await removeTrackFromPublicPlaylist({
-            playlistId: playlistId,
+            playlistId: playlist.id,
             trackIdToRemove: trackId,
             userId: currentUser.id
         });

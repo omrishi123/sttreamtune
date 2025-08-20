@@ -30,7 +30,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
 
@@ -48,6 +47,7 @@ export default function PlaylistPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRepairing, setIsRepairing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
@@ -151,15 +151,14 @@ export default function PlaylistPage() {
 
   const handleDeletePlaylist = async () => {
     if (!playlist) return;
-
+    setIsDeleting(true);
     const result = await deletePlaylist(playlist.id);
-
+    setIsDeleting(false);
     if (result.success) {
         toast({
             title: "Playlist Deleted",
             description: `"${playlist.name}" has been deleted.`,
         });
-        // This will trigger a re-fetch of data in the library page
         router.push('/library');
         router.refresh(); 
     } else {
@@ -196,8 +195,8 @@ export default function PlaylistPage() {
     }
   };
 
-  // User can edit if it's a private playlist, or if it's a public playlist they own.
-  const canEdit = currentUser && playlist && (!playlist.public || playlist.ownerId === currentUser.id);
+  // User can edit if it's a private playlist, or if it's a public playlist they own, or if they are an admin.
+  const canEdit = currentUser && playlist && (!playlist.public || playlist.ownerId === currentUser.id || currentUser.isAdmin);
   // A playlist is broken if it's public, has no ownerId, and the user is logged in (not a guest).
   const isBroken = currentUser?.id !== 'guest' && playlist.public && !playlist.ownerId;
 
@@ -247,7 +246,7 @@ export default function PlaylistPage() {
                 <AlertDialog>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button size="lg" variant="outline">
+                      <Button size="lg" variant="outline" disabled={isDeleting}>
                         <MoreHorizontal className="h-5 w-5" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -270,8 +269,8 @@ export default function PlaylistPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90">
-                        Delete
+                      <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+                        {isDeleting ? 'Deleting...' : 'Delete'}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
