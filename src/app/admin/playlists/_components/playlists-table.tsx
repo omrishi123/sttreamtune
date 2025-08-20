@@ -25,6 +25,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Trash2, Star, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +52,7 @@ interface PlaylistsTableProps {
 export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
   const [playlists, setPlaylists] = React.useState(initialPlaylists);
   const [selectedPlaylist, setSelectedPlaylist] = React.useState<Playlist | null>(null);
+  const [playlistToDelete, setPlaylistToDelete] = React.useState<Playlist | null>(null);
   const { toast } = useToast();
 
   const handleToggleFeatured = async (id: string, currentStatus: boolean) => {
@@ -66,16 +77,14 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this playlist permanently?')) {
-        return;
-    }
+  const handleDeleteConfirm = async () => {
+    if (!playlistToDelete) return;
     try {
-      await deletePlaylist(id);
-      setPlaylists((prev) => prev.filter((p) => p.id !== id));
+      await deletePlaylist(playlistToDelete.id);
+      setPlaylists((prev) => prev.filter((p) => p.id !== playlistToDelete.id));
       toast({
         title: 'Playlist Deleted',
-        description: 'The playlist has been removed.',
+        description: `"${playlistToDelete.name}" has been removed.`,
       });
     } catch (error: any) {
       toast({
@@ -83,6 +92,8 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
         title: 'Error',
         description: error.message || 'Failed to delete playlist.',
       });
+    } finally {
+        setPlaylistToDelete(null);
     }
   };
 
@@ -166,7 +177,7 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
                           {playlist.isFeatured ? 'Unfeature' : 'Feature'}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDelete(playlist.id)} className="text-destructive">
+                        <DropdownMenuItem onClick={() => setPlaylistToDelete(playlist)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
@@ -191,6 +202,22 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
               onTracksUpdated={handleTracksUpdated}
           />
       )}
+       <AlertDialog open={!!playlistToDelete} onOpenChange={() => setPlaylistToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the playlist "{playlistToDelete?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
