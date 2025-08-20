@@ -230,7 +230,7 @@ export default function PlaylistPage() {
   const canEditChannelContent = playlist && playlist.isChannelPlaylist;
 
   // A public playlist is broken if it has no ownerId and the user is logged in.
-  const isBroken = currentUser?.id !== 'guest' && playlist.public && !playlist.ownerId;
+  const isBroken = currentUser?.id !== 'guest' && playlist.public && !playlist.ownerId && !playlist.isChannelPlaylist;
 
 
   return (
