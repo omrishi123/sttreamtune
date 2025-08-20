@@ -37,6 +37,8 @@ interface UserDataContextType extends UserData {
   addFetchedPlaylistToCache: (playlist: Playlist) => void;
   addChannel: (channel: Channel) => void;
   getChannelById: (channelId: string) => Channel | undefined;
+  removeChannel: (channelId: string) => void;
+  updateChannel: (channel: Channel) => void;
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
@@ -245,6 +247,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
     const playlist = getPlaylistById(playlistId);
     if (!playlist || !currentUser) return;
+    
+    if (playlist.isChannelPlaylist) {
+        toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'Cannot add tracks to a channel playlist.' });
+        return;
+    }
 
     if (playlist.public) {
       if (playlist.ownerId !== currentUser.id && !currentUser.isAdmin) {
@@ -290,8 +297,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     const playlist = getPlaylistById(playlistId);
     if (!playlist || !currentUser) return;
 
-    // For public playlists in Firestore - use the secure flow
     if (playlist.public) {
+        // For public playlists in Firestore - use the secure flow
         const result = await removeTrackFromPublicPlaylist({
             playlistId: playlist.id,
             trackIdToRemove: trackId,
@@ -306,9 +313,17 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
                 description: result.message
             });
         }
-    } 
-    // For private playlists in local storage
-    else {
+    } else if (playlist.isChannelPlaylist) {
+        // Handle local channel playlists
+        const channel = userData.channels.find(c => c.id === playlist.id);
+        if (channel) {
+            const updatedUploads = channel.uploads.filter(t => t.id !== trackId);
+            const updatedChannel = { ...channel, uploads: updatedUploads };
+            updateChannel(updatedChannel);
+            toast({ title: "Track Removed", description: "The track has been removed from the channel's uploads."});
+        }
+    } else {
+      // For private playlists in local storage
       setUserData(prev => ({
         ...prev,
         playlists: prev.playlists.map(p =>
@@ -379,6 +394,30 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     // Check firestore/community playlists next
     const communityPlaylist = communityPlaylists.find(p => p.id === playlistId);
     if (communityPlaylist) return communityPlaylist;
+    
+    // Check channel playlists
+    for (const channel of userData.channels) {
+        if (channel.id === playlistId) { // For the main "uploads" list
+             return {
+                id: channel.id,
+                name: channel.name,
+                description: `Uploaded by ${channel.name}`,
+                public: false,
+                owner: 'You',
+                coverArt: channel.logo,
+                trackIds: channel.uploads.map(t => t.id),
+                tracks: channel.uploads,
+                isChannelPlaylist: true,
+            }
+        }
+        const channelPlaylist = channel.playlists.find(p => p.id === playlistId);
+        if (channelPlaylist) {
+            // Because tracks are not stored inside the channel playlist object, we need to fetch them
+            const tracks = channelPlaylist.trackIds.map(id => getTrackById(id)).filter(Boolean) as Track[];
+            return {...channelPlaylist, tracks, isChannelPlaylist: true};
+        }
+    }
+
 
     // Finally, check the temporary cache for fetched YT playlists
     return fetchedPlaylistsCache[playlistId];
@@ -393,6 +432,20 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         }
     });
   };
+
+  const removeChannel = (channelId: string) => {
+    setUserData(prev => ({
+      ...prev,
+      channels: prev.channels.filter(c => c.id !== channelId)
+    }));
+  };
+
+  const updateChannel = (updatedChannel: Channel) => {
+    setUserData(prev => ({
+        ...prev,
+        channels: prev.channels.map(c => c.id === updatedChannel.id ? updatedChannel : c)
+    }));
+  }
 
   const getChannelById = (channelId: string) => {
     return userData.channels.find(c => c.id === channelId);
@@ -416,6 +469,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     addFetchedPlaylistToCache,
     addChannel,
     getChannelById,
+    removeChannel,
+    updateChannel,
   };
 
   if (!isInitialized) {

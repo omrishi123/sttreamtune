@@ -26,6 +26,7 @@ export interface Playlist {
   isLikedSongs?: boolean;
   tracks?: Track[]; // For public playlists, embed full track objects
   isFeatured?: boolean;
+  isChannelPlaylist?: boolean; // To identify playlists managed within a channel
 }
 
 export interface Channel {

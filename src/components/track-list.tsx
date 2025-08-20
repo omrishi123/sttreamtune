@@ -41,9 +41,10 @@ import { onAuthChange } from "@/lib/auth";
 interface TrackListProps {
   tracks: Track[];
   playlist?: Playlist;
+  onRemoveTrack?: (trackId: string) => void;
 }
 
-export function TrackList({ tracks, playlist }: TrackListProps) {
+export function TrackList({ tracks, playlist, onRemoveTrack }: TrackListProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache, removeTrackFromPlaylist } = useUserData();
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
@@ -70,7 +71,11 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
   }
 
   const handleRemoveTrack = (trackId: string) => {
-    if (playlist) {
+    // If a custom remove handler is provided (for local channel playlists), use it.
+    if (onRemoveTrack) {
+      onRemoveTrack(trackId);
+    } else if (playlist) {
+      // Otherwise, use the default context handler (for user and public playlists).
       removeTrackFromPlaylist(playlist.id, trackId);
     }
   };
@@ -82,7 +87,11 @@ export function TrackList({ tracks, playlist }: TrackListProps) {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const canEditPlaylist = currentUser && playlist && (playlist.public ? playlist.ownerId === currentUser.id : true);
+  // Can edit if it's a private playlist, a public one they own, or a local channel playlist.
+  const canEditPlaylist = currentUser && playlist && (
+    playlist.isChannelPlaylist ||
+    (playlist.public ? playlist.ownerId === currentUser.id : true)
+  );
 
   return (
     <Table>
