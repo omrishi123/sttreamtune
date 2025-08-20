@@ -14,6 +14,7 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 // Input schema for the flow
 const GetChannelContentInputSchema = z.object({
   channelUrl: z.string().describe('The URL of the YouTube channel.'),
+  importType: z.enum(['all', 'uploads', 'playlists']).default('all').describe('The type of content to import.'),
 });
 export type GetChannelContentInput = z.infer<typeof GetChannelContentInputSchema>;
 
@@ -101,41 +102,47 @@ export async function getChannelContent(input: GetChannelContentInput): Promise<
   channelId = channelDetails.id;
   const uploadsPlaylistId = channelDetails.contentDetails.relatedPlaylists.uploads;
 
-  // --- 2. Fetch All Uploaded Videos ---
-  const uploadedTracks = await getTracksForPlaylist(uploadsPlaylistId);
-
-  // --- 3. Fetch All Public Playlists ---
-  const channelPlaylists: Playlist[] = [];
-  let nextPageToken: string | undefined = undefined;
+  let uploadedTracks: Track[] = [];
+  let channelPlaylists: Playlist[] = [];
   
-  do {
-      const playlistsUrl = new URL('https://www.googleapis.com/youtube/v3/playlists');
-      playlistsUrl.searchParams.append('part', 'snippet,contentDetails');
-      playlistsUrl.searchParams.append('channelId', channelId);
-      playlistsUrl.searchParams.append('maxResults', '50');
-      playlistsUrl.searchParams.append('key', YOUTUBE_API_KEY);
-      if (nextPageToken) {
-          playlistsUrl.searchParams.append('pageToken', nextPageToken);
-      }
-      
-      const playlistsResponse = await fetch(playlistsUrl.toString());
-      const playlistsData = await playlistsResponse.json();
+  // --- 2. Fetch All Uploaded Videos (conditional) ---
+  if (input.importType === 'all' || input.importType === 'uploads') {
+    uploadedTracks = await getTracksForPlaylist(uploadsPlaylistId);
+  }
 
-      if (playlistsData.items) {
-          const fetchedPlaylists = playlistsData.items.map((item: any): Playlist => ({
-              id: item.id,
-              name: item.snippet.title,
-              description: item.snippet.description,
-              coverArt: item.snippet.thumbnails.high.url,
-              trackIds: [], // These will be fetched on demand when the playlist is clicked
-              public: true,
-              owner: channelDetails.snippet.title,
-              'data-ai-hint': 'youtube playlist'
-          }));
-          channelPlaylists.push(...fetchedPlaylists);
-      }
-      nextPageToken = playlistsData.nextPageToken;
-  } while (nextPageToken);
+
+  // --- 3. Fetch All Public Playlists (conditional) ---
+  if (input.importType === 'all' || input.importType === 'playlists') {
+    let nextPageToken: string | undefined = undefined;
+    do {
+        const playlistsUrl = new URL('https://www.googleapis.com/youtube/v3/playlists');
+        playlistsUrl.searchParams.append('part', 'snippet,contentDetails');
+        playlistsUrl.searchParams.append('channelId', channelId);
+        playlistsUrl.searchParams.append('maxResults', '50');
+        playlistsUrl.searchParams.append('key', YOUTUBE_API_KEY);
+        if (nextPageToken) {
+            playlistsUrl.searchParams.append('pageToken', nextPageToken);
+        }
+        
+        const playlistsResponse = await fetch(playlistsUrl.toString());
+        const playlistsData = await playlistsResponse.json();
+
+        if (playlistsData.items) {
+            const fetchedPlaylists = playlistsData.items.map((item: any): Playlist => ({
+                id: item.id,
+                name: item.snippet.title,
+                description: item.snippet.description,
+                coverArt: item.snippet.thumbnails.high.url,
+                trackIds: [], // These will be fetched on demand when the playlist is clicked
+                public: true,
+                owner: channelDetails.snippet.title,
+                'data-ai-hint': 'youtube playlist'
+            }));
+            channelPlaylists.push(...fetchedPlaylists);
+        }
+        nextPageToken = playlistsData.nextPageToken;
+    } while (nextPageToken);
+  }
 
 
   // --- 4. Assemble and Return ---

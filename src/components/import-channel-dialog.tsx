@@ -21,9 +21,11 @@ import { getChannelContent } from '@/ai/flows/get-channel-content-flow';
 import { Icons } from './icons';
 import type { User } from '@/lib/types';
 import { onAuthChange } from '@/lib/auth';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export function ImportChannelDialog({ children }: { children: React.ReactNode }) {
   const [url, setUrl] = useState('');
+  const [importType, setImportType] = useState<'all' | 'uploads' | 'playlists'>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -61,7 +63,7 @@ export function ImportChannelDialog({ children }: { children: React.ReactNode })
     setIsLoading(true);
 
     try {
-      const channelData = await getChannelContent({ channelUrl: url });
+      const channelData = await getChannelContent({ channelUrl: url, importType });
 
       // Add all tracks from uploads and playlists to the global track cache
       const allTracks = [...channelData.uploads, ...channelData.playlists.flatMap(p => p.tracks || [])];
@@ -77,6 +79,7 @@ export function ImportChannelDialog({ children }: { children: React.ReactNode })
 
       setIsOpen(false);
       setUrl('');
+      setImportType('all');
     } catch (error: any) {
       console.error('Failed to import channel:', error);
       toast({
@@ -96,7 +99,7 @@ export function ImportChannelDialog({ children }: { children: React.ReactNode })
           <DialogHeader>
             <DialogTitle>Import YouTube Channel</DialogTitle>
             <DialogDescription>
-              Paste the URL of a YouTube channel to import their uploads and playlists. This may take a moment.
+              Paste a channel URL and choose what you want to import. This may take a moment.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -114,6 +117,43 @@ export function ImportChannelDialog({ children }: { children: React.ReactNode })
                   required
                   disabled={isLoading}
                 />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4 pt-2">
+                 <Label className="text-right pt-2">
+                  Import
+                </Label>
+                 <RadioGroup value={importType} onValueChange={(value) => setImportType(value as any)} className="col-span-3 space-y-2">
+                    <div>
+                      <RadioGroupItem value="all" id="all" className="peer sr-only" />
+                      <Label
+                        htmlFor="all"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
+                        Uploads & Playlists
+                        <span className="text-xs text-muted-foreground mt-1">Import everything from the channel.</span>
+                      </Label>
+                    </div>
+                     <div>
+                      <RadioGroupItem value="uploads" id="uploads" className="peer sr-only" />
+                      <Label
+                        htmlFor="uploads"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
+                        Uploads Only
+                         <span className="text-xs text-muted-foreground mt-1">Import only the channel's uploaded videos.</span>
+                      </Label>
+                    </div>
+                     <div>
+                      <RadioGroupItem value="playlists" id="playlists" className="peer sr-only" />
+                      <Label
+                        htmlFor="playlists"
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
+                        Playlists Only
+                         <span className="text-xs text-muted-foreground mt-1">Import only the public playlists.</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
               </div>
             </div>
             <DialogFooter>
