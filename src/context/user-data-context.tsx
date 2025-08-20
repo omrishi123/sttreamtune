@@ -187,10 +187,16 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addPlaylist = (playlist: Playlist) => {
-    setUserData(prev => ({
-      ...prev,
-      playlists: [playlist, ...prev.playlists],
-    }));
+     // If the playlist is public, add it to the community playlist state
+    if (playlist.public) {
+      setCommunityPlaylists(prev => [playlist, ...prev]);
+    } else {
+      // Otherwise, add it to the user's private playlists
+      setUserData(prev => ({
+        ...prev,
+        playlists: [playlist, ...prev.playlists],
+      }));
+    }
   };
   
   const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false) => {
@@ -211,11 +217,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
     if (isPublic) {
       try {
-        await addDoc(collection(db, "communityPlaylists"), {
+        const docRef = await addDoc(collection(db, "communityPlaylists"), {
           ...newPlaylistData,
           tracks: [], // Initialize with empty tracks array
           createdAt: serverTimestamp(),
         });
+        // Add the newly created public playlist to the local state immediately
+        addPlaylist({ ...newPlaylistData, id: docRef.id });
+
       } catch (e) {
         console.error("Error adding document: ", e);
         throw e; // re-throw to be caught by the dialog
