@@ -55,19 +55,10 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return;
-    
-    if (!user) {
-        toast({
-            variant: 'destructive',
-            title: 'Not Logged In',
-            description: 'You must be logged in to create a playlist.',
-        });
-        return;
-    }
 
-    if (isPublic && user.id === 'guest') {
-       setShowLoginAlert(true);
-       return;
+    if (user?.id === 'guest' && isPublic) {
+      setShowLoginAlert(true);
+      return;
     }
 
     setIsLoading(true);
@@ -85,7 +76,7 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to create playlist. Please try again.',
+          description: error.message || 'Failed to create playlist. Please try again.',
         });
     } finally {
         setIsLoading(false);

@@ -206,10 +206,15 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false) => {
-    if (!currentUser || currentUser.id === 'guest') {
+    if (!currentUser) {
       throw new Error("Cannot create playlist: no user is logged in.");
     }
     
+    // Explicitly block guest users from creating public playlists
+    if (currentUser.id === 'guest' && isPublic) {
+      throw new Error("Guest users cannot create public playlists. Please log in.");
+    }
+
     const newPlaylistData = {
       name,
       description,
