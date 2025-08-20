@@ -252,51 +252,59 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
     const playlist = getPlaylistById(playlistId);
     if (!playlist || !currentUser) return;
-    
+
     if (playlist.isChannelPlaylist) {
         toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'Cannot add tracks to a channel playlist.' });
         return;
     }
 
     if (playlist.public) {
-      if (playlist.ownerId !== currentUser.id && !currentUser.isAdmin) {
-          toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
-          return;
-      }
-      const trackToAdd = getTrackById(trackId);
-      if (!trackToAdd) {
-        console.error("Cannot add a track that is not in cache to a public playlist.");
-        return;
-      }
-      const playlistRef = doc(db, 'communityPlaylists', playlistId);
-      try {
-        await updateDoc(playlistRef, {
-          tracks: arrayUnion(trackToAdd),
-          trackIds: arrayUnion(trackId)
-        });
-        toast({ title: 'Added to playlist', description: `"${trackToAdd.title}" has been added.` });
-      } catch (error: any) {
-        console.error("Error updating public playlist:", error);
-        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
-      }
-    } 
-    // For private playlists in local storage
-    else {
-      setUserData(prev => {
-        const isTrackAlreadyInPlaylist = prev.playlists.find(p => p.id === playlistId)?.trackIds.includes(trackId);
-        if (isTrackAlreadyInPlaylist) {
-          toast({ title: 'Already in playlist', description: 'This song is already in the playlist.' });
-          return prev;
+        if (playlist.ownerId !== currentUser.id && !currentUser.isAdmin) {
+            toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
+            return;
         }
-        
-        const newPlaylists = prev.playlists.map(p =>
-          p.id === playlistId ? { ...p, trackIds: [...p.trackIds, trackId] } : p
-        );
-        toast({ title: 'Added to playlist', description: `Song has been added.` });
-        return { ...prev, playlists: newPlaylists };
-      });
+        const trackToAdd = getTrackById(trackId);
+        if (!trackToAdd) {
+            console.error("Cannot add a track that is not in cache to a public playlist.");
+            return;
+        }
+        const playlistRef = doc(db, 'communityPlaylists', playlistId);
+        try {
+            await updateDoc(playlistRef, {
+                tracks: arrayUnion(trackToAdd),
+                trackIds: arrayUnion(trackId)
+            });
+            toast({ title: 'Added to playlist', description: `"${trackToAdd.title}" has been added.` });
+        } catch (error: any) {
+            console.error("Error updating public playlist:", error);
+            toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+        }
+    } else {
+        // For private playlists in local storage
+        let wasAdded = false;
+        setUserData(prev => {
+            const isTrackAlreadyInPlaylist = prev.playlists.find(p => p.id === playlistId)?.trackIds.includes(trackId);
+            if (isTrackAlreadyInPlaylist) {
+                return prev; // Return previous state if track is already there
+            }
+            wasAdded = true;
+            return {
+                ...prev,
+                playlists: prev.playlists.map(p =>
+                    p.id === playlistId ? { ...p, trackIds: [...p.trackIds, trackId] } : p
+                ),
+            };
+        });
+
+        // Show toast notification outside of the render cycle
+        if (wasAdded) {
+            toast({ title: 'Added to playlist', description: 'Song has been added.' });
+        } else {
+            toast({ title: 'Already in playlist', description: 'This song is already in the playlist.' });
+        }
     }
-  };
+};
+
 
   const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
     const playlist = getPlaylistById(playlistId);
