@@ -44,6 +44,7 @@ import type { Playlist, Track } from '@/lib/types';
 import { toggleFeaturedStatus, deletePlaylist } from '@/lib/admin-actions';
 import { useToast } from '@/hooks/use-toast';
 import { ViewTracksDialog } from './view-tracks-dialog';
+import { cn } from '@/lib/utils';
 
 interface PlaylistsTableProps {
   initialPlaylists: Playlist[];
@@ -118,14 +119,14 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden w-[100px] sm:table-cell">
+                <TableHead className="w-[60px] sm:w-[80px] px-2 sm:px-4">
                   <span className="sr-only">Image</span>
                 </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Owner</TableHead>
-                <TableHead className="hidden md:table-cell">Tracks</TableHead>
-                <TableHead>
+                <TableHead className="px-2 sm:px-4">Name</TableHead>
+                <TableHead className="hidden md:table-cell px-2 sm:px-4">Status</TableHead>
+                <TableHead className="hidden md:table-cell px-2 sm:px-4">Owner</TableHead>
+                <TableHead className="hidden md:table-cell px-2 sm:px-4">Tracks</TableHead>
+                <TableHead className="px-2 sm:px-4">
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
@@ -133,33 +134,33 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
             <TableBody>
               {playlists.map((playlist) => (
                 <TableRow key={playlist.id}>
-                  <TableCell className="hidden sm:table-cell">
+                  <TableCell className="px-2 sm:px-4">
                     <Image
                       alt={playlist.name}
-                      className="aspect-square rounded-md object-cover"
+                      className="aspect-square rounded-md object-cover w-12 h-12 sm:w-16 sm:h-16"
                       height="64"
                       src={playlist.coverArt}
                       width="64"
                       unoptimized
                     />
                   </TableCell>
-                  <TableCell className="font-medium">
-                    <Link href={`/playlists/${playlist.id}`} className="hover:underline" target="_blank">
+                  <TableCell className="font-medium text-sm sm:text-base px-2 sm:px-4 max-w-[150px] sm:max-w-xs">
+                    <Link href={`/playlists/${playlist.id}`} className="hover:underline font-semibold break-words" target="_blank">
                       {playlist.name}
                     </Link>
-                    <p className="text-xs text-muted-foreground line-clamp-2 md:hidden">By {playlist.owner}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{playlist.description}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 break-words">{playlist.description}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 md:hidden">By {playlist.owner}</p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell px-2 sm:px-4">
                     {playlist.isFeatured && <Badge>Featured</Badge>}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="hidden md:table-cell px-2 sm:px-4">
                     {playlist.owner}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="hidden md:table-cell px-2 sm:px-4">
                     {playlist.tracks?.length || playlist.trackIds?.length || 0}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-2 sm:px-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
