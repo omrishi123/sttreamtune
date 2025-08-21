@@ -1,18 +1,31 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAuth() && request.auth.uid == userId;
+      allow update: if isAuth() && request.auth.uid == userId;
+    }
+    
     match /communityPlaylists/{playlistId} {
-      // Anyone, including guests, can view the community playlists.
-      allow read;
-
-      // Users can only create a playlist if they are logged in and the
-      // ownerId of the new playlist is their own user ID.
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
-
-      // Users can only update or delete a playlist if they are logged in
-      // and they are the owner of the playlist that already exists.
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      allow read: if true;
+      allow create: if isAuth();
+      allow update, delete: if isAuth();
+    }
+    
+    match /app-config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
