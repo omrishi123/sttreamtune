@@ -10,7 +10,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { doc, getDoc, deleteDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Playlist } from '@/lib/types';
+import type { Playlist, User } from '@/lib/types';
 
 const DeletePlaylistInputSchema = z.object({
   playlistId: z.string().describe('The ID of the playlist document in Firestore.'),
@@ -81,9 +81,11 @@ const deletePlaylistFlow = ai.defineFlow(
 
         // Security Check: Verify ownership before deleting
         if (playlistData.ownerId !== userId) {
-            // Allow admin to override
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (!userDoc.exists() || !userDoc.data()?.isAdmin) {
+            // Allow admin to override by fetching the user's server-side record.
+            const userDocRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userDocRef);
+
+            if (!userDoc.exists() || !(userDoc.data() as User).isAdmin) {
                 return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
             }
         }
