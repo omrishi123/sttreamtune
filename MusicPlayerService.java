@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <!-- Define a custom permission for the media browser service -->
+    <permission
+        android:name="com.streamtune.app.MEDIA_BROWSER_SERVICE"
+        android:protectionLevel="signature" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -36,20 +41,14 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
-                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
-                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
 
         <service
             android:name=".MusicPlayerService"
-            android:exported="true" android:foregroundServiceType="mediaPlayback"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            android:permission="com.streamtune.app.MEDIA_BROWSER_SERVICE"
             tools:ignore="Instantiatable">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
