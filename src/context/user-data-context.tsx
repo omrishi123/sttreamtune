@@ -216,7 +216,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       throw new Error("Guest users cannot create public playlists. Please log in.");
     }
 
-    const newPlaylistData = {
+    const newPlaylistData: Omit<Playlist, 'id'> = {
       name,
       description,
       trackIds: [],

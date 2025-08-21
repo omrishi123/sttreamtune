@@ -56,7 +56,16 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
     e.preventDefault();
     if (!name) return;
 
-    if (user?.id === 'guest' && isPublic) {
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Not Logged In',
+            description: 'You must be logged in to create a playlist.',
+        });
+        return;
+    }
+    
+    if (user.id === 'guest' && isPublic) {
       setShowLoginAlert(true);
       return;
     }

@@ -98,6 +98,9 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       addTracksToCache(result.tracks);
       
       const playlistToSave = { ...result.playlist };
+      
+      // *** FIX: Ensure ownerId is always set on the playlist before saving ***
+      playlistToSave.ownerId = user.id;
 
       // For private playlists, we can override the cover art with the full generated image data URI
       // because it will be stored in localStorage, which has a larger limit.
@@ -109,7 +112,6 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
          // For public playlists, we save to Firestore with the consistent ID.
          const publicPlaylistData = {
           ...playlistToSave,
-          ownerId: user.id,
           tracks: result.tracks,
           createdAt: serverTimestamp(),
          }
