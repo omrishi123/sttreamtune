@@ -229,14 +229,13 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
     if (isPublic) {
       try {
-        const docRef = await addDoc(collection(db, "communityPlaylists"), {
+        // Save to Firestore. The real-time listener will handle adding it to the local state.
+        // This prevents the duplicate key error.
+        await addDoc(collection(db, "communityPlaylists"), {
           ...newPlaylistData,
           tracks: [], // Initialize with empty tracks array
           createdAt: serverTimestamp(),
         });
-        // Add the newly created public playlist to the local state immediately
-        addPlaylist({ ...newPlaylistData, id: docRef.id });
-
       } catch (e) {
         console.error("Error adding document: ", e);
         throw e; // re-throw to be caught by the dialog
@@ -246,7 +245,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         ...newPlaylistData,
         id: `playlist-${Date.now()}`,
       };
-      addPlaylist(newLocalPlaylist);
+      // For private playlists, we add them directly to local state
+      setUserData(prev => ({
+        ...prev,
+        playlists: [newLocalPlaylist, ...prev.playlists],
+      }));
     }
   };
   
