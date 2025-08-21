@@ -218,6 +218,24 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
                     long pos = intent.getLongExtra("SEEK_TO_POSITION", 0);
                     mediaSessionCallback.onSeekTo(pos);
                     break;
+                // *** THIS IS THE FIX ***
+                // Handle standard system media actions explicitly
+                case PlaybackStateCompat.ACTION_PLAY_PAUSE:
+                case PlaybackStateCompat.ACTION_PLAY:
+                    mediaSessionCallback.onPlay();
+                    break;
+                case PlaybackStateCompat.ACTION_PAUSE:
+                    mediaSessionCallback.onPause();
+                    break;
+                case PlaybackStateCompat.ACTION_STOP:
+                    mediaSessionCallback.onStop();
+                    break;
+                case PlaybackStateCompat.ACTION_SKIP_TO_NEXT:
+                    mediaSessionCallback.onSkipToNext();
+                    break;
+                case PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS:
+                    mediaSessionCallback.onSkipToPrevious();
+                    break;
             }
         }
         return START_NOT_STICKY;
@@ -406,5 +424,3 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     @Nullable @Override public BrowserRoot onGetRoot(@NonNull String c, int i, @Nullable Bundle b) { return new BrowserRoot("media_root", null); }
     @Override public void onLoadChildren(@NonNull String p, @NonNull Result<List<MediaBrowserCompat.MediaItem>> r) { r.sendResult(null); }
 }
-
-    
