@@ -62,12 +62,11 @@ const updatePlaylistFlow = ai.defineFlow(
     outputSchema: UpdatePlaylistOutputSchema,
   },
   async ({ playlistId, trackIdToRemove, userId }) => {
-    if (!playlistId || !trackIdToRemove || !userId) {
-        return { success: false, message: 'Playlist ID, Track ID, and User ID are required.' };
+    if (!playlistId || !trackIdToRemove) {
+        return { success: false, message: 'Playlist ID and Track ID are required.' };
     }
-     if (userId === 'guest') {
-        return { success: false, message: 'Guests cannot update playlists.' };
-    }
+    // The security check is now fully handled by Firestore rules (`allow update: if isAuth();`).
+    // We no longer need to check for guest users or ownership here.
 
     try {
         const playlistRef = await findPlaylistDocumentRef(playlistId);
@@ -83,9 +82,6 @@ const updatePlaylistFlow = ai.defineFlow(
         }
 
         const playlistData = playlistDoc.data() as Playlist;
-
-        // According to the new firestore.rules, any authenticated user can update.
-        // The ownership check is no longer needed here as it's handled by the rule `allow update: if isAuth();`
 
         // Find the full track object to remove from the 'tracks' array
         const trackToRemove = playlistData.tracks?.find(t => t.id === trackIdToRemove);
@@ -107,6 +103,10 @@ const updatePlaylistFlow = ai.defineFlow(
         return { success: true, message: 'Track successfully removed from playlist.' };
     } catch (error: any) {
         console.error("Error in updatePlaylistFlow: ", error);
+         // Firestore security rule failures will be caught here.
+        if (error.code === 'permission-denied') {
+            return { success: false, message: 'Permission Denied. You must be logged in to update a playlist.' };
+        }
         return { success: false, message: error.message || 'An unknown error occurred while updating the playlist.' };
     }
   }

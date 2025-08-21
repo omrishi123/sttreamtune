@@ -60,12 +60,11 @@ const deletePlaylistFlow = ai.defineFlow(
     outputSchema: DeletePlaylistOutputSchema,
   },
   async ({ playlistId, userId }) => {
-    if (!playlistId || !userId) {
-        return { success: false, message: 'Playlist ID and User ID are required.' };
+    if (!playlistId) {
+        return { success: false, message: 'Playlist ID is required.' };
     }
-     if (userId === 'guest') {
-        return { success: false, message: 'Guests cannot delete playlists.' };
-    }
+     // The security check is now fully handled by Firestore rules (`allow delete: if isAuth();`).
+     // We no longer need to check for guest users or ownership here.
 
     try {
         const playlistRef = await findPlaylistDocumentRef(playlistId);
@@ -73,15 +72,16 @@ const deletePlaylistFlow = ai.defineFlow(
         if (!playlistRef) {
              return { success: false, message: 'Playlist not found.' };
         }
-
-        // According to the new firestore.rules, any authenticated user can delete.
-        // The ownership check is no longer needed here as it's handled by the rule `allow delete: if isAuth();`
         
         await deleteDoc(playlistRef);
 
         return { success: true, message: 'Playlist successfully deleted.' };
     } catch (error: any) {
         console.error("Error in deletePlaylistFlow: ", error);
+        // Firestore security rule failures will be caught here.
+        if (error.code === 'permission-denied') {
+            return { success: false, message: 'Permission Denied. You must be logged in to delete a playlist.' };
+        }
         return { success: false, message: error.message || 'An unknown error occurred while deleting the playlist.' };
     }
   }
