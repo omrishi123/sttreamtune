@@ -10,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayRemove, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Playlist, Track } from '@/lib/types';
 
@@ -26,6 +26,30 @@ const UpdatePlaylistOutputSchema = z.object({
   message: z.string(),
 });
 export type UpdatePlaylistOutput = z.infer<typeof UpdatePlaylistOutputSchema>;
+
+// Helper function to find the correct playlist document reference,
+// supporting both direct document ID and legacy ID formats.
+async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData> | null> {
+    if (!id) return null;
+
+    // 1. Try to get the document directly using the provided ID. This is the most reliable method.
+    const directRef = doc(db, 'communityPlaylists', id);
+    const docSnap = await getDoc(directRef);
+    if (docSnap.exists()) {
+        return directRef;
+    }
+
+    // 2. Fallback for legacy playlists: Query the collection where the `id` field matches.
+    const q = query(collection(db, 'communityPlaylists'), where('id', '==', id));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        // Return the ref of the first document found.
+        return querySnapshot.docs[0].ref;
+    }
+
+    return null;
+}
 
 export async function removeTrackFromPublicPlaylist(input: UpdatePlaylistInput): Promise<UpdatePlaylistOutput> {
   return updatePlaylistFlow(input);
@@ -43,7 +67,12 @@ const updatePlaylistFlow = ai.defineFlow(
     }
 
     try {
-        const playlistRef = doc(db, 'communityPlaylists', playlistId);
+        const playlistRef = await findPlaylistDocumentRef(playlistId);
+
+        if (!playlistRef) {
+            return { success: false, message: 'Playlist not found.' };
+        }
+
         const playlistDoc = await getDoc(playlistRef);
 
         if (!playlistDoc.exists()) {

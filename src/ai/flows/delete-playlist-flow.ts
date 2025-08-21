@@ -29,7 +29,7 @@ export type DeletePlaylistOutput = z.infer<typeof DeletePlaylistOutputSchema>;
 async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData> | null> {
     if (!id) return null;
 
-    // 1. Try to get the document directly using the provided ID.
+    // 1. Try to get the document directly using the provided ID. This is the most reliable method.
     const directRef = doc(db, 'communityPlaylists', id);
     const docSnap = await getDoc(directRef);
     if (docSnap.exists()) {
