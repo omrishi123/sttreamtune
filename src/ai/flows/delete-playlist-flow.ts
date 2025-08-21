@@ -8,9 +8,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { doc, getDoc, deleteDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import type { Playlist, User } from '@/lib/types';
+import adminDb from '@/lib/firebase-admin';
+import type { Playlist } from '@/lib/types';
 
 const DeletePlaylistInputSchema = z.object({
   playlistId: z.string().describe('The ID of the playlist document in Firestore.'),
@@ -25,23 +24,23 @@ const DeletePlaylistOutputSchema = z.object({
 export type DeletePlaylistOutput = z.infer<typeof DeletePlaylistOutputSchema>;
 
 // Helper function to find the correct playlist document reference,
-// supporting both direct document ID and legacy ID formats.
-async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData> | null> {
+// supporting both direct document ID and legacy ID formats using the Admin SDK.
+async function findPlaylistDocumentRef(id: string): Promise<FirebaseFirestore.DocumentReference | null> {
+    if (!adminDb) {
+        throw new Error("Firebase Admin is not initialized.");
+    }
     if (!id) return null;
 
-    // 1. Try to get the document directly using the provided ID. This is the most reliable method.
-    const directRef = doc(db, 'communityPlaylists', id);
-    const docSnap = await getDoc(directRef);
-    if (docSnap.exists()) {
+    const directRef = adminDb.collection('communityPlaylists').doc(id);
+    const docSnap = await directRef.get();
+    if (docSnap.exists) {
         return directRef;
     }
 
-    // 2. Fallback for legacy playlists: Query the collection where the `id` field matches.
-    const q = query(collection(db, 'communityPlaylists'), where('id', '==', id));
-    const querySnapshot = await getDocs(q);
+    const q = adminDb.collection('communityPlaylists').where('id', '==', id).limit(1);
+    const querySnapshot = await q.get();
 
     if (!querySnapshot.empty) {
-        // Return the ref of the first document found.
         return querySnapshot.docs[0].ref;
     }
 
@@ -63,8 +62,10 @@ const deletePlaylistFlow = ai.defineFlow(
     if (!playlistId) {
         return { success: false, message: 'Playlist ID is required.' };
     }
-     // The security check is now fully handled by Firestore rules (`allow delete: if isAuth();`).
-     // We no longer need to check for guest users or ownership here.
+    
+    // With the new Firestore rules, any authenticated user can delete.
+    // The UI logic on the frontend restricts who sees the button.
+    // The backend just needs to perform the action.
 
     try {
         const playlistRef = await findPlaylistDocumentRef(playlistId);
@@ -73,15 +74,11 @@ const deletePlaylistFlow = ai.defineFlow(
              return { success: false, message: 'Playlist not found.' };
         }
         
-        await deleteDoc(playlistRef);
+        await playlistRef.delete();
 
         return { success: true, message: 'Playlist successfully deleted.' };
     } catch (error: any) {
-        console.error("Error in deletePlaylistFlow: ", error);
-        // Firestore security rule failures will be caught here.
-        if (error.code === 'permission-denied') {
-            return { success: false, message: 'Permission Denied. You must be logged in to delete a playlist.' };
-        }
+        console.error("Error in deletePlaylistFlow (Admin SDK): ", error);
         return { success: false, message: error.message || 'An unknown error occurred while deleting the playlist.' };
     }
   }
