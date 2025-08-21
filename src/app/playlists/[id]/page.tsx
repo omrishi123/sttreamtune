@@ -221,10 +221,10 @@ export default function PlaylistPage() {
     }
   };
 
-  // User can edit if it's their own private playlist, or a public playlist they own/are admin for.
+  // User can edit if it's their own private playlist, or a public playlist they own.
   const canEdit = currentUser && playlist && (
     (!playlist.public && !playlist.isChannelPlaylist) || // Their own private playlist
-    (playlist.public && (playlist.ownerId === currentUser.id || currentUser.isAdmin)) // Public playlist they own or admin
+    (playlist.public && playlist.ownerId === currentUser.id) // Public playlist they own
   );
   // Channel playlists are editable locally.
   const canEditChannelContent = playlist && playlist.isChannelPlaylist;
