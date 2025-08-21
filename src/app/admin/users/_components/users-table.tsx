@@ -59,7 +59,10 @@ export function UsersTable({ initialUsers, onRoleChangeClick }: UsersTableProps)
                       <AvatarImage src={user.photoURL} alt={user.name} />
                       <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
                     </Avatar>
-                    <div className="font-medium">{user.name}</div>
+                    <div className="grid gap-1">
+                      <p className="font-medium truncate">{user.name}</p>
+                      <p className="text-xs text-muted-foreground sm:hidden truncate">{user.email}</p>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">{user.email}</TableCell>

@@ -129,7 +129,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Users</CardDescription>
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead className="hidden sm:table-cell">Email</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
                     <TableCell>
                       <div className="font-medium">{user.name}</div>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -200,7 +200,7 @@ export default function AdminDashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Playlist</TableHead>
-                  <TableHead>Owner</TableHead>
+                  <TableHead className="hidden sm:table-cell">Owner</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                         {playlist.name}
                        </Link>
                     </TableCell>
-                    <TableCell>{playlist.owner}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{playlist.owner}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

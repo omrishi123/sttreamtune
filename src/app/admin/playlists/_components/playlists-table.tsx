@@ -147,6 +147,7 @@ export function PlaylistsTable({ initialPlaylists }: PlaylistsTableProps) {
                     <Link href={`/playlists/${playlist.id}`} className="hover:underline" target="_blank">
                       {playlist.name}
                     </Link>
+                    <p className="text-xs text-muted-foreground line-clamp-2 md:hidden">By {playlist.owner}</p>
                     <p className="text-xs text-muted-foreground line-clamp-2">{playlist.description}</p>
                   </TableCell>
                   <TableCell>
