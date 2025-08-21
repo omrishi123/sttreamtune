@@ -112,7 +112,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const playlists: Playlist[] = [];
       querySnapshot.forEach((doc) => {
-        playlists.push({ id: doc.id, ...doc.data() } as Playlist);
+        // *** FIX: Ensure the document's own ID is used as the primary ID for the playlist object ***
+        playlists.push({ ...doc.data(), id: doc.id } as Playlist);
       });
       setCommunityPlaylists(playlists);
     }, (error) => {
@@ -280,23 +281,27 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
         }
     } else {
-        // For private playlists in local storage
         let wasAdded = false;
         setUserData(prev => {
-            const isTrackAlreadyInPlaylist = prev.playlists.find(p => p.id === playlistId)?.trackIds.includes(trackId);
+            const currentPlaylists = prev.playlists;
+            const targetPlaylist = currentPlaylists.find(p => p.id === playlistId);
+            
+            if (!targetPlaylist) return prev;
+
+            const isTrackAlreadyInPlaylist = targetPlaylist.trackIds.includes(trackId);
             if (isTrackAlreadyInPlaylist) {
-                return prev; // Return previous state if track is already there
+                wasAdded = false; // Track was already there
+                return prev;
             }
-            wasAdded = true;
-            return {
-                ...prev,
-                playlists: prev.playlists.map(p =>
-                    p.id === playlistId ? { ...p, trackIds: [...p.trackIds, trackId] } : p
-                ),
-            };
+
+            wasAdded = true; // Track will be added
+            const updatedPlaylists = currentPlaylists.map(p =>
+                p.id === playlistId ? { ...p, trackIds: [...p.trackIds, trackId] } : p
+            );
+            return { ...prev, playlists: updatedPlaylists };
         });
 
-        // Show toast notification outside of the render cycle
+        // Trigger toast outside of the setter function
         if (wasAdded) {
             toast({ title: 'Added to playlist', description: 'Song has been added.' });
         } else {
@@ -359,6 +364,31 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
           userId: currentUser.id
         });
         return result;
+    } else if (playlist.isChannelPlaylist) {
+      // Find the channel that contains this playlist and remove it
+      let channelIdContainingPlaylist: string | null = null;
+      const updatedChannels = userData.channels.map(channel => {
+          const playlistExists = channel.playlists.some(p => p.id === playlistId);
+          if (playlistExists) {
+              channelIdContainingPlaylist = channel.id;
+              return {
+                  ...channel,
+                  playlists: channel.playlists.filter(p => p.id !== playlistId)
+              };
+          }
+          return channel;
+      });
+
+      if (channelIdContainingPlaylist) {
+          setUserData(prev => ({
+              ...prev,
+              channels: updatedChannels
+          }));
+          return { success: true, message: 'Playlist removed from channel.' };
+      } else {
+         return { success: false, message: 'Could not find the channel for this playlist.' };
+      }
+
     } else {
       // It's a private playlist, remove from local state
       setUserData(prev => ({
