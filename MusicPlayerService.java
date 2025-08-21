@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Objects;
 
 public class MusicPlayerService extends MediaBrowserServiceCompat implements LifecycleOwner {
 
@@ -197,45 +198,25 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
         MediaButtonReceiver.handleIntent(mediaSession, intent);
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
-            switch (action) {
-                case "PLAY_PLAYLIST":
-                    String playlistJson = intent.getStringExtra("PLAYLIST_JSON");
-                    currentIndex = intent.getIntExtra("CURRENT_INDEX", -1);
-                    parsePlaylist(playlistJson);
-                    playSongAtIndex();
-                    break;
-                case "SET_SLEEP_TIMER":
-                    long duration = intent.getLongExtra("SLEEP_TIMER_DURATION", 0);
-                    handleSleepTimer(duration);
-                    break;
-                case "ACTION_PLAY":
-                    mediaSessionCallback.onPlay();
-                    break;
-                case "ACTION_PAUSE":
-                    mediaSessionCallback.onPause();
-                    break;
-                case "ACTION_SEEK_TO":
-                    long pos = intent.getLongExtra("SEEK_TO_POSITION", 0);
-                    mediaSessionCallback.onSeekTo(pos);
-                    break;
-                // *** THIS IS THE FIX ***
-                // Handle standard system media actions explicitly
-                case PlaybackStateCompat.ACTION_PLAY_PAUSE:
-                case PlaybackStateCompat.ACTION_PLAY:
-                    mediaSessionCallback.onPlay();
-                    break;
-                case PlaybackStateCompat.ACTION_PAUSE:
-                    mediaSessionCallback.onPause();
-                    break;
-                case PlaybackStateCompat.ACTION_STOP:
-                    mediaSessionCallback.onStop();
-                    break;
-                case PlaybackStateCompat.ACTION_SKIP_TO_NEXT:
-                    mediaSessionCallback.onSkipToNext();
-                    break;
-                case PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS:
-                    mediaSessionCallback.onSkipToPrevious();
-                    break;
+
+            if (Objects.equals(action, "PLAY_PLAYLIST")) {
+                String playlistJson = intent.getStringExtra("PLAYLIST_JSON");
+                currentIndex = intent.getIntExtra("CURRENT_INDEX", -1);
+                parsePlaylist(playlistJson);
+                playSongAtIndex();
+            } else if (Objects.equals(action, "SET_SLEEP_TIMER")) {
+                long duration = intent.getLongExtra("SLEEP_TIMER_DURATION", 0);
+                handleSleepTimer(duration);
+            } else if (Objects.equals(action, "ACTION_PLAY")) {
+                mediaSessionCallback.onPlay();
+            } else if (Objects.equals(action, "ACTION_PAUSE")) {
+                mediaSessionCallback.onPause();
+            } else if (Objects.equals(action, "ACTION_SEEK_TO")) {
+                long pos = intent.getLongExtra("SEEK_TO_POSITION", 0);
+                mediaSessionCallback.onSeekTo(pos);
+            } else if (Objects.equals(action, "android.intent.action.MEDIA_BUTTON")) {
+                 // The MediaButtonReceiver sent this. The mediaSession callback will be triggered automatically.
+                 // We don't need to do anything extra here.
             }
         }
         return START_NOT_STICKY;
