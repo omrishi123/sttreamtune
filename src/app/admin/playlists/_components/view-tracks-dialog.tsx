@@ -86,8 +86,8 @@ export function ViewTracksDialog({ playlist, isOpen, onOpenChange, onTracksUpdat
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {tracks.map((track) => (
-                                <TableRow key={track.id}>
+                            {tracks.map((track, index) => (
+                                <TableRow key={`${track.id}-${index}`}>
                                     <TableCell>
                                         <Image
                                             src={track.artwork}
