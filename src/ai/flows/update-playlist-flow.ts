@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { doc, getDoc, updateDoc, arrayRemove, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Playlist, Track } from '@/lib/types';
+import type { Playlist, Track, User } from '@/lib/types';
 
 const UpdatePlaylistInputSchema = z.object({
   playlistId: z.string().describe('The ID of the playlist document in Firestore.'),
@@ -83,7 +83,12 @@ const updatePlaylistFlow = ai.defineFlow(
 
         // Security Check: Verify ownership before proceeding
         if (playlistData.ownerId !== userId) {
-            return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
+            const userDocRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userDocRef);
+
+            if (!userDoc.exists() || !(userDoc.data() as User).isAdmin) {
+              return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
+            }
         }
 
         // Find the full track object to remove from the 'tracks' array

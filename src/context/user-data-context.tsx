@@ -194,16 +194,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addPlaylist = (playlist: Playlist) => {
-     // If the playlist is public, add it to the community playlist state
-    if (playlist.public) {
-      setCommunityPlaylists(prev => [playlist, ...prev]);
-    } else {
-      // Otherwise, add it to the user's private playlists
+      // For private playlists, we add them directly to local state
       setUserData(prev => ({
         ...prev,
         playlists: [playlist, ...prev.playlists],
       }));
-    }
   };
   
   const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false) => {
@@ -230,7 +225,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (isPublic) {
       try {
         // Save to Firestore. The real-time listener will handle adding it to the local state.
-        // This prevents the duplicate key error.
         await addDoc(collection(db, "communityPlaylists"), {
           ...newPlaylistData,
           tracks: [], // Initialize with empty tracks array
@@ -245,11 +239,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         ...newPlaylistData,
         id: `playlist-${Date.now()}`,
       };
-      // For private playlists, we add them directly to local state
-      setUserData(prev => ({
-        ...prev,
-        playlists: [newLocalPlaylist, ...prev.playlists],
-      }));
+      addPlaylist(newLocalPlaylist);
     }
   };
   
