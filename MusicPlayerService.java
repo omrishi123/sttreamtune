@@ -287,32 +287,32 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     }
 
     private void updateMetadata(String title, String artist, String thumbnailUrl) {
-        final MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist);
-
-        mediaSession.setMetadata(metadataBuilder.build());
-        updateNotification();
-
-        if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
-            executorService.submit(() -> {
+        executorService.submit(() -> {
+            Bitmap artwork = null;
+            if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
                 try {
                     URL url = new URL(thumbnailUrl);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setDoInput(true);
                     connection.connect();
                     InputStream input = connection.getInputStream();
-                    Bitmap bitmap = BitmapFactory.decodeStream(input);
-                    if (bitmap != null) {
-                        metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap);
-                        mediaSession.setMetadata(metadataBuilder.build());
-                        updateNotification();
-                    }
+                    artwork = BitmapFactory.decodeStream(input);
                 } catch (Exception e) {
                     Log.e(TAG, "Error downloading artwork", e);
                 }
-            });
-        }
+            }
+
+            MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist);
+
+            if (artwork != null) {
+                metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, artwork);
+            }
+
+            mediaSession.setMetadata(metadataBuilder.build());
+            updateNotification();
+        });
     }
 
     private void updateNotification() {
@@ -408,3 +408,5 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     @Nullable @Override public BrowserRoot onGetRoot(@NonNull String c, int i, @Nullable Bundle b) { return new BrowserRoot("media_root", null); }
     @Override public void onLoadChildren(@NonNull String p, @NonNull Result<List<MediaBrowserCompat.MediaItem>> r) { r.sendResult(null); }
 }
+
+    
