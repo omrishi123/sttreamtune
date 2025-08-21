@@ -1,13 +1,10 @@
 package com.streamtune.app;
 
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.webkit.JavascriptInterface;
-import androidx.media.session.MediaButtonReceiver;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 public class WebAppInterface {
     private final Context context;
@@ -42,41 +39,34 @@ public class WebAppInterface {
         context.startService(intent);
     }
 
-    private void sendMediaButtonIntent(long action) {
-        try {
-            PendingIntent pendingIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(context, action);
-            pendingIntent.send();
-        } catch (PendingIntent.CanceledException e) {
-            // This might happen if the service is killed, so we restart it.
-            Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-            intent.setPackage(context.getPackageName());
-            MediaButtonReceiver.handleIntent(intent);
-        }
+    private void sendMediaCommand(String action) {
+        Intent intent = new Intent(context, MusicPlayerService.class);
+        intent.setAction(action);
+        context.startService(intent);
+    }
+    
+    @JavascriptInterface
+    public void play() {
+        sendMediaCommand("ACTION_PLAY");
+    }
+    
+    @JavascriptInterface
+    public void pause() {
+        sendMediaCommand("ACTION_PAUSE");
     }
 
     @JavascriptInterface
     public void playNext() {
-        sendMediaButtonIntent(PlaybackStateCompat.ACTION_SKIP_TO_NEXT);
+        sendMediaCommand("ACTION_SKIP_TO_NEXT");
     }
 
     @JavascriptInterface
     public void playPrevious() {
-        sendMediaButtonIntent(PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS);
-    }
-
-    @JavascriptInterface
-    public void play() {
-        sendMediaButtonIntent(PlaybackStateCompat.ACTION_PLAY);
-    }
-
-    @JavascriptInterface
-    public void pause() {
-        sendMediaButtonIntent(PlaybackStateCompat.ACTION_PAUSE);
+        sendMediaCommand("ACTION_SKIP_TO_PREVIOUS");
     }
 
     @JavascriptInterface
     public void seekTo(int positionInSeconds) {
-        // Seek is not a standard media button action, so it still needs a custom intent.
         Intent intent = new Intent(context, MusicPlayerService.class);
         intent.setAction("ACTION_SEEK_TO");
         intent.putExtra("SEEK_TO_POSITION", (long) positionInSeconds * 1000);

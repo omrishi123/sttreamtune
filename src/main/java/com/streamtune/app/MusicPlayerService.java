@@ -195,13 +195,11 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // This is the first and most important line. It handles all standard media button events.
         MediaButtonReceiver.handleIntent(mediaSession, intent);
 
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
 
-            // Handle only our custom actions here. Standard actions are now handled above.
             if (Objects.equals(action, "PLAY_PLAYLIST")) {
                 String playlistJson = intent.getStringExtra("PLAYLIST_JSON");
                 currentIndex = intent.getIntExtra("CURRENT_INDEX", -1);
@@ -210,6 +208,17 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
             } else if (Objects.equals(action, "SET_SLEEP_TIMER")) {
                 long duration = intent.getLongExtra("SLEEP_TIMER_DURATION", 0);
                 handleSleepTimer(duration);
+            } else if (Objects.equals(action, "ACTION_PLAY")) {
+                mediaSessionCallback.onPlay();
+            } else if (Objects.equals(action, "ACTION_PAUSE")) {
+                mediaSessionCallback.onPause();
+            } else if (Objects.equals(action, "ACTION_SKIP_TO_NEXT")) {
+                mediaSessionCallback.onSkipToNext();
+            } else if (Objects.equals(action, "ACTION_SKIP_TO_PREVIOUS")) {
+                mediaSessionCallback.onSkipToPrevious();
+            } else if (Objects.equals(action, "ACTION_SEEK_TO")) {
+                long pos = intent.getLongExtra("SEEK_TO_POSITION", 0);
+                mediaSessionCallback.onSeekTo(pos);
             }
         }
         return START_NOT_STICKY;
