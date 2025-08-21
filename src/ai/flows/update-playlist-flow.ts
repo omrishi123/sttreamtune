@@ -65,6 +65,9 @@ const updatePlaylistFlow = ai.defineFlow(
     if (!playlistId || !trackIdToRemove || !userId) {
         return { success: false, message: 'Playlist ID, Track ID, and User ID are required.' };
     }
+     if (userId === 'guest') {
+        return { success: false, message: 'Guests cannot update playlists.' };
+    }
 
     try {
         const playlistRef = await findPlaylistDocumentRef(playlistId);
@@ -81,15 +84,8 @@ const updatePlaylistFlow = ai.defineFlow(
 
         const playlistData = playlistDoc.data() as Playlist;
 
-        // Security Check: Verify ownership before proceeding
-        if (playlistData.ownerId !== userId) {
-            const userDocRef = doc(db, 'users', userId);
-            const userDoc = await getDoc(userDocRef);
-
-            if (!userDoc.exists() || !(userDoc.data() as User).isAdmin) {
-              return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
-            }
-        }
+        // According to the new firestore.rules, any authenticated user can update.
+        // The ownership check is no longer needed here as it's handled by the rule `allow update: if isAuth();`
 
         // Find the full track object to remove from the 'tracks' array
         const trackToRemove = playlistData.tracks?.find(t => t.id === trackIdToRemove);

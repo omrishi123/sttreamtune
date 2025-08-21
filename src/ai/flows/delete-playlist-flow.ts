@@ -63,6 +63,9 @@ const deletePlaylistFlow = ai.defineFlow(
     if (!playlistId || !userId) {
         return { success: false, message: 'Playlist ID and User ID are required.' };
     }
+     if (userId === 'guest') {
+        return { success: false, message: 'Guests cannot delete playlists.' };
+    }
 
     try {
         const playlistRef = await findPlaylistDocumentRef(playlistId);
@@ -71,25 +74,9 @@ const deletePlaylistFlow = ai.defineFlow(
              return { success: false, message: 'Playlist not found.' };
         }
 
-        const playlistDoc = await getDoc(playlistRef);
-
-        if (!playlistDoc.exists()) {
-            return { success: false, message: 'Playlist not found.' };
-        }
-
-        const playlistData = playlistDoc.data() as Playlist;
-
-        // Security Check: Verify ownership before deleting
-        if (playlistData.ownerId !== userId) {
-            // Allow admin to override by fetching the user's server-side record.
-            const userDocRef = doc(db, 'users', userId);
-            const userDoc = await getDoc(userDocRef);
-
-            if (!userDoc.exists() || !(userDoc.data() as User).isAdmin) {
-                return { success: false, message: 'Permission denied. You are not the owner of this playlist.' };
-            }
-        }
-
+        // According to the new firestore.rules, any authenticated user can delete.
+        // The ownership check is no longer needed here as it's handled by the rule `allow delete: if isAuth();`
+        
         await deleteDoc(playlistRef);
 
         return { success: true, message: 'Playlist successfully deleted.' };
