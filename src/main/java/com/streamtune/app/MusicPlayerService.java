@@ -196,15 +196,20 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
-             MediaButtonReceiver.handleIntent(mediaSession, intent);
-            if (intent.getAction() != null) {
-                String action = intent.getAction();
-                if (Objects.equals(action, "PLAY_PLAYLIST")) {
+            // This is the most important line. It handles all media button events
+            // from the notification, Bluetooth, etc., and sends them to the MediaSession.Callback.
+            MediaButtonReceiver.handleIntent(mediaSession, intent);
+
+            String action = intent.getAction();
+            if (action != null) {
+                // We only need to handle our custom actions here. The standard media
+                // actions are handled automatically by the line above.
+                if (action.equals("PLAY_PLAYLIST")) {
                     String playlistJson = intent.getStringExtra("PLAYLIST_JSON");
                     currentIndex = intent.getIntExtra("CURRENT_INDEX", -1);
                     parsePlaylist(playlistJson);
                     playSongAtIndex();
-                } else if (Objects.equals(action, "SET_SLEEP_TIMER")) {
+                } else if (action.equals("SET_SLEEP_TIMER")) {
                     long duration = intent.getLongExtra("SLEEP_TIMER_DURATION", 0);
                     handleSleepTimer(duration);
                 }
@@ -212,6 +217,7 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
         }
         return START_NOT_STICKY;
     }
+
 
     private void handleSleepTimer(long durationInMillis) {
         if (sleepTimer != null) {
