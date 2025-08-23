@@ -15,10 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { updateAppConfig } from '@/lib/admin-actions';
+import { Textarea } from '@/components/ui/textarea';
 
 interface AppConfig {
   latestVersion: string;
   updateUrl: string;
+  updateNotes: string;
 }
 
 interface AppConfigFormProps {
@@ -50,7 +52,7 @@ export function AppConfigForm({ initialConfig }: AppConfigFormProps) {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setConfig((prev) => ({ ...prev, [id]: value }));
   };
@@ -87,6 +89,20 @@ export function AppConfigForm({ initialConfig }: AppConfigFormProps) {
                 onChange={handleChange}
                 placeholder="e.g., https://yourapp.com/update.apk"
               />
+            </div>
+             <div className="grid gap-3">
+              <Label htmlFor="updateNotes">Update Notes</Label>
+               <Textarea
+                id="updateNotes"
+                className="w-full"
+                value={config.updateNotes}
+                onChange={handleChange}
+                placeholder="- New feature added&#10;- Bug fixes"
+                rows={4}
+              />
+               <p className="text-sm text-muted-foreground">
+                Describe the changes in this update. This will be shown to the user in the update dialog.
+              </p>
             </div>
           </div>
         </CardContent>

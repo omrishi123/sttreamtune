@@ -34,6 +34,7 @@ export function useAppUpdate() {
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [updateUrl, setUpdateUrl] = useState<string | null>(null);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const [updateNotes, setUpdateNotes] = useState<string | null>(null);
 
   useEffect(() => {
     // This function will handle all the logic
@@ -50,6 +51,7 @@ export function useAppUpdate() {
         const data = docSnap.data();
         const remoteVersion = data.latestVersion;
         const url = data.updateUrl;
+        const notes = data.updateNotes; // Fetch the new notes
 
         if (!remoteVersion || !url) {
             console.log("Remote version or update URL is missing from Firestore.");
@@ -66,6 +68,7 @@ export function useAppUpdate() {
             if (isNewerVersion(currentApkVersion, remoteVersion)) {
                 setLatestVersion(remoteVersion);
                 setUpdateUrl(url);
+                setUpdateNotes(notes);
                 setShowUpdateDialog(true);
             }
         } else {
@@ -75,6 +78,7 @@ export function useAppUpdate() {
             console.log("Native bridge 'getAppVersion' not found. Forcing update for old client.");
             setLatestVersion(remoteVersion);
             setUpdateUrl(url);
+            setUpdateNotes(notes);
             setShowUpdateDialog(true);
         }
 
@@ -86,5 +90,5 @@ export function useAppUpdate() {
     checkForUpdates();
   }, []);
 
-  return { showUpdateDialog, updateUrl, latestVersion };
+  return { showUpdateDialog, updateUrl, latestVersion, updateNotes };
 }

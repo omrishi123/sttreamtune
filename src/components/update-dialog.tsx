@@ -13,14 +13,16 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from './ui/scroll-area';
 
 interface UpdateDialogProps {
   isOpen: boolean;
   updateUrl: string | null;
   latestVersion: string | null;
+  updateNotes: string | null;
 }
 
-export function UpdateDialog({ isOpen, updateUrl, latestVersion }: UpdateDialogProps) {
+export function UpdateDialog({ isOpen, updateUrl, latestVersion, updateNotes }: UpdateDialogProps) {
     const [open, setOpen] = useState(isOpen);
 
     useEffect(() => {
@@ -40,9 +42,17 @@ export function UpdateDialog({ isOpen, updateUrl, latestVersion }: UpdateDialogP
           <AlertDialogHeader>
             <AlertDialogTitle>Update Available</AlertDialogTitle>
             <AlertDialogDescription>
-              A new version ({latestVersion}) of StreamTune is available. Please update to the latest version for the best experience.
+              A new version ({latestVersion}) of StreamTune is available. Please update for the best experience.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {updateNotes && (
+            <div className="space-y-2">
+                <h3 className="font-semibold text-sm">What's new:</h3>
+                <ScrollArea className="h-24 w-full rounded-md border p-3 bg-muted/50">
+                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">{updateNotes}</p>
+                </ScrollArea>
+            </div>
+          )}
           <AlertDialogFooter>
              <AlertDialogCancel asChild>
                 <Button variant="outline" onClick={() => setOpen(false)}>Later</Button>

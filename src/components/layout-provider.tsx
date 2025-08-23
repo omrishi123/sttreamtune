@@ -18,7 +18,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { showUpdateDialog, updateUrl, latestVersion } = useAppUpdate();
+  const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
 
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
@@ -64,7 +64,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           <UpdateDialog 
             isOpen={showUpdateDialog} 
             updateUrl={updateUrl} 
-            latestVersion={latestVersion} 
+            latestVersion={latestVersion}
+            updateNotes={updateNotes}
           />
         </PlayerLayout>
       </PlayerProvider>

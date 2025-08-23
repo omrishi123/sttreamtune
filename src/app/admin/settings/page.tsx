@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface AppConfig {
   latestVersion: string;
   updateUrl: string;
+  updateNotes: string;
 }
 
 function SettingsPageSkeleton() {
@@ -27,6 +28,10 @@ function SettingsPageSkeleton() {
                          <div className="space-y-2">
                             <Skeleton className="h-4 w-24" />
                             <Skeleton className="h-10 w-full" />
+                        </div>
+                         <div className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-20 w-full" />
                         </div>
                     </div>
                     <Skeleton className="h-10 w-20 mt-4" />

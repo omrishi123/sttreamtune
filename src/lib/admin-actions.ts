@@ -187,15 +187,22 @@ export async function getAppConfig() {
   const docSnap = await configRef.get();
 
   if (docSnap.exists) {
-    return docSnap.data() as { latestVersion: string; updateUrl: string };
+    const data = docSnap.data();
+    return { 
+        latestVersion: data?.latestVersion || '', 
+        updateUrl: data?.updateUrl || '',
+        updateNotes: data?.updateNotes || '',
+    };
   } else {
-    return { latestVersion: '', updateUrl: '' };
+    // Return a default structure if the document doesn't exist
+    return { latestVersion: '', updateUrl: '', updateNotes: '' };
   }
 }
 
 export async function updateAppConfig(config: {
   latestVersion: string;
   updateUrl: string;
+  updateNotes: string;
 }) {
   if (!adminDb) {
     throw new Error("Firebase Admin is not initialized.");
