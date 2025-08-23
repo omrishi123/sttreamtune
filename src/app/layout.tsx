@@ -6,6 +6,8 @@ import { PlayerProvider } from '@/context/player-context';
 import { LayoutProvider } from '@/components/layout-provider';
 import { UserDataProvider } from '@/context/user-data-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import Script from 'next/script';
+
 
 export const metadata: Metadata = {
   title: 'StreamTune',
@@ -48,6 +50,7 @@ export default function RootLayout({
           <LayoutProvider>{children}</LayoutProvider>
           <Toaster />
         </ThemeProvider>
+         <Script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" />
       </body>
     </html>
   );

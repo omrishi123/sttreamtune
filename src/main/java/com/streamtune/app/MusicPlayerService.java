@@ -195,30 +195,19 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        MediaButtonReceiver.handleIntent(mediaSession, intent);
-
-        if (intent != null && intent.getAction() != null) {
-            String action = intent.getAction();
-
-            if (Objects.equals(action, "PLAY_PLAYLIST")) {
-                String playlistJson = intent.getStringExtra("PLAYLIST_JSON");
-                currentIndex = intent.getIntExtra("CURRENT_INDEX", -1);
-                parsePlaylist(playlistJson);
-                playSongAtIndex();
-            } else if (Objects.equals(action, "SET_SLEEP_TIMER")) {
-                long duration = intent.getLongExtra("SLEEP_TIMER_DURATION", 0);
-                handleSleepTimer(duration);
-            } else if (Objects.equals(action, "ACTION_PLAY")) {
-                mediaSessionCallback.onPlay();
-            } else if (Objects.equals(action, "ACTION_PAUSE")) {
-                mediaSessionCallback.onPause();
-            } else if (Objects.equals(action, "ACTION_SKIP_TO_NEXT")) {
-                mediaSessionCallback.onSkipToNext();
-            } else if (Objects.equals(action, "ACTION_SKIP_TO_PREVIOUS")) {
-                mediaSessionCallback.onSkipToPrevious();
-            } else if (Objects.equals(action, "ACTION_SEEK_TO")) {
-                long pos = intent.getLongExtra("SEEK_TO_POSITION", 0);
-                mediaSessionCallback.onSeekTo(pos);
+        if (intent != null) {
+             MediaButtonReceiver.handleIntent(mediaSession, intent);
+            if (intent.getAction() != null) {
+                String action = intent.getAction();
+                if (Objects.equals(action, "PLAY_PLAYLIST")) {
+                    String playlistJson = intent.getStringExtra("PLAYLIST_JSON");
+                    currentIndex = intent.getIntExtra("CURRENT_INDEX", -1);
+                    parsePlaylist(playlistJson);
+                    playSongAtIndex();
+                } else if (Objects.equals(action, "SET_SLEEP_TIMER")) {
+                    long duration = intent.getLongExtra("SLEEP_TIMER_DURATION", 0);
+                    handleSleepTimer(duration);
+                }
             }
         }
         return START_NOT_STICKY;

@@ -282,6 +282,9 @@ export function Player() {
               />
             </PopoverContent>
           </Popover>
+          <div className="w-10">
+              <google-cast-launcher />
+          </div>
           <Button variant="ghost" size="icon" onClick={() => setIsNowPlayingOpen(true)}>
               <Youtube className="h-5 w-5" />
           </Button>
