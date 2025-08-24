@@ -36,6 +36,15 @@ import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { useToast } from "@/hooks/use-toast";
 import { NowPlayingSheet } from "./now-playing-sheet";
 
+const EqualizerBars = ({ isPlaying }: { isPlaying: boolean }) => (
+    <div className="flex items-end gap-1 h-4 w-4">
+        <span className={cn("w-1 h-1/3 bg-primary/80 rounded-full", isPlaying && "animate-[bounce_1.2s_ease-in-out_infinite] [animation-delay:-0.2s]")}></span>
+        <span className={cn("w-1 h-full bg-primary rounded-full", isPlaying && "animate-[bounce_1.2s_ease-in-out_infinite]")}></span>
+        <span className={cn("w-1 h-2/3 bg-primary/90 rounded-full", isPlaying && "animate-[bounce_1.2s_ease-in-out_infinite] [animation-delay:0.2s]")}></span>
+    </div>
+);
+
+
 export function Player() {
   const { 
     currentTrack, 
@@ -184,7 +193,7 @@ export function Player() {
   }
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2 text-card-foreground shadow-md z-50">
+    <footer className="fixed bottom-0 left-0 right-0 bg-card/70 border-t border-border/50 px-4 py-2 text-card-foreground shadow-lg z-50 backdrop-blur-lg">
       <div className="grid grid-cols-[minmax(0,1fr)_2fr_minmax(0,1fr)] items-center w-full">
         {/* Left Section: Song Info */}
         <div className="flex items-center gap-3 overflow-hidden min-w-0">
@@ -210,9 +219,9 @@ export function Player() {
         {/* Center Section: Player Controls */}
         <div className="flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <Shuffle className="h-5 w-5 text-muted-foreground" />
-            </Button>
+             <div className="w-8">
+               <EqualizerBars isPlaying={isPlaying} />
+             </div>
             <Button variant="ghost" size="icon" onClick={playPrev}>
               <SkipBack className="h-6 w-6" />
             </Button>
@@ -226,9 +235,7 @@ export function Player() {
             <Button variant="ghost" size="icon" onClick={playNext}>
               <SkipForward className="h-6 w-6" />
             </Button>
-            <Button variant="ghost" size="icon">
-              <Repeat className="h-5 w-5 text-muted-foreground" />
-            </Button>
+             <div className="w-8" />
           </div>
           <div className="flex items-center gap-2 w-full max-w-xl">
             <span className="text-xs text-muted-foreground">{formatTime(currentTime)}</span>
