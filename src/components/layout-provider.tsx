@@ -12,6 +12,7 @@ import { PlayerProvider } from "@/context/player-context";
 import { Icons } from "./icons";
 import { useAppUpdate } from "@/hooks/use-app-update";
 import { UpdateDialog } from "./update-dialog";
+import { cn } from "@/lib/utils";
 
 const loadingMessages = [
   "Tuning the instruments...",
@@ -28,6 +29,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
@@ -40,8 +42,12 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) {
       const interval = setInterval(() => {
-        setLoadingMessageIndex((prevIndex) => (prevIndex + 1) % loadingMessages.length);
-      }, 2000);
+        setIsVisible(false); // Start fading out
+        setTimeout(() => {
+          setLoadingMessageIndex((prevIndex) => (prevIndex + 1) % loadingMessages.length);
+          setIsVisible(true); // Fade in new message
+        }, 500); // Wait for fade-out to complete
+      }, 2500); // Total time each message is visible + fades
       return () => clearInterval(interval);
     }
   }, [loading]);
@@ -55,7 +61,13 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
        <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
           <Icons.logo className="h-12 w-12 animate-pulse" />
-          <p className="text-muted-foreground transition-opacity duration-500">
+          <p 
+            key={loadingMessageIndex}
+            className={cn(
+                "text-muted-foreground transition-opacity duration-500",
+                isVisible ? "opacity-100" : "opacity-0"
+            )}
+          >
             {loadingMessages[loadingMessageIndex]}
           </p>
         </div>
