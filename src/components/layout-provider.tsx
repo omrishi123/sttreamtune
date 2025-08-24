@@ -12,7 +12,6 @@ import { PlayerProvider } from "@/context/player-context";
 import { Icons } from "./icons";
 import { useAppUpdate } from "@/hooks/use-app-update";
 import { UpdateDialog } from "./update-dialog";
-import { cn } from "@/lib/utils";
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
