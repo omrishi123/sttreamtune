@@ -13,12 +13,21 @@ import { Icons } from "./icons";
 import { useAppUpdate } from "@/hooks/use-app-update";
 import { UpdateDialog } from "./update-dialog";
 
+const loadingMessages = [
+  "Tuning the instruments...",
+  "Cueing up the first track...",
+  "Polishing the vinyl...",
+  "Building your library...",
+  "Checking the sound levels...",
+];
+
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
@@ -27,6 +36,15 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setLoadingMessageIndex((prevIndex) => (prevIndex + 1) % loadingMessages.length);
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [loading]);
 
   if (isAuthPage) {
     return <AuthLayout>{children}</AuthLayout>;
@@ -37,7 +55,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
        <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
           <Icons.logo className="h-12 w-12 animate-pulse" />
-          <p className="text-muted-foreground">Loading your experience...</p>
+          <p className="text-muted-foreground transition-opacity duration-500">
+            {loadingMessages[loadingMessageIndex]}
+          </p>
         </div>
       </div>
     );
