@@ -29,16 +29,24 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           setProgress(oldProgress => {
               if (oldProgress >= 100) {
                   clearInterval(progressInterval);
-                  setLoading(false);
+                  // Only set loading to false when progress is complete AND user is available
+                  if(user) {
+                    setLoading(false);
+                  }
                   return 100;
               }
               return oldProgress + 10;
           });
       }, 120);
+
+      // Handle the case where the user is not found but progress finishes
+      if(!user && progress >= 100) {
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user, progress]);
 
   if (isAuthPage) {
     return <AuthLayout>{children}</AuthLayout>;
@@ -61,7 +69,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                         ></div>
                     ))}
                 </div>
-                <p className="mt-6 text-sm text-white/80">Tuning your experience... {progress}%</p>
+                <p className="mt-6 text-sm text-white/80">Loading your experience... {progress}%</p>
             </div>
        </div>
     );
