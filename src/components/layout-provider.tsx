@@ -45,7 +45,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     return <AuthLayout>{children}</AuthLayout>;
   }
 
-  if (loading || progress < 100) {
+  if (loading || !user) {
      return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-background to-blue-900 text-white">
             <div className="flex flex-col items-center justify-center">
@@ -68,19 +68,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     );
   }
   
-  if (!user) {
-    // This can happen briefly between loading and user being set.
-    // Or if auth state fails to resolve to a user or guest.
-     return (
-       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <Icons.logo className="h-12 w-12 animate-pulse" />
-          <p className="text-muted-foreground">Authenticating...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <UserDataProvider>
       <PlayerProvider>
