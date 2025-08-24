@@ -235,83 +235,94 @@ export default function PlaylistPage() {
 
   return (
     <div className="space-y-8">
-       <header className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-        <Image
-          src={imgSrc || playlist.coverArt}
-          alt={playlist.name}
-          width={200}
-          height={200}
-          className="rounded-lg shadow-lg aspect-square object-cover w-[150px] h-[150px] sm:w-[175px] sm:h-[175px] md:w-[200px] md:h-[200px] flex-shrink-0"
-          priority
-          data-ai-hint={playlist['data-ai-hint']}
-          onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
-          unoptimized
-        />
-        <div className="space-y-3 min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-headline tracking-tighter line-clamp-3">
-            {playlist.name}
-          </h1>
-          {playlist.description && <p className="text-muted-foreground text-sm line-clamp-2">{playlist.description}</p>}
-          <p className="text-sm text-muted-foreground">
-            Created by{" "}
-            <span className="text-foreground font-medium">{playlist.owner}</span>
-            {" \u2022 "}
-            {tracks.length} songs, about {totalMinutes} min
-          </p>
-          <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 pt-2">
-             <Button size="lg" onClick={handlePlayPlaylist}>
-                <Play className="mr-2 h-5 w-5"/>
-                Play
-             </Button>
-             <Button size="lg" variant="outline" onClick={handleShare}>
-                <Share2 className="mr-2 h-5 w-5"/>
-                Share
-             </Button>
-             {isBroken && (
-                <Button size="lg" variant="destructive" onClick={handleRepairPlaylist} disabled={isRepairing}>
-                  <Wrench className="mr-2 h-5 w-5"/>
-                  {isRepairing ? 'Repairing...' : 'Repair'}
-                </Button>
-              )}
-             {canEdit && (
-                <AlertDialog>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="lg" variant="outline" disabled={isDeleting}>
-                        <MoreHorizontal className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete playlist</span>
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the
-                        playlist "{playlist.name}".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-          </div>
+      <div className="relative -mx-6 -mt-6 p-6 pt-16 pb-8 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+            <Image
+            src={imgSrc || FALLBACK_IMAGE_URL}
+            alt=""
+            fill
+            className="object-cover blur-3xl scale-125 opacity-50 dark:opacity-30"
+            unoptimized
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
         </div>
-      </header>
-
+        <header className="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+            <Image
+                src={imgSrc || playlist.coverArt}
+                alt={playlist.name}
+                width={200}
+                height={200}
+                className="rounded-lg shadow-2xl aspect-square object-cover w-[150px] h-[150px] sm:w-[175px] sm:h-[175px] md:w-[200px] md:h-[200px] flex-shrink-0"
+                priority
+                data-ai-hint={playlist['data-ai-hint']}
+                onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
+                unoptimized
+            />
+            <div className="space-y-3 min-w-0">
+            <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-headline tracking-tighter line-clamp-3">
+                {playlist.name}
+            </h1>
+            {playlist.description && <p className="text-muted-foreground text-sm line-clamp-2">{playlist.description}</p>}
+            <p className="text-sm text-muted-foreground">
+                Created by{" "}
+                <span className="text-foreground font-medium">{playlist.owner}</span>
+                {" \u2022 "}
+                {tracks.length} songs, about {totalMinutes} min
+            </p>
+            <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 pt-2">
+                <Button size="lg" onClick={handlePlayPlaylist}>
+                    <Play className="mr-2 h-5 w-5"/>
+                    Play
+                </Button>
+                <Button size="lg" variant="outline" onClick={handleShare}>
+                    <Share2 className="mr-2 h-5 w-5"/>
+                    Share
+                </Button>
+                {isBroken && (
+                    <Button size="lg" variant="destructive" onClick={handleRepairPlaylist} disabled={isRepairing}>
+                    <Wrench className="mr-2 h-5 w-5"/>
+                    {isRepairing ? 'Repairing...' : 'Repair'}
+                    </Button>
+                )}
+                {canEdit && (
+                    <AlertDialog>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button size="lg" variant="outline" disabled={isDeleting}>
+                            <MoreHorizontal className="h-5 w-5" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                        <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Delete playlist</span>
+                            </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the
+                            playlist "{playlist.name}".
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                    </AlertDialog>
+                )}
+            </div>
+            </div>
+        </header>
+       </div>
       <section>
         <TrackList 
           tracks={tracks} 

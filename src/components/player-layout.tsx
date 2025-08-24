@@ -57,6 +57,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserData } from "@/context/user-data-context";
 import { AddPlaylistDialog } from "./add-playlist-dialog";
 import { AppInitializer } from "./app-initializer";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PlayerLayoutProps {
   children: React.ReactNode;
@@ -103,25 +104,47 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const currentUserPlaylists = userPlaylists;
 
   if (isMobile === undefined) {
-    return (
-       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <Icons.logo className="h-12 w-12 animate-pulse" />
-          <p className="text-muted-foreground">Loading your experience...</p>
-        </div>
-      </div>
+     return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-background to-blue-900 text-white">
+            <div className="flex flex-col items-center justify-center">
+                <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
+                    <Icons.logo className="h-8 w-8" />
+                    <span className="font-headline">StreamTune</span>
+                </h1>
+                <div className="flex gap-1.5 items-end h-8">
+                    {[...Array(4)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="w-1.5 h-full bg-white/80 rounded animate-bounce"
+                            style={{ animationDelay: `${i * 150}ms` }}
+                        ></div>
+                    ))}
+                </div>
+            </div>
+       </div>
     );
   }
 
   if (!user) {
     // This case should not be hit if LayoutProvider logic is correct, but as a fallback
     return (
-       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <Icons.logo className="h-12 w-12 animate-pulse" />
-          <p className="text-muted-foreground">Authenticating...</p>
-        </div>
-      </div>
+       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-background to-blue-900 text-white">
+            <div className="flex flex-col items-center justify-center">
+                <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
+                    <Icons.logo className="h-8 w-8" />
+                    <span className="font-headline">StreamTune</span>
+                </h1>
+                <div className="flex gap-1.5 items-end h-8">
+                    {[...Array(4)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="w-1.5 h-full bg-white/80 rounded animate-bounce"
+                            style={{ animationDelay: `${i * 150}ms` }}
+                        ></div>
+                    ))}
+                </div>
+            </div>
+       </div>
     );
   }
   
@@ -315,7 +338,19 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </header>
-            <main className="p-6 pt-0 md:pt-6">{children}</main>
+            <main className="p-6 pt-0 md:pt-6">
+               <AnimatePresence mode="wait">
+                  <motion.div
+                    key={pathname}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
+            </main>
           </SidebarInset>
         </div>
         <Player />

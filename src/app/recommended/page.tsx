@@ -10,6 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getCachedRecommendations, getSearchHistory } from '@/lib/recommendations';
+import { Card, CardContent } from '@/components/ui/card';
+import { Sparkles } from 'lucide-react';
 
 export default function RecommendedPage() {
     const [recommendedTracks, setRecommendedTracks] = useState<GenerateRecommendationsOutput>([]);
@@ -40,7 +42,7 @@ export default function RecommendedPage() {
                     Recommended For You
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Based on your recent searches.
+                    Based on your recent searches, here are some tracks you might like.
                 </p>
             </div>
 
@@ -50,17 +52,37 @@ export default function RecommendedPage() {
                         {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
                     </div>
                 ) : !hasSearchHistory ? (
-                    <div className="text-center py-16">
-                        <h2 className="text-2xl font-semibold">Nothing to recommend yet!</h2>
-                        <p className="text-muted-foreground mt-2">
-                            Search for some songs to get personalized recommendations.
-                        </p>
-                        <Button asChild className="mt-4">
-                            <Link href="/search">Go to Search</Link>
-                        </Button>
-                    </div>
-                ) : (
+                     <Card className="flex flex-col items-center justify-center p-12 text-center bg-muted/50 col-span-full">
+                        <CardContent className="p-0 space-y-4">
+                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                                <Sparkles className="w-8 h-8 text-primary" />
+                            </div>
+                            <h3 className="font-semibold text-xl">Nothing to recommend yet!</h3>
+                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                                We need to know what you like first. Search for a few songs to get personalized recommendations.
+                            </p>
+                            <Button asChild className="mt-6">
+                                <Link href="/search">Go to Search</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : recommendedTracks.length > 0 ? (
                     <TrackList tracks={recommendedTracks} />
+                ) : (
+                     <Card className="flex flex-col items-center justify-center p-12 text-center bg-muted/50 col-span-full">
+                        <CardContent className="p-0 space-y-4">
+                             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                                <Sparkles className="w-8 h-8 text-primary" />
+                            </div>
+                            <h3 className="font-semibold text-xl">Could not generate recommendations</h3>
+                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                                The AI might be busy. Please try searching for a few more songs and check back later.
+                            </p>
+                             <Button asChild className="mt-6">
+                                <Link href="/search">Go to Search</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
                 )}
             </section>
         </div>
