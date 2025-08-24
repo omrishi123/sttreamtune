@@ -57,7 +57,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserData } from "@/context/user-data-context";
 import { AddPlaylistDialog } from "./add-playlist-dialog";
 import { AppInitializer } from "./app-initializer";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface PlayerLayoutProps {
   children: React.ReactNode;
@@ -339,17 +338,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                 </DropdownMenu>
             </header>
             <main className="p-6 pt-0 md:pt-6">
-               <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pathname}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {children}
-                  </motion.div>
-                </AnimatePresence>
+              {children}
             </main>
           </SidebarInset>
         </div>
