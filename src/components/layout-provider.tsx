@@ -28,9 +28,9 @@ interface Particle {
 }
 
 function AnimatedLoadingScreen() {
-    const [progress, setProgress] = useState(0);
     const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
     const [particles, setParticles] = useState<Particle[]>([]);
+    const [progress, setProgress] = useState(0);
 
     // Particle effect logic
     useEffect(() => {
@@ -47,7 +47,6 @@ function AnimatedLoadingScreen() {
             };
             setParticles(prev => [...prev, newParticle]);
 
-            // Remove particle after animation ends to prevent DOM overload
             setTimeout(() => {
                 setParticles(prev => prev.filter(p => p.id !== newParticle.id));
             }, 7000);
@@ -61,16 +60,16 @@ function AnimatedLoadingScreen() {
 
     // Progress and subtitle logic
     useEffect(() => {
-        const progressInterval = setInterval(() => {
+        const progressTimer = setInterval(() => {
             setProgress(oldProgress => {
                 if (oldProgress >= 100) {
-                    clearInterval(progressInterval);
+                    clearInterval(progressTimer);
                     return 100;
                 }
                 return oldProgress + 5;
             });
         }, 150);
-        
+
         const subtitleInterval = setInterval(() => {
             setSubtitle(prev => {
                 const currentIndex = loadingSubtitles.indexOf(prev);
@@ -79,13 +78,13 @@ function AnimatedLoadingScreen() {
         }, 1200);
 
         return () => {
-            clearInterval(progressInterval);
+            clearInterval(progressTimer);
             clearInterval(subtitleInterval);
         };
     }, []);
 
     return (
-         <div className="fixed inset-0 overflow-hidden bg-[#0b1020] text-foreground">
+         <div className="fixed inset-0 z-[200] overflow-hidden bg-[#0b1020] text-foreground">
             {/* Background Layers */}
             <div className="fixed inset-0 bg-gradient-to-br from-[#1e1e2f] via-[#3b0066] to-[#001f54] bg-[size:300%_300%] animate-gradient-move filter saturate-110"></div>
             <div 
@@ -96,7 +95,7 @@ function AnimatedLoadingScreen() {
              {/* Particle Container */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 {particles.map(p => (
-                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float" style={p.style}>
+                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float text-white" style={p.style}>
                         {p.char}
                     </div>
                 ))}
@@ -106,7 +105,7 @@ function AnimatedLoadingScreen() {
             <div className="fixed inset-0 grid place-items-center p-6">
                 <div className="w-full max-w-[520px] rounded-3xl p-7 text-center shadow-[0_30px_80px_rgba(0,0,0,.35),inset_0_0_0_1px_rgba(255,255,255,.08)] bg-white/5 backdrop-blur-lg">
                     {/* Logo */}
-                    <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse-logo text-shadow-[0_4px_30px_rgba(167,139,250,.45)]">
+                    <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse text-shadow-[0_4px_30px_rgba(167,139,250,.45)] text-white">
                         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,_#7cf6ff,_transparent_55%),linear-gradient(135deg,_rgba(124,246,255,.55),_rgba(167,139,250,.5))] shadow-[0_10px_30px_rgba(124,246,255,.35),inset_0_0_18px_rgba(255,255,255,.25)]">
                             <Icons.logo className="h-6 w-6 text-white"/>
                         </div>
@@ -144,38 +143,39 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
       setUser(user);
-      // Let the loading animation run for a minimum duration for effect
-      setTimeout(() => {
-         // We consider loading complete once we have a user object
-         if(user) {
-            setLoading(false);
-         }
-      }, 2500); // Minimum load time
     });
 
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 3000); 
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
   if (isAuthPage) {
     return <AuthLayout>{children}</AuthLayout>;
-  }
-  
-  if (loading || !user) {
-    return <AnimatedLoadingScreen />;
   }
   
   return (
     <UserDataProvider>
       <PlayerProvider>
-        <PlayerLayout user={user}>
-          {children}
-          <UpdateDialog 
-            isOpen={showUpdateDialog} 
-            updateUrl={updateUrl} 
-            latestVersion={latestVersion}
-            updateNotes={updateNotes}
-          />
-        </PlayerLayout>
+        {loading && <AnimatedLoadingScreen />}
+        <div className={cn("transition-opacity duration-500", loading ? "opacity-0" : "opacity-100")}>
+          <PlayerLayout user={user!}>
+            {children}
+            <UpdateDialog 
+              isOpen={showUpdateDialog} 
+              updateUrl={updateUrl} 
+              latestVersion={latestVersion}
+              updateNotes={updateNotes}
+            />
+          </PlayerLayout>
+        </div>
       </PlayerProvider>
     </UserDataProvider>
   );
