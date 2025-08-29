@@ -105,6 +105,12 @@ export default {
             '0%, 100%': { height: '5px' },
             '50%': { height: '25px' }
         },
+        'float': {
+          '0%': { transform: 'translateY(20px) translateX(0) scale(.9) rotate(0deg)', opacity: '0' },
+          '10%': { opacity: '.85' },
+          '80%': { opacity: '.85' },
+          '100%': { transform: 'translateY(-120vh) translateX(40px) scale(1.1) rotate(12deg)', opacity: '0' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -113,6 +119,7 @@ export default {
         'drift': 'drift 22s linear infinite',
         'pulse-logo': 'pulse-logo 2.4s ease-in-out infinite',
         'bounce-loader': 'bounce-loader 1s infinite ease-in-out',
+        'float': 'float 6.5s ease-in infinite',
       },
     },
   },

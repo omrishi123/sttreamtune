@@ -21,10 +21,45 @@ const loadingSubtitles = [
     "Curating the perfect flow…"
 ];
 
+interface Particle {
+  id: number;
+  char: string;
+  style: React.CSSProperties;
+}
+
 function AnimatedLoadingScreen() {
     const [progress, setProgress] = useState(0);
     const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
+    const [particles, setParticles] = useState<Particle[]>([]);
 
+    // Particle effect logic
+    useEffect(() => {
+        const notes = ["♪", "♫", "♬", "𝄞"];
+        const spawnParticle = () => {
+            const newParticle: Particle = {
+                id: Date.now() + Math.random(),
+                char: notes[Math.floor(Math.random() * notes.length)],
+                style: {
+                    left: `${Math.random() * 100}vw`,
+                    animationDelay: `${Math.random() * 3}s`,
+                    fontSize: `${14 + Math.random() * 20}px`,
+                },
+            };
+            setParticles(prev => [...prev, newParticle]);
+
+            // Remove particle after animation ends to prevent DOM overload
+            setTimeout(() => {
+                setParticles(prev => prev.filter(p => p.id !== newParticle.id));
+            }, 7000);
+        };
+        
+        const particleInterval = setInterval(spawnParticle, 600);
+        
+        return () => clearInterval(particleInterval);
+    }, []);
+
+
+    // Progress and subtitle logic
     useEffect(() => {
         const progressInterval = setInterval(() => {
             setProgress(oldProgress => {
@@ -50,7 +85,7 @@ function AnimatedLoadingScreen() {
     }, []);
 
     return (
-         <div className="fixed inset-0 overflow-hidden bg-[#0b1020] text-white">
+         <div className="fixed inset-0 overflow-hidden bg-[#0b1020] text-foreground">
             {/* Background Layers */}
             <div className="fixed inset-0 bg-gradient-to-br from-[#1e1e2f] via-[#3b0066] to-[#001f54] bg-[size:300%_300%] animate-gradient-move filter saturate-110"></div>
             <div 
@@ -58,31 +93,40 @@ function AnimatedLoadingScreen() {
                 style={{backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.05'/></svg>")`}}
             ></div>
             
+             {/* Particle Container */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                {particles.map(p => (
+                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float" style={p.style}>
+                        {p.char}
+                    </div>
+                ))}
+            </div>
+
             {/* Center Content */}
             <div className="fixed inset-0 grid place-items-center p-6">
                 <div className="w-full max-w-[520px] rounded-3xl p-7 text-center shadow-[0_30px_80px_rgba(0,0,0,.35),inset_0_0_0_1px_rgba(255,255,255,.08)] bg-white/5 backdrop-blur-lg">
                     {/* Logo */}
                     <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse-logo text-shadow-[0_4px_30px_rgba(167,139,250,.45)]">
                         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,_#7cf6ff,_transparent_55%),linear-gradient(135deg,_rgba(124,246,255,.55),_rgba(167,139,250,.5))] shadow-[0_10px_30px_rgba(124,246,255,.35),inset_0_0_18px_rgba(255,255,255,.25)]">
-                            <Icons.logo className="h-6 w-6"/>
+                            <Icons.logo className="h-6 w-6 text-white"/>
                         </div>
-                        <span>StreamTune</span>
+                        <span className="text-white">StreamTune</span>
                     </div>
 
                     {/* Equalizer */}
                      <div className="flex justify-center gap-2 my-5 h-8 items-end">
-                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.4s]"></span>
-                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.3s]"></span>
-                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.2s]"></span>
-                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.1s]"></span>
-                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader"></span>
+                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.4s]"></span>
+                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.3s]"></span>
+                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.2s]"></span>
+                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.1s]"></span>
+                        <span className="w-1.5 rounded bg-primary animate-bounce-loader"></span>
                     </div>
 
                     {/* Copy + Progress */}
-                    <div className="text-base opacity-85">{subtitle}</div>
-                    <div className="mt-1.5 font-bold tracking-wider">{progress}%</div>
+                    <div className="text-base opacity-85 text-white/90">{subtitle}</div>
+                    <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
 
-                    <div className="mt-4 text-xs opacity-65">Pro tip: long-press to add songs to Quick Queue</div>
+                    <div className="mt-4 text-xs opacity-65 text-white/70">Pro tip: long-press to add songs to Quick Queue</div>
                 </div>
             </div>
         </div>
@@ -102,7 +146,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       // Let the loading animation run for a minimum duration for effect
       setTimeout(() => {
-         if (user) {
+         // We consider loading complete once we have a user object
+         if(user) {
             setLoading(false);
          }
       }, 2500); // Minimum load time
