@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
+import { AnimatePresence, motion } from "framer-motion";
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 
@@ -333,3 +334,4 @@ export default function PlaylistPage() {
     </div>
   );
 }
+

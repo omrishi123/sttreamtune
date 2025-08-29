@@ -12,6 +12,83 @@ import { PlayerProvider } from "@/context/player-context";
 import { Icons } from "./icons";
 import { useAppUpdate } from "@/hooks/use-app-update";
 import { UpdateDialog } from "./update-dialog";
+import { cn } from "@/lib/utils";
+
+const loadingSubtitles = [
+    "Tuning your vibe…",
+    "Finding your rhythm…",
+    "Warming up the equalizer…",
+    "Curating the perfect flow…"
+];
+
+function AnimatedLoadingScreen() {
+    const [progress, setProgress] = useState(0);
+    const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
+
+    useEffect(() => {
+        const progressInterval = setInterval(() => {
+            setProgress(oldProgress => {
+                if (oldProgress >= 100) {
+                    clearInterval(progressInterval);
+                    return 100;
+                }
+                return oldProgress + 5;
+            });
+        }, 150);
+        
+        const subtitleInterval = setInterval(() => {
+            setSubtitle(prev => {
+                const currentIndex = loadingSubtitles.indexOf(prev);
+                return loadingSubtitles[(currentIndex + 1) % loadingSubtitles.length];
+            });
+        }, 1200);
+
+        return () => {
+            clearInterval(progressInterval);
+            clearInterval(subtitleInterval);
+        };
+    }, []);
+
+    return (
+         <div className="fixed inset-0 overflow-hidden bg-[#0b1020] text-white">
+            {/* Background Layers */}
+            <div className="fixed inset-0 bg-gradient-to-br from-[#1e1e2f] via-[#3b0066] to-[#001f54] bg-[size:300%_300%] animate-gradient-move filter saturate-110"></div>
+            <div 
+                className="fixed inset-[-100px] animate-drift mix-blend-soft-light opacity-45 pointer-events-none" 
+                style={{backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.05'/></svg>")`}}
+            ></div>
+            
+            {/* Center Content */}
+            <div className="fixed inset-0 grid place-items-center p-6">
+                <div className="w-full max-w-[520px] rounded-3xl p-7 text-center shadow-[0_30px_80px_rgba(0,0,0,.35),inset_0_0_0_1px_rgba(255,255,255,.08)] bg-white/5 backdrop-blur-lg">
+                    {/* Logo */}
+                    <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse-logo text-shadow-[0_4px_30px_rgba(167,139,250,.45)]">
+                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,_#7cf6ff,_transparent_55%),linear-gradient(135deg,_rgba(124,246,255,.55),_rgba(167,139,250,.5))] shadow-[0_10px_30px_rgba(124,246,255,.35),inset_0_0_18px_rgba(255,255,255,.25)]">
+                            <Icons.logo className="h-6 w-6"/>
+                        </div>
+                        <span>StreamTune</span>
+                    </div>
+
+                    {/* Equalizer */}
+                     <div className="flex justify-center gap-2 my-5 h-8 items-end">
+                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.4s]"></span>
+                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.3s]"></span>
+                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.2s]"></span>
+                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader [animation-delay:-0.1s]"></span>
+                        <span className="w-1.5 rounded bg-[#00f7ff] animate-bounce-loader"></span>
+                    </div>
+
+                    {/* Copy + Progress */}
+                    <div className="text-base opacity-85">{subtitle}</div>
+                    <div className="mt-1.5 font-bold tracking-wider">{progress}%</div>
+
+                    <div className="mt-4 text-xs opacity-65">Pro tip: long-press to add songs to Quick Queue</div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,60 +96,27 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
       setUser(user);
-      // Simulate loading progress even after auth is resolved to make it look smooth
-      const progressInterval = setInterval(() => {
-          setProgress(oldProgress => {
-              if (oldProgress >= 100) {
-                  clearInterval(progressInterval);
-                  // Only set loading to false when progress is complete AND user is available
-                  if(user) {
-                    setLoading(false);
-                  }
-                  return 100;
-              }
-              return oldProgress + 10;
-          });
-      }, 120);
-
-      // Handle the case where the user is not found but progress finishes
-      if(!user && progress >= 100) {
-        setLoading(false);
-      }
+      // Let the loading animation run for a minimum duration for effect
+      setTimeout(() => {
+         if (user) {
+            setLoading(false);
+         }
+      }, 2500); // Minimum load time
     });
 
     return () => unsubscribe();
-  }, [user, progress]);
+  }, []);
 
   if (isAuthPage) {
     return <AuthLayout>{children}</AuthLayout>;
   }
-
+  
   if (loading || !user) {
-     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-background to-blue-900 text-white">
-            <div className="flex flex-col items-center justify-center">
-                <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
-                    <Icons.logo className="h-8 w-8" />
-                    <span className="font-headline">StreamTune</span>
-                </h1>
-                <div className="flex gap-1.5 items-end h-8">
-                    {[...Array(4)].map((_, i) => (
-                        <div
-                            key={i}
-                            className="w-1.5 h-full bg-white/80 rounded animate-bounce"
-                            style={{ animationDelay: `${i * 150}ms` }}
-                        ></div>
-                    ))}
-                </div>
-                <p className="mt-6 text-sm text-white/80">Loading your experience... {progress}%</p>
-            </div>
-       </div>
-    );
+    return <AnimatedLoadingScreen />;
   }
   
   return (

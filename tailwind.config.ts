@@ -88,21 +88,31 @@ export default {
             height: '0',
           },
         },
-        'bounce': {
-          '0%, 100%': { 
-            transform: 'scaleY(0.3)',
-            opacity: '0.7',
-          },
-          '50%': { 
-            transform: 'scaleY(1)',
-            opacity: '1',
-          },
+        'gradient-move': {
+            '0%': { backgroundPosition: '0% 50%' },
+            '50%': { backgroundPosition: '100% 50%' },
+            '100%': { backgroundPosition: '0% 50%' },
+        },
+        'drift': {
+            from: { transform: 'translate3d(0,0,0)' },
+            to: { transform: 'translate3d(-140px,-140px,0)' }
+        },
+        'pulse-logo': {
+            '0%, 100%': { transform: 'scale(1)' },
+            '50%': { transform: 'scale(1.035)' }
+        },
+        'bounce-loader': {
+            '0%, 100%': { height: '5px' },
+            '50%': { height: '25px' }
         },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'bounce': 'bounce 1.2s infinite ease-in-out',
+        'gradient-move': 'gradient-move 14s ease-in-out infinite',
+        'drift': 'drift 22s linear infinite',
+        'pulse-logo': 'pulse-logo 2.4s ease-in-out infinite',
+        'bounce-loader': 'bounce-loader 1s infinite ease-in-out',
       },
     },
   },
