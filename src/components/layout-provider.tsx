@@ -52,7 +52,7 @@ function AnimatedLoadingScreen() {
             }, 7000);
         };
         
-        const particleInterval = setInterval(spawnParticle, 600);
+        const particleInterval = setInterval(spawnParticle, 150);
         
         return () => clearInterval(particleInterval);
     }, []);
@@ -105,11 +105,11 @@ function AnimatedLoadingScreen() {
             <div className="fixed inset-0 grid place-items-center p-6">
                 <div className="w-full max-w-[520px] rounded-3xl p-7 text-center shadow-[0_30px_80px_rgba(0,0,0,.35),inset_0_0_0_1px_rgba(255,255,255,.08)] bg-white/5 backdrop-blur-lg">
                     {/* Logo */}
-                    <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse text-shadow-[0_4px_30px_rgba(167,139,250,.45)] text-white">
+                    <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse text-shadow-[0_4px_30px_rgba(167,139,250,.45)] text-foreground">
                         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,_#7cf6ff,_transparent_55%),linear-gradient(135deg,_rgba(124,246,255,.55),_rgba(167,139,250,.5))] shadow-[0_10px_30px_rgba(124,246,255,.35),inset_0_0_18px_rgba(255,255,255,.25)]">
                             <Icons.logo className="h-6 w-6 text-white"/>
                         </div>
-                        <span className="text-white">StreamTune</span>
+                        <span className="text-foreground">StreamTune</span>
                     </div>
 
                     {/* Equalizer */}
@@ -122,10 +122,10 @@ function AnimatedLoadingScreen() {
                     </div>
 
                     {/* Copy + Progress */}
-                    <div className="text-base opacity-85 text-white/90">{subtitle}</div>
-                    <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
+                    <div className="text-base opacity-85 text-foreground/90">{subtitle}</div>
+                    <div className="mt-1.5 font-bold tracking-wider text-foreground">{progress}%</div>
 
-                    <div className="mt-4 text-xs opacity-65 text-white/70">Pro tip: long-press to add songs to Quick Queue</div>
+                    <div className="mt-4 text-xs opacity-65 text-foreground/70">Pro tip: long-press to add songs to Quick Queue</div>
                 </div>
             </div>
         </div>
@@ -161,21 +161,34 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     return <AuthLayout>{children}</AuthLayout>;
   }
   
+  if (loading) {
+    return <AnimatedLoadingScreen />;
+  }
+
+  if (!user) {
+    // Fallback for the brief moment user might be null after loading
+    return (
+        <div className="flex h-screen items-center justify-center bg-background">
+          <div className="flex flex-col items-center space-y-4">
+            <Icons.logo className="h-12 w-12 animate-pulse" />
+            <p className="text-muted-foreground">Authenticating...</p>
+          </div>
+        </div>
+    );
+  }
+
   return (
     <UserDataProvider>
       <PlayerProvider>
-        {loading && <AnimatedLoadingScreen />}
-        <div className={cn("transition-opacity duration-500", loading ? "opacity-0" : "opacity-100")}>
-          <PlayerLayout user={user!}>
-            {children}
-            <UpdateDialog 
-              isOpen={showUpdateDialog} 
-              updateUrl={updateUrl} 
-              latestVersion={latestVersion}
-              updateNotes={updateNotes}
-            />
-          </PlayerLayout>
-        </div>
+        <PlayerLayout user={user!}>
+          {children}
+          <UpdateDialog 
+            isOpen={showUpdateDialog} 
+            updateUrl={updateUrl} 
+            latestVersion={latestVersion}
+            updateNotes={updateNotes}
+          />
+        </PlayerLayout>
       </PlayerProvider>
     </UserDataProvider>
   );

@@ -119,7 +119,7 @@ export default {
         'drift': 'drift 22s linear infinite',
         'pulse-logo': 'pulse-logo 2.4s ease-in-out infinite',
         'bounce-loader': 'bounce-loader 1s infinite ease-in-out',
-        'float': 'float 6.5s ease-in infinite',
+        'float': 'float 4s ease-in infinite',
       },
     },
   },
