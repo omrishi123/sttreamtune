@@ -7,6 +7,7 @@ const SEARCH_HISTORY_KEY = 'searchHistory';
 const RECOMMENDATIONS_CACHE_KEY = 'recommendedTracksCache';
 const RECOMMENDED_PLAYLISTS_CACHE_PREFIX = 'recommended-playlists-';
 const PLAYLIST_TRACKS_CACHE_PREFIX = 'playlist-tracks-';
+const SINGLE_PLAYLIST_CACHE_PREFIX = 'single-playlist-'; // New cache for individual YT playlists
 
 interface RecommendationCache {
     history: string[];
@@ -21,6 +22,12 @@ interface RecommendedPlaylistCache {
 
 interface PlaylistTracksCache {
     tracks: Track[];
+    timestamp: number;
+}
+
+// A simple cache for individual playlist objects
+interface SinglePlaylistCache {
+    playlist: Playlist;
     timestamp: number;
 }
 
@@ -121,6 +128,7 @@ export const cacheRecommendedPlaylists = (genre: string, playlists: Playlist[]) 
     }
 };
 
+
 // ====== INDIVIDUAL PLAYLIST TRACKS CACHE ======
 export const getCachedPlaylistTracks = (playlistId: string): Track[] | null => {
     if (typeof window === 'undefined') return null;
@@ -150,16 +158,51 @@ export const cachePlaylistTracks = (playlistId: string, tracks: Track[]) => {
     }
 };
 
+// ====== INDIVIDUAL YOUTUBE PLAYLIST METADATA CACHE ======
+export const getCachedSinglePlaylist = (playlistId: string): Playlist | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const cached = localStorage.getItem(`${SINGLE_PLAYLIST_CACHE_PREFIX}${playlistId}`);
+        if (cached) {
+            const data: SinglePlaylistCache = JSON.parse(cached);
+            return data.playlist;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Failed to get cached playlist metadata for ${playlistId}:`, error);
+        return null;
+    }
+};
+
+export const cacheSinglePlaylist = (playlist: Playlist) => {
+    if (typeof window === 'undefined') return;
+    try {
+        const data: SinglePlaylistCache = {
+            playlist,
+            timestamp: Date.now(),
+        };
+        localStorage.setItem(`${SINGLE_PLAYLIST_CACHE_PREFIX}${playlist.id}`, JSON.stringify(data));
+    } catch (error) {
+        console.error(`Failed to cache playlist metadata for ${playlist.id}:`, error);
+    }
+};
+
 
 // ====== CACHE MANAGEMENT ======
 export const clearAllRecommendationCaches = () => {
     if (typeof window === 'undefined') return;
     try {
         Object.keys(localStorage).forEach(key => {
-            if (key.startsWith(RECOMMENDED_PLAYLISTS_CACHE_PREFIX) || key.startsWith(PLAYLIST_TRACKS_CACHE_PREFIX)) {
+            if (
+                key.startsWith(RECOMMENDED_PLAYLISTS_CACHE_PREFIX) || 
+                key.startsWith(PLAYLIST_TRACKS_CACHE_PREFIX) ||
+                key.startsWith(SINGLE_PLAYLIST_CACHE_PREFIX)
+            ) {
                 localStorage.removeItem(key);
             }
         });
+        // Also clear song recommendations if they exist
+        localStorage.removeItem(RECOMMENDATIONS_CACHE_KEY);
     } catch (error) {
         console.error("Failed to clear recommendation caches:", error);
     }
