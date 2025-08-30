@@ -1,10 +1,12 @@
 
 import { generateRecommendations, GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
-import type { Track } from './types';
+import type { Track, Playlist } from './types';
 
 const MAX_SEARCH_HISTORY = 5;
 const SEARCH_HISTORY_KEY = 'searchHistory';
 const RECOMMENDATIONS_CACHE_KEY = 'recommendedTracksCache';
+const RECOMMENDED_PLAYLISTS_CACHE_PREFIX = 'recommended-playlists-';
+const PLAYLIST_TRACKS_CACHE_PREFIX = 'playlist-tracks-';
 
 interface RecommendationCache {
     history: string[];
@@ -12,7 +14,18 @@ interface RecommendationCache {
     timestamp: number;
 }
 
-// Client-side function to get search history
+interface RecommendedPlaylistCache {
+    playlists: Playlist[];
+    timestamp: number;
+}
+
+interface PlaylistTracksCache {
+    tracks: Track[];
+    timestamp: number;
+}
+
+
+// ====== SEARCH HISTORY ======
 export const getSearchHistory = (): string[] => {
     if (typeof window === 'undefined') return [];
     try {
@@ -24,12 +37,10 @@ export const getSearchHistory = (): string[] => {
     }
 }
 
-// Client-side function to update search history
 export const updateSearchHistory = (query: string) => {
     if (typeof window === 'undefined') return;
     try {
         const history = getSearchHistory();
-        // Add new query to the front, remove duplicates, and slice to max length
         const updatedHistory = [query, ...history.filter((item: string) => item !== query)].slice(0, MAX_SEARCH_HISTORY);
         localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updatedHistory));
     } catch (error) {
@@ -37,14 +48,14 @@ export const updateSearchHistory = (query: string) => {
     }
 }
 
-// Client-side function to clear recommendations from cache
-export const clearCachedRecommendations = () => {
+export const clearSearchHistoryCache = () => {
     if (typeof window === 'undefined') return;
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
     localStorage.removeItem(RECOMMENDATIONS_CACHE_KEY);
 }
 
-// This function can be called from client components ('use client')
-// It handles fetching and caching logic.
+
+// ====== SONG RECOMMENDATIONS ======
 export const getCachedRecommendations = async (): Promise<{ tracks: GenerateRecommendationsOutput, fromCache: boolean }> => {
     if (typeof window === 'undefined') return { tracks: [], fromCache: false };
 
@@ -57,7 +68,6 @@ export const getCachedRecommendations = async (): Promise<{ tracks: GenerateReco
         const cachedData = localStorage.getItem(RECOMMENDATIONS_CACHE_KEY);
         if (cachedData) {
             const cache: RecommendationCache = JSON.parse(cachedData);
-            // Check if history matches. JSON.stringify is a simple way to compare arrays of strings.
             if (JSON.stringify(cache.history) === JSON.stringify(currentHistory)) {
                 return { tracks: cache.tracks, fromCache: true };
             }
@@ -66,11 +76,8 @@ export const getCachedRecommendations = async (): Promise<{ tracks: GenerateReco
         console.error("Failed to read recommendation cache:", error);
     }
     
-    // If no valid cache, fetch new recommendations
     try {
         const results = await generateRecommendations({ history: currentHistory });
-        
-        // Save new recommendations to cache
         const newCache: RecommendationCache = {
             history: currentHistory,
             tracks: results,
@@ -81,7 +88,79 @@ export const getCachedRecommendations = async (): Promise<{ tracks: GenerateReco
         return { tracks: results, fromCache: false };
     } catch (error) {
          console.error('Failed to fetch recommendations:', error);
-         // Don't toast from here as this is a library function, let the caller decide.
          return { tracks: [], fromCache: false };
+    }
+};
+
+// ====== PERSONALIZED PLAYLIST RECOMMENDATIONS ======
+export const getCachedRecommendedPlaylists = (genre: string): Playlist[] | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const cached = localStorage.getItem(`${RECOMMENDED_PLAYLISTS_CACHE_PREFIX}${genre}`);
+        if (cached) {
+            const data: RecommendedPlaylistCache = JSON.parse(cached);
+            return data.playlists;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Failed to get cached playlists for ${genre}:`, error);
+        return null;
+    }
+};
+
+export const cacheRecommendedPlaylists = (genre: string, playlists: Playlist[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+        const data: RecommendedPlaylistCache = {
+            playlists,
+            timestamp: Date.now(),
+        };
+        localStorage.setItem(`${RECOMMENDED_PLAYLISTS_CACHE_PREFIX}${genre}`, JSON.stringify(data));
+    } catch (error) {
+        console.error(`Failed to cache playlists for ${genre}:`, error);
+    }
+};
+
+// ====== INDIVIDUAL PLAYLIST TRACKS CACHE ======
+export const getCachedPlaylistTracks = (playlistId: string): Track[] | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const cached = localStorage.getItem(`${PLAYLIST_TRACKS_CACHE_PREFIX}${playlistId}`);
+        if (cached) {
+            const data: PlaylistTracksCache = JSON.parse(cached);
+            return data.tracks;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Failed to get cached tracks for playlist ${playlistId}:`, error);
+        return null;
+    }
+};
+
+export const cachePlaylistTracks = (playlistId: string, tracks: Track[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+        const data: PlaylistTracksCache = {
+            tracks,
+            timestamp: Date.now(),
+        };
+        localStorage.setItem(`${PLAYLIST_TRACKS_CACHE_PREFIX}${playlistId}`, JSON.stringify(data));
+    } catch (error) {
+        console.error(`Failed to cache tracks for playlist ${playlistId}:`, error);
+    }
+};
+
+
+// ====== CACHE MANAGEMENT ======
+export const clearAllRecommendationCaches = () => {
+    if (typeof window === 'undefined') return;
+    try {
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith(RECOMMENDED_PLAYLISTS_CACHE_PREFIX) || key.startsWith(PLAYLIST_TRACKS_CACHE_PREFIX)) {
+                localStorage.removeItem(key);
+            }
+        });
+    } catch (error) {
+        console.error("Failed to clear recommendation caches:", error);
     }
 };

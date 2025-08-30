@@ -9,6 +9,7 @@ import { PlaylistCard } from '@/components/playlist-card';
 import type { Playlist } from '@/lib/types';
 import { getYoutubePlaylists } from '@/ai/flows/get-youtube-playlists-flow';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getCachedRecommendedPlaylists, cacheRecommendedPlaylists } from '@/lib/recommendations';
 
 interface PlaylistSectionProps {
   title: string;
@@ -31,13 +32,19 @@ export const PlaylistSection: React.FC<PlaylistSectionProps> = ({
   useEffect(() => {
     if (isPersonalized) {
       const fetchPlaylists = async () => {
+        setIsLoading(true);
         try {
-          setIsLoading(true);
-          const results = await getYoutubePlaylists({ query: `${title} music playlist` });
-          setPlaylists(results);
+          const cachedPlaylists = getCachedRecommendedPlaylists(title);
+          if (cachedPlaylists) {
+            setPlaylists(cachedPlaylists);
+          } else {
+            const results = await getYoutubePlaylists({ query: `${title} music playlist` });
+            setPlaylists(results);
+            cacheRecommendedPlaylists(title, results);
+          }
         } catch (error) {
           console.error(`Failed to fetch playlists for ${title}:`, error);
-          setPlaylists([]); // Set to empty array on error
+          setPlaylists([]);
         } finally {
           setIsLoading(false);
         }
@@ -47,7 +54,7 @@ export const PlaylistSection: React.FC<PlaylistSectionProps> = ({
   }, [isPersonalized, title]);
 
   if (!isPersonalized && (!playlists || playlists.length === 0)) {
-    return null; // Don't render section if there are no initial playlists and it's not personalized
+    return null;
   }
 
   return (

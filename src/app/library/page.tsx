@@ -14,13 +14,14 @@ import { useUserData } from "@/context/user-data-context";
 import { PlaylistCard } from "@/components/playlist-card";
 import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Sparkles, Tv } from "lucide-react";
+import { Plus, Upload, Sparkles, Tv, Settings } from "lucide-react";
 import { Playlist, User, Channel } from "@/lib/types";
 import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
 import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
 import { ImportChannelDialog } from "@/components/import-channel-dialog";
 import { onAuthChange } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
+import { SettingsDialog } from '@/components/settings-dialog';
 
 const PlaylistGrid = ({ playlists, title, isGuestPrivateSection = false }: { playlists: Playlist[], title?: string, isGuestPrivateSection?: boolean }) => {
     if (playlists.length === 0) {
@@ -239,6 +240,11 @@ export default function LibraryPage() {
                 <span className="hidden sm:inline">New</span>
               </Button>
           </AddPlaylistDialog>
+           <SettingsDialog>
+                <Button variant="outline" size="sm" className="p-2">
+                    <Settings className="h-4 w-4" />
+                </Button>
+            </SettingsDialog>
         </div>
       </div>
       

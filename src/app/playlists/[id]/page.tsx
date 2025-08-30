@@ -3,7 +3,7 @@
 "use client";
 
 import Image from "next/image";
-import { getTracksForPlaylist, getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
+import { getTracksForPlaylist as fetchTracksForPlaylist, getYoutubePlaylistDetails } from "@/ai/flows/get-youtube-playlists-flow";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
-import { AnimatePresence, motion } from "framer-motion";
+import { getCachedPlaylistTracks, cachePlaylistTracks } from "@/lib/recommendations";
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 
@@ -41,7 +41,7 @@ export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { getPlaylistById, getTrackById, addTracksToCache, deletePlaylist, addFetchedPlaylistToCache, updateChannel } = useUserData();
+  const { getPlaylistById, addTracksToCache, deletePlaylist, addFetchedPlaylistToCache, updateChannel } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
@@ -65,29 +65,33 @@ export default function PlaylistPage() {
     let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
     let fetchedTracks: Track[] = [];
 
-    // If the playlist is already found (from cache, local storage, or firestore)...
-    if (foundPlaylist) {
-        if (foundPlaylist.public && foundPlaylist.tracks && !foundPlaylist.isChannelPlaylist) { // Public playlist from firestore
+    if (foundPlaylist) { // Playlist exists in user data or cache
+        if (foundPlaylist.public && foundPlaylist.tracks) { // Public playlist from firestore
             fetchedTracks = foundPlaylist.tracks;
             addTracksToCache(fetchedTracks);
-        } else if (foundPlaylist.isChannelPlaylist) {
-            fetchedTracks = foundPlaylist.tracks || []; // Tracks are embedded for channel playlists
+        } else if (foundPlaylist.isChannelPlaylist) { // Channel-based playlist
+             fetchedTracks = foundPlaylist.tracks || [];
+        } else { // It's a personalized YT playlist or a local playlist
+            let cachedTracks = getCachedPlaylistTracks(id);
+            if (cachedTracks) {
+                fetchedTracks = cachedTracks;
+            } else {
+                fetchedTracks = await fetchTracksForPlaylist(id);
+                cachePlaylistTracks(id, fetchedTracks);
+            }
+            addTracksToCache(fetchedTracks);
         }
-        else { // Private or cached playlist
-            fetchedTracks = foundPlaylist.trackIds.map(trackId => getTrackById(trackId)).filter(Boolean) as Track[];
-        }
-    } else { // External YouTube playlist not in our system, so we fetch it
+    } else { // External YouTube playlist not in our system
       try {
         const ytPlaylistDetails = await getYoutubePlaylistDetails({ playlistId: id });
         if (ytPlaylistDetails) {
-          fetchedTracks = await getTracksForPlaylist(id);
+          fetchedTracks = await fetchTracksForPlaylist(id);
           addTracksToCache(fetchedTracks);
           foundPlaylist = {
             ...ytPlaylistDetails,
             trackIds: fetchedTracks.map(t => t.id),
-            tracks: fetchedTracks // Also store full tracks for caching
+            tracks: fetchedTracks 
           };
-          // Add the newly fetched playlist to the context's cache
           addFetchedPlaylistToCache(foundPlaylist);
         }
       } catch (error) {
@@ -101,10 +105,10 @@ export default function PlaylistPage() {
       setTracks(fetchedTracks);
       setImgSrc(foundPlaylist.coverArt);
     } else {
-      setPlaylist(null); // Not found
+      setPlaylist(null);
     }
     setIsLoading(false);
-  }, [id, getPlaylistById, getTrackById, addTracksToCache, addFetchedPlaylistToCache]);
+  }, [id, getPlaylistById, addTracksToCache, addFetchedPlaylistToCache]);
 
 
   useEffect(() => {
@@ -121,11 +125,8 @@ export default function PlaylistPage() {
     setPlaylist(updatedPlaylist);
     setTracks(newTracks);
 
-    // This is a local operation, so we need to update the parent channel object
-    const channelId = params.channelId as string; // Assuming channelId is in route or available
+    const channelId = params.channelId as string; 
     if (channelId) {
-        // This is complex, ideally the context handles this update logic
-        // For now, this is a placeholder for the logic that would be needed
         // updateChannel(channelId, updatedPlaylist);
     }
 
@@ -207,7 +208,7 @@ export default function PlaylistPage() {
           title: "Playlist Repaired!",
           description: "You now have full control over this playlist.",
         });
-        fetchPlaylistData(); // Re-fetch data to update the UI
+        fetchPlaylistData();
       } else {
         throw new Error(result.message);
       }
@@ -222,15 +223,12 @@ export default function PlaylistPage() {
     }
   };
 
-  // User can edit if it's their own private playlist, or a public playlist they own.
   const canEdit = currentUser && playlist && (
-    (!playlist.public && !playlist.isChannelPlaylist) || // Their own private playlist
-    (playlist.public && playlist.ownerId === currentUser.id) // Public playlist they own
+    (!playlist.public && !playlist.isChannelPlaylist) || 
+    (playlist.public && playlist.ownerId === currentUser.id)
   );
-  // Channel playlists are editable locally.
   const canEditChannelContent = playlist && playlist.isChannelPlaylist;
 
-  // A public playlist is broken if it has no ownerId and the user is logged in.
   const isBroken = currentUser?.id !== 'guest' && playlist.public && !playlist.ownerId && !playlist.isChannelPlaylist;
 
 
@@ -334,4 +332,3 @@ export default function PlaylistPage() {
     </div>
   );
 }
-
