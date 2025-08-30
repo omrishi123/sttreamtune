@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AuthLayout } from "@/components/auth-layout";
 import { PlayerLayout } from "@/components/player-layout";
 import { onAuthChange } from "@/lib/auth";
@@ -13,6 +13,7 @@ import { Icons } from "./icons";
 import { useAppUpdate } from "@/hooks/use-app-update";
 import { UpdateDialog } from "./update-dialog";
 import { cn } from "@/lib/utils";
+import { hasSelectedPreferences, clearUserPreferences } from "@/lib/preferences";
 
 const loadingSubtitles = [
     "Tuning your vibe…",
@@ -32,7 +33,6 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
     const [particles, setParticles] = useState<Particle[]>([]);
     const [progress, setProgress] = useState(0);
 
-    // Particle effect logic
     useEffect(() => {
         const notes = ["♪", "♫", "♬", "𝄞"];
         const spawnParticle = () => {
@@ -58,7 +58,6 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
     }, []);
 
 
-    // Progress and subtitle logic
     useEffect(() => {
         const progressTimer = setInterval(() => {
             setProgress(oldProgress => {
@@ -88,14 +87,12 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
             "fixed inset-0 z-[200] overflow-hidden bg-[#0b1020] transition-opacity duration-700 ease-in-out",
             isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
          )}>
-            {/* Background Layers */}
             <div className="fixed inset-0 bg-gradient-to-br from-[#1e1e2f] via-[#3b0066] to-[#001f54] bg-[size:300%_300%] animate-gradient-move filter saturate-110"></div>
             <div 
                 className="fixed inset-[-100px] animate-drift mix-blend-soft-light opacity-45 pointer-events-none" 
                 style={{backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.05'/></svg>")`}}
             ></div>
             
-             {/* Particle Container */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 {particles.map(p => (
                     <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float text-white" style={p.style}>
@@ -104,10 +101,8 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                 ))}
             </div>
 
-            {/* Center Content */}
             <div className="fixed inset-0 grid place-items-center p-6">
                 <div className="w-full max-w-[520px] rounded-3xl p-7 text-center shadow-[0_30px_80px_rgba(0,0,0,.35),inset_0_0_0_1px_rgba(255,255,255,.08)] bg-white/5 backdrop-blur-lg">
-                    {/* Logo */}
                     <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse text-shadow-[0_4px_30px_rgba(167,139,250,.45)] text-white">
                         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,_#7cf6ff,_transparent_55%),linear-gradient(135deg,_rgba(124,246,255,.55),_rgba(167,139,250,.5))] shadow-[0_10px_30px_rgba(124,246,255,.35),inset_0_0_18px_rgba(255,255,255,.25)]">
                             <Icons.logo className="h-6 w-6 text-white"/>
@@ -115,7 +110,6 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                         <span className="text-white">StreamTune</span>
                     </div>
 
-                    {/* Equalizer */}
                      <div className="flex justify-center gap-2 my-5 h-8 items-end">
                         <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.4s]"></span>
                         <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.3s]"></span>
@@ -124,7 +118,6 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                         <span className="w-1.5 rounded bg-primary animate-bounce-loader"></span>
                     </div>
 
-                    {/* Copy + Progress */}
                     <div className="text-base opacity-85 text-white">{subtitle}</div>
                     <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
 
@@ -138,35 +131,45 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isWelcomePage = pathname === "/welcome";
+
   const [user, setUser] = useState<User | null>(null);
-  const [isAppReady, setIsAppReady] = useState(false);
+  const [isReadyForApp, setIsReadyForApp] = useState(false);
+  
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
 
   useEffect(() => {
-    const unsubscribe = onAuthChange((user) => {
-      setUser(user);
+    const unsubscribe = onAuthChange((fbUser) => {
+        if(fbUser) {
+            // If the user changes, reset their preferences to force re-selection
+            if(user && user.id !== fbUser.id) {
+                clearUserPreferences();
+            }
+            setUser(fbUser);
+            if (hasSelectedPreferences()) {
+                setIsReadyForApp(true);
+            } else {
+                router.replace('/welcome');
+            }
+        } else {
+            setUser(null);
+        }
     });
 
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      // Once we have the user, we know the app is ready to be displayed.
-      setIsAppReady(true);
-    }
-  }, [user]);
-
-  if (isAuthPage) {
-    return <AuthLayout>{children}</AuthLayout>;
-  }
+  }, [user, router]);
   
+  if (isAuthPage || isWelcomePage) {
+    return <>{children}</>;
+  }
+
   return (
     <>
-      <AnimatedLoadingScreen isVisible={!isAppReady} />
+      <AnimatedLoadingScreen isVisible={!isReadyForApp} />
       
-      {isAppReady && user ? (
+      {isReadyForApp && user ? (
          <div className="transition-opacity duration-500 ease-in-out opacity-100">
             <UserDataProvider>
               <PlayerProvider>
@@ -183,7 +186,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             </UserDataProvider>
           </div>
       ) : (
-        // Render nothing but the loader until the app is ready
         null
       )}
     </>
