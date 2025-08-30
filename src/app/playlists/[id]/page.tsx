@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { getCachedPlaylistTracks, cachePlaylistTracks, getCachedRecommendedPlaylists, getCachedSinglePlaylist, cacheSinglePlaylist } from "@/lib/recommendations";
+import { getCachedPlaylistTracks, cachePlaylistTracks, getCachedSinglePlaylist, cacheSinglePlaylist } from "@/lib/recommendations";
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 
@@ -40,7 +40,7 @@ export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { getPlaylistById, addTracksToCache, deletePlaylist, updateChannel } = useUserData();
+  const { getPlaylistById, addTracksToCache, deletePlaylist, updateChannel, getTrackById } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
