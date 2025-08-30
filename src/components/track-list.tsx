@@ -130,9 +130,9 @@ export function TrackList({ tracks, playlist, onRemoveTrack }: TrackListProps) {
                   </Button>
                 </div>
               </TableCell>
-              <TableCell className="max-w-[150px] sm:max-w-xs">
-                <div className="font-medium break-words">{track.title}</div>
-                <div className="text-sm text-muted-foreground break-words">
+              <TableCell className="max-w-[150px] sm:max-w-xs break-words">
+                <div className="font-medium">{track.title}</div>
+                <div className="text-sm text-muted-foreground">
                   {track.artist}
                 </div>
               </TableCell>
