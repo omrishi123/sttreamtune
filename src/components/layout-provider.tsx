@@ -27,7 +27,7 @@ interface Particle {
   style: React.CSSProperties;
 }
 
-function AnimatedLoadingScreen() {
+function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
     const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
     const [particles, setParticles] = useState<Particle[]>([]);
     const [progress, setProgress] = useState(0);
@@ -68,7 +68,7 @@ function AnimatedLoadingScreen() {
                 }
                 return oldProgress + 5;
             });
-        }, 175); // Slightly slower progress to match the 3500ms total
+        }, 175); 
 
         const subtitleInterval = setInterval(() => {
             setSubtitle(prev => {
@@ -84,7 +84,10 @@ function AnimatedLoadingScreen() {
     }, []);
 
     return (
-         <div className="fixed inset-0 z-[200] overflow-hidden bg-[#0b1020]">
+         <div className={cn(
+            "fixed inset-0 z-[200] overflow-hidden bg-[#0b1020] transition-opacity duration-700 ease-in-out",
+            isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+         )}>
             {/* Background Layers */}
             <div className="fixed inset-0 bg-gradient-to-br from-[#1e1e2f] via-[#3b0066] to-[#001f54] bg-[size:300%_300%] animate-gradient-move filter saturate-110"></div>
             <div 
@@ -122,10 +125,10 @@ function AnimatedLoadingScreen() {
                     </div>
 
                     {/* Copy + Progress */}
-                    <div className="text-base opacity-85 text-white/90">{subtitle}</div>
+                    <div className="text-base opacity-85 text-white">{subtitle}</div>
                     <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
 
-                    <div className="mt-4 text-xs opacity-65 text-white/70">Pro tip: long-press to add songs to Quick Queue</div>
+                    <div className="mt-4 text-xs opacity-65 text-white">Pro tip: long-press to add songs to Quick Queue</div>
                 </div>
             </div>
         </div>
@@ -137,7 +140,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isAppReady, setIsAppReady] = useState(false);
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
 
   useEffect(() => {
@@ -150,10 +153,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (user) {
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 3500); 
-      return () => clearTimeout(timer);
+      // Once we have the user, we know the app is ready to be displayed.
+      setIsAppReady(true);
     }
   }, [user]);
 
@@ -161,35 +162,30 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     return <AuthLayout>{children}</AuthLayout>;
   }
   
-  if (loading) {
-    return <AnimatedLoadingScreen />;
-  }
-
-  if (!user) {
-    // Fallback for the brief moment user might be null after loading
-    return (
-        <div className="flex h-screen items-center justify-center bg-background">
-          <div className="flex flex-col items-center space-y-4">
-            <Icons.logo className="h-12 w-12 animate-pulse" />
-            <p className="text-muted-foreground">Authenticating...</p>
-          </div>
-        </div>
-    );
-  }
-
   return (
-    <UserDataProvider>
-      <PlayerProvider>
-        <PlayerLayout user={user!}>
-          {children}
-          <UpdateDialog 
-            isOpen={showUpdateDialog} 
-            updateUrl={updateUrl} 
-            latestVersion={latestVersion}
-            updateNotes={updateNotes}
-          />
-        </PlayerLayout>
-      </PlayerProvider>
-    </UserDataProvider>
+    <>
+      <AnimatedLoadingScreen isVisible={!isAppReady} />
+      
+      {isAppReady && user ? (
+         <div className="transition-opacity duration-500 ease-in-out opacity-100">
+            <UserDataProvider>
+              <PlayerProvider>
+                <PlayerLayout user={user}>
+                  {children}
+                  <UpdateDialog 
+                    isOpen={showUpdateDialog} 
+                    updateUrl={updateUrl} 
+                    latestVersion={latestVersion}
+                    updateNotes={updateNotes}
+                  />
+                </PlayerLayout>
+              </PlayerProvider>
+            </UserDataProvider>
+          </div>
+      ) : (
+        // Render nothing but the loader until the app is ready
+        null
+      )}
+    </>
   );
 }
