@@ -22,41 +22,15 @@ import { getCachedRecommendations } from '@/lib/recommendations';
 import { TrackCard } from '@/components/track-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
-
-
-interface PlaylistSectionProps {
-  title: string;
-  playlists: Playlist[] | null;
-  viewAllLink?: string;
-}
-
-const PlaylistSection: React.FC<PlaylistSectionProps> = ({ title, playlists, viewAllLink }) => (
-  <section>
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-2xl font-bold font-headline">{title}</h2>
-      {viewAllLink && (
-        <Button asChild variant="ghost" size="sm">
-          <Link href={viewAllLink}>
-            View all
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      )}
-    </div>
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-      {playlists?.map((playlist) => (
-        <PlaylistCard key={playlist.id} playlist={playlist} />
-      ))}
-    </div>
-  </section>
-);
-
+import { getUserPreferences } from '@/lib/preferences';
+import { PlaylistSection } from '@/components/playlist-section';
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { communityPlaylists } = useUserData();
   const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [userGenres, setUserGenres] = useState<string[]>([]);
 
   useEffect(() => {
       const fetchRecommendations = async () => {
@@ -66,13 +40,20 @@ export default function HomePage() {
           setLoadingRecommendations(false);
       };
       fetchRecommendations();
+
+      const preferences = getUserPreferences();
+      if (preferences && preferences.genres) {
+        setUserGenres(preferences.genres);
+      }
   }, []);
 
   const featuredPlaylists = useMemo(() => {
+    if (!communityPlaylists) return [];
     return communityPlaylists.filter(p => p.isFeatured);
   }, [communityPlaylists]);
 
   const recentCommunityPlaylists = useMemo(() => {
+    if (!communityPlaylists) return [];
     // Exclude featured playlists from the "recent" section to avoid duplication
     return communityPlaylists.filter(p => !p.isFeatured).slice(0, 6);
   }, [communityPlaylists]);
@@ -182,6 +163,14 @@ export default function HomePage() {
           />
       )}
       
+      {userGenres.map(genre => (
+        <PlaylistSection
+            key={genre}
+            title={genre}
+            isPersonalized={true}
+        />
+      ))}
+
       {filteredPlaylists.map(section => (
          <PlaylistSection 
             key={section.title}
