@@ -7,7 +7,7 @@ import { getTracksForPlaylist as fetchTracksForPlaylist, getYoutubePlaylistDetai
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, Wrench } from "lucide-react";
+import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck } from "lucide-react";
 import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState, useCallback } from "react";
@@ -32,7 +32,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { repairPlaylist } from "@/ai/flows/repair-playlist-flow";
 import { getCachedPlaylistTracks, cachePlaylistTracks } from "@/lib/recommendations";
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
@@ -48,7 +47,6 @@ export default function PlaylistPage() {
   const [playlist, setPlaylist] = useState<Playlist | undefined | null>(undefined);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRepairing, setIsRepairing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | undefined>(undefined);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
@@ -198,39 +196,11 @@ export default function PlaylistPage() {
     }
   };
 
-  const handleRepairPlaylist = async () => {
-    if (!playlist || !currentUser || currentUser.id === 'guest') return;
-    setIsRepairing(true);
-    try {
-      const result = await repairPlaylist({ playlistId: playlist.id, userId: currentUser.id });
-      if (result.success) {
-        toast({
-          title: "Playlist Repaired!",
-          description: "You now have full control over this playlist.",
-        });
-        fetchPlaylistData();
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Repair Failed",
-        description: error.message || "Could not repair the playlist. Please try again.",
-      });
-    } finally {
-      setIsRepairing(false);
-    }
-  };
-
   const canEdit = currentUser && playlist && (
     (!playlist.public && !playlist.isChannelPlaylist) || 
     (playlist.public && playlist.ownerId === currentUser.id)
   );
   const canEditChannelContent = playlist && playlist.isChannelPlaylist;
-
-  const isBroken = currentUser?.id !== 'guest' && playlist.public && !playlist.ownerId && !playlist.isChannelPlaylist;
-
 
   return (
     <div className="space-y-8">
@@ -278,12 +248,6 @@ export default function PlaylistPage() {
                     <Share2 className="mr-2 h-5 w-5"/>
                     Share
                 </Button>
-                {isBroken && (
-                    <Button size="lg" variant="destructive" onClick={handleRepairPlaylist} disabled={isRepairing}>
-                    <Wrench className="mr-2 h-5 w-5"/>
-                    {isRepairing ? 'Repairing...' : 'Repair'}
-                    </Button>
-                )}
                 {canEdit && (
                     <AlertDialog>
                     <DropdownMenu>

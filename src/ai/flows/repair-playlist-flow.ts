@@ -1,11 +1,9 @@
 
+
 'use server';
 /**
- * @fileOverview A flow to repair a public playlist by assigning ownership.
- *
- * This flow allows a logged-in user to claim ownership of a public playlist
- * that is missing an ownerId, a common issue for playlists created by older
- * versions of the app. It runs securely on the backend.
+ * @fileOverview This flow is no longer used and can be safely removed or ignored.
+ * The playlist repair functionality has been removed from the UI.
  */
 
 import { ai } from '@/ai/genkit';
