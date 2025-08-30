@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthLayout } from "@/components/auth-layout";
 import { PlayerLayout } from "@/components/player-layout";
@@ -33,32 +33,40 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
     const [particles, setParticles] = useState<Particle[]>([]);
     const [progress, setProgress] = useState(0);
 
-    useEffect(() => {
+    const spawnParticle = useCallback(() => {
         const notes = ["♪", "♫", "♬", "𝄞"];
-        const spawnParticle = () => {
-            const newParticle: Particle = {
-                id: Date.now() + Math.random(),
-                char: notes[Math.floor(Math.random() * notes.length)],
-                style: {
-                    left: `${Math.random() * 100}vw`,
-                    animationDelay: `${Math.random() * 3}s`,
-                    fontSize: `${14 + Math.random() * 20}px`,
-                },
-            };
-            setParticles(prev => [...prev, newParticle]);
-
-            setTimeout(() => {
-                setParticles(prev => prev.filter(p => p.id !== newParticle.id));
-            }, 7000);
+        const newParticle: Particle = {
+            id: Date.now() + Math.random(),
+            char: notes[Math.floor(Math.random() * notes.length)],
+            style: {
+                left: `${Math.random() * 100}vw`,
+                animationDelay: `${Math.random() * 3}s`,
+                fontSize: `${14 + Math.random() * 20}px`,
+            },
         };
-        
+
+        setParticles(prev => {
+            const newParticles = [...prev, newParticle];
+            // Limit the number of particles to avoid performance issues
+            if (newParticles.length > 50) {
+                return newParticles.slice(newParticles.length - 50);
+            }
+            return newParticles;
+        });
+
+    }, []);
+
+    useEffect(() => {
+        if (!isVisible) return;
+    
         const particleInterval = setInterval(spawnParticle, 150);
         
         return () => clearInterval(particleInterval);
-    }, []);
-
+    }, [spawnParticle, isVisible]);
+    
 
     useEffect(() => {
+        if (!isVisible) return;
         const progressTimer = setInterval(() => {
             setProgress(oldProgress => {
                 if (oldProgress >= 100) {
@@ -80,7 +88,7 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
             clearInterval(progressTimer);
             clearInterval(subtitleInterval);
         };
-    }, []);
+    }, [isVisible]);
 
     return (
          <div className={cn(
