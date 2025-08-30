@@ -10,7 +10,7 @@ import { searchYoutube, YoutubeSearchOutput } from "@/ai/flows/search-youtube-fl
 import { usePlayer } from "@/context/player-context";
 import { useUserData } from "@/context/user-data-context";
 import { useToast } from "@/hooks/use-toast";
-import { clearCachedRecommendations, updateSearchHistory } from "@/lib/recommendations";
+import { clearAllRecommendationCaches, updateSearchHistory } from "@/lib/recommendations";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -38,7 +38,7 @@ export default function SearchPage() {
       } else {
         // On successful search, update history and clear old recommendations
         updateSearchHistory(query);
-        clearCachedRecommendations();
+        clearAllRecommendationCaches();
       }
     } catch (error: any) {
       console.error("Search failed:", error);
