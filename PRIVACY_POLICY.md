@@ -57,3 +57,32 @@ We may update our Privacy Policy from time to time. We will notify you of any ch
 
 If you have any questions about this Privacy Policy, you can contact us.
 (Note: You should add your contact email or a link to a contact form here).
+
+---
+
+## Annex II: Technical and Organisational Security Measures
+
+This section outlines the technical and organizational measures implemented to ensure the security of data processed by StreamTune.
+
+**1. Data Encryption:**
+*   **In-Transit:** All data transmitted between the client application and our backend services (including Firebase Authentication, Firestore, and the YouTube API) is encrypted using industry-standard Transport Layer Security (TLS/SSL).
+*   **At-Rest:** Data stored on our backend, such as user profiles and public playlists in Firestore, is encrypted at rest by Google Cloud's default encryption mechanisms.
+
+**2. Access Control:**
+*   **Authentication:** User access to the Service is protected by Firebase Authentication, which manages secure password handling and OAuth 2.0 for Google Sign-In.
+*   **Authorization:** Access to user-specific data is restricted. Private playlists and preferences are stored in the browser's local storage and are not accessible by other users. Public playlists have security rules managed through Firebase to control read/write permissions.
+*   **Administrative Access:** Access to backend systems and databases for administrative purposes is restricted to authorized personnel only, using secure credentials.
+
+**3. Data Storage and Segregation:**
+*   **Private Data:** User data such as private playlists, liked songs, recently played tracks, and cached song information is stored locally on the user's device using the browser's `localStorage`. This data does not leave the user's device unless explicitly made public.
+*   **Public Data:** User profiles and public playlists are stored securely in Google's Firestore database, a NoSQL cloud database that provides robust security and scalability.
+
+**4. Third-Party Service Security:**
+*   **Firebase/Google Cloud:** We rely on the robust security infrastructure of Google Cloud Platform and Firebase for authentication, database, and hosting. Google maintains a comprehensive security program, including physical security, network security, and vulnerability management.
+*   **YouTube API:** We interact with the YouTube API using a secure API key. We do not transmit personal user data (other than search queries) to the YouTube API.
+
+**5. Data Minimization:**
+*   We collect only the data necessary to provide and improve the Service. For example, when creating an account, we only store essential information like name, email, and profile picture provided by the authentication service.
+
+**6. Secure Development & Incident Response:**
+*   The application is developed with security best practices in mind. In the event of a data breach or security incident, we will take immediate steps to mitigate the impact, notify affected users as required by law, and take action to prevent future incidents.
