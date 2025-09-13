@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { User, Playlist, Track } from './types';
+import type { User, Playlist, Track, UserActivity } from './types';
 import { revalidatePath } from 'next/cache';
 import admin from 'firebase-admin';
 import adminDb from './firebase-admin';
@@ -210,4 +210,52 @@ export async function updateAppConfig(config: {
   const configRef = adminDb.collection('app-config').doc('version');
   await configRef.set(config, { merge: true });
   revalidatePath('/admin/settings');
+}
+
+// ========== USER ACTIVITY ==========
+export async function getUserActivityStats() {
+    if (!adminDb) {
+        throw new Error("Firebase Admin is not initialized.");
+    }
+    const now = new Date();
+    const periods = {
+        '24h': 24 * 60 * 60 * 1000,
+        '7d': 7 * 24 * 60 * 60 * 1000,
+        '15d': 15 * 24 * 60 * 60 * 1000,
+        '30d': 30 * 24 * 60 * 60 * 1000,
+    };
+
+    const activityRef = adminDb.collection('user_activity');
+    
+    const queries = Object.keys(periods).map(key => {
+        const cutoff = new Date(now.getTime() - periods[key as keyof typeof periods]);
+        return activityRef.where('lastSeen', '>=', cutoff).count().get();
+    });
+
+    try {
+        const results = await Promise.all(queries);
+        const [
+            count24h,
+            count7d,
+            count15d,
+            count30d
+        ] = results.map(res => res.data().count);
+        
+        // Also fetch a list of all activities to display
+        const allActivitySnapshot = await activityRef.orderBy('lastSeen', 'desc').limit(100).get();
+        const allActivities = allActivitySnapshot.docs.map(doc => serializeFirestoreData(doc) as UserActivity).filter(Boolean);
+
+        return {
+            activeUsers: {
+                '24h': count24h,
+                '7d': count7d,
+                '15d': count15d,
+                '30d': count30d,
+            },
+            allActivities,
+        };
+    } catch(error) {
+        console.error("Error fetching user activity stats:", error);
+        throw new Error("Failed to fetch user activity stats.");
+    }
 }

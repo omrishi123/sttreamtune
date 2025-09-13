@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { hasSelectedPreferences, clearUserPreferences } from "@/lib/preferences";
 import { useRecommendationRefresh } from "@/hooks/use-recommendation-refresh";
 import { RefreshRecommendationsDialog } from "@/components/refresh-recommendations-dialog";
+import { pingUserActivity } from "@/lib/user-activity";
 
 const loadingSubtitles = [
     "Tuning your vibe…",
@@ -146,6 +147,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthChange((fbUser) => {
         if(fbUser) {
+            pingUserActivity(fbUser); // Ping user activity on auth change
             if(user && user.id !== fbUser.id) {
                 clearUserPreferences();
             }
@@ -157,8 +159,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             }
         } else {
             setUser(null);
-            // Optional: Redirect to login if no user and not on a public page
-            // if (!isAuthPage) router.replace('/login');
         }
     });
 

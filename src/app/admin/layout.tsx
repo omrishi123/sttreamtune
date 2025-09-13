@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   PanelLeft,
   ChevronLeft,
+  Activity,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,7 @@ import {
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/activity', label: 'Activity', icon: Activity },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/playlists', label: 'Playlists', icon: Music },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
