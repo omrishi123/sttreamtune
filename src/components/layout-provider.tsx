@@ -14,6 +14,7 @@ import { useAppUpdate } from "@/hooks/use-app-update";
 import { UpdateDialog } from "./update-dialog";
 import { cn } from "@/lib/utils";
 import { hasSelectedPreferences, clearUserPreferences } from "@/lib/preferences";
+import { pingUserActivity } from "@/lib/user-activity";
 
 const loadingSubtitles = [
     "Tuning your vibe…",
@@ -151,6 +152,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthChange((fbUser) => {
         if(fbUser) {
+            pingUserActivity(fbUser);
             // If the user changes, reset their preferences to force re-selection
             if(user && user.id !== fbUser.id) {
                 clearUserPreferences();
