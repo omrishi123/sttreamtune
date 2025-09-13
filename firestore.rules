@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -22,9 +21,9 @@ service cloud.firestore {
     // App Config: Read-only for everyone. Only backend admin can write.
     match /app-config/version {
       allow read: if true;
-      allow write: if false;
+      allow write: if false; // Only backend admin should write this
     }
-    
+
     // User Activity: Allow anyone to create/update their own activity document.
     // This is secure because they can only write to a document named after their unique deviceId.
     match /user_activity/{deviceId} {
