@@ -7,8 +7,6 @@ import type { User } from './types';
 import { nanoid } from 'nanoid';
 
 const DEVICE_ID_KEY = 'streamtune_device_id';
-const LAST_PING_KEY = 'streamtune_last_activity_ping';
-const PING_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 // Gets or creates a unique ID for the device
 const getDeviceId = (): string => {
@@ -21,28 +19,8 @@ const getDeviceId = (): string => {
   return deviceId;
 };
 
-// Checks if we should ping the server based on the last ping time
-const shouldPing = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  const lastPing = localStorage.getItem(LAST_PING_KEY);
-  if (!lastPing) {
-    return true; // Never pinged before
-  }
-  return Date.now() - parseInt(lastPing, 10) > PING_INTERVAL;
-};
-
-// Updates the last ping time in local storage
-const updateLastPingTimestamp = (): void => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(LAST_PING_KEY, Date.now().toString());
-};
-
-// The main function to call on app load
+// The main function to call on app load. It now pings every time.
 export const pingUserActivity = async (user: User) => {
-  if (!shouldPing()) {
-    return; // It's not time to ping yet
-  }
-
   const deviceId = getDeviceId();
   if (!deviceId) return;
 
@@ -60,8 +38,8 @@ export const pingUserActivity = async (user: User) => {
 
   try {
     const activityRef = doc(db, 'user_activity', deviceId);
+    // Use setDoc with merge:true, which will create the document or update it if it exists.
     await setDoc(activityRef, activityData, { merge: true });
-    updateLastPingTimestamp(); // Only update timestamp on successful write
   } catch (error) {
     console.error('Failed to ping user activity:', error);
   }
