@@ -131,7 +131,7 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                     <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
 
                     <div className="mt-4 p-2 rounded-lg bg-primary/20 border border-primary/30">
-                        <p className="text-xs text-primary font-semibold">Pro tip: long-press to add songs to Quick Queue</p>
+                        <p className="text-xs text-primary font-semibold">{'{App Made by Om Rishi -ig-@om_ki_tech_18 }'}</p>
                     </div>
                 </div>
             </div>
