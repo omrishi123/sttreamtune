@@ -64,8 +64,8 @@ export default function WelcomePage() {
     saveUserPreferences(Array.from(selectedGenres));
     // Brief delay to show loading state before redirecting
     setTimeout(() => {
-      router.push('/');
-      router.refresh(); // Ensures the layout provider re-evaluates and doesn't redirect back
+      // Force a hard navigation to ensure the entire app state is re-evaluated
+      window.location.href = '/';
     }, 500);
   };
   
