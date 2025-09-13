@@ -130,7 +130,9 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                     <div className="text-base opacity-85 text-white">{subtitle}</div>
                     <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
 
-                    <div className="mt-4 text-xs opacity-65 text-white">Pro tip: long-press to add songs to Quick Queue</div>
+                    <div className="mt-4 p-2 rounded-lg bg-primary/20 border border-primary/30">
+                        <p className="text-xs text-primary font-semibold">First-time setup can take a minute. We're personalizing your experience!</p>
+                    </div>
                 </div>
             </div>
         </div>
