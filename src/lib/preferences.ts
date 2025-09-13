@@ -1,9 +1,10 @@
 
 'use client';
 
-const PREFERENCES_KEY = 'streamtune-user-preferences';
+// A single, user-agnostic key for storing preferences on the device.
+const PREFERENCES_KEY = 'streamtune-device-preferences';
 
-interface UserPreferences {
+interface DevicePreferences {
   genres: string[];
   lastRefreshPrompt?: number;
 }
@@ -12,7 +13,7 @@ export const saveUserPreferences = (genres: string[]): void => {
   if (typeof window === 'undefined') return;
   try {
     const currentPrefs = getUserPreferences();
-    const newPrefs: UserPreferences = {
+    const newPrefs: DevicePreferences = {
       ...currentPrefs,
       genres,
     };
@@ -22,7 +23,7 @@ export const saveUserPreferences = (genres: string[]): void => {
   }
 };
 
-export const getUserPreferences = (): UserPreferences | null => {
+export const getUserPreferences = (): DevicePreferences | null => {
   if (typeof window === 'undefined') return null;
   try {
     const prefs = localStorage.getItem(PREFERENCES_KEY);
@@ -57,7 +58,7 @@ export const updateUserRefreshPromptTimestamp = (): void => {
     if (typeof window === 'undefined') return;
     try {
         const currentPrefs = getUserPreferences() || { genres: [] };
-        const newPrefs: UserPreferences = {
+        const newPrefs: DevicePreferences = {
             ...currentPrefs,
             lastRefreshPrompt: Date.now(),
         };

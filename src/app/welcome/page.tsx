@@ -64,8 +64,10 @@ export default function WelcomePage() {
     saveUserPreferences(Array.from(selectedGenres));
     // Brief delay to show loading state before redirecting
     setTimeout(() => {
-      // Force a hard navigation to ensure the entire app state is re-evaluated
-      window.location.href = '/';
+        router.push('/');
+        // After pushing, force a reload of data on the new page.
+        // This is more reliable than window.location and keeps the user in-app.
+        router.refresh();
     }, 500);
   };
   
