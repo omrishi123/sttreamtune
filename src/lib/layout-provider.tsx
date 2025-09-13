@@ -30,7 +30,7 @@ interface Particle {
   style: React.CSSProperties;
 }
 
-function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
+function AnimatedLoadingScreen({ isVisible, isFirstLoad }: { isVisible: boolean, isFirstLoad: boolean }) {
     const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
     const [particles, setParticles] = useState<Particle[]>([]);
     const [progress, setProgress] = useState(0);
@@ -122,8 +122,15 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
 
                     <div className="text-base opacity-85 text-white">{subtitle}</div>
                     <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
+                    
+                    {isFirstLoad ? (
+                        <div className="mt-4 p-2 rounded-lg bg-primary/20 border border-primary/30">
+                            <p className="text-xs text-primary font-semibold">First-time setup can take a minute. We're personalizing your experience!</p>
+                        </div>
+                    ) : (
+                         <div className="mt-4 text-xs opacity-65 text-white">Pro tip: long-press to add songs to Quick Queue</div>
+                    )}
 
-                    <div className="mt-4 text-xs opacity-65 text-white">Pro tip: long-press to add songs to Quick Queue</div>
                 </div>
             </div>
         </div>
@@ -139,6 +146,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [isReadyForApp, setIsReadyForApp] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(false);
   
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
   const { showRefreshDialog, setShowRefreshDialog } = useRecommendationRefresh();
@@ -154,7 +162,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             setUser(fbUser);
             if (hasSelectedPreferences()) {
                 setIsReadyForApp(true);
+                setIsFirstLoad(false);
             } else if (!isWelcomePage) {
+                setIsFirstLoad(true);
                 router.replace('/welcome');
             }
         } else {
@@ -178,7 +188,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <AnimatedLoadingScreen isVisible={!isReadyForApp} />
+      <AnimatedLoadingScreen isVisible={!isReadyForApp} isFirstLoad={isFirstLoad} />
       
       {isReadyForApp && user ? (
          <div className="transition-opacity duration-500 ease-in-out opacity-100">
