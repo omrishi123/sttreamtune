@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { User, Playlist, Track, UserActivity } from './types';
@@ -79,6 +80,27 @@ export async function updateUserRole(userId: string, isAdmin: boolean) {
   const userRef = adminDb.collection('users').doc(userId);
   await userRef.update({ isAdmin });
   revalidatePath('/admin/users');
+}
+
+export async function updateUserVerification(userId: string, isVerified: boolean) {
+  if (!adminDb) {
+    throw new Error("Firebase Admin is not initialized.");
+  }
+  const userRef = adminDb.collection('users').doc(userId);
+  await userRef.update({ isVerified });
+
+  // Update all playlists owned by this user
+  const playlistsQuery = adminDb.collection('communityPlaylists').where('ownerId', '==', userId);
+  const playlistsSnapshot = await playlistsQuery.get();
+  const batch = adminDb.batch();
+  playlistsSnapshot.forEach(doc => {
+    batch.update(doc.ref, { ownerIsVerified: isVerified });
+  });
+  await batch.commit();
+
+  revalidatePath('/admin/users');
+  revalidatePath('/community');
+  revalidatePath('/');
 }
 
 

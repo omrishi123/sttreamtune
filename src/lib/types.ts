@@ -1,4 +1,5 @@
 
+
 import {z} from 'zod';
 
 export interface Track {
@@ -22,6 +23,7 @@ export interface Playlist {
   public: boolean;
   owner: string; // user display name
   ownerId?: string; // user's unique ID
+  ownerIsVerified?: boolean; // To display verification badge
   'data-ai-hint'?: string;
   isLikedSongs?: boolean;
   tracks?: Track[]; // For public playlists, embed full track objects
@@ -43,6 +45,7 @@ export interface User {
   email: string;
   photoURL?: string;
   isAdmin?: boolean; // Add isAdmin flag
+  isVerified?: boolean; // Add isVerified flag
 }
 
 export interface UserData {
@@ -71,6 +74,7 @@ export const GeneratePlaylistResponseSchema = z.object({
     public: z.boolean(),
     owner: z.string(),
     ownerId: z.optional(z.string()),
+    ownerIsVerified: z.optional(z.boolean()),
     'data-ai-hint': z.optional(z.string()),
     isLikedSongs: z.optional(z.boolean()),
   }),

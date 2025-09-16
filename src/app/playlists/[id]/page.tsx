@@ -7,7 +7,7 @@ import { getTracksForPlaylist as fetchTracksForPlaylist, getYoutubePlaylistDetai
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck } from "lucide-react";
+import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, BadgeCheck } from "lucide-react";
 import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState, useCallback } from "react";
@@ -244,12 +244,13 @@ export default function PlaylistPage() {
                 {playlist.name}
             </h1>
             {playlist.description && <p className="text-muted-foreground text-sm line-clamp-2">{playlist.description}</p>}
-            <p className="text-sm text-muted-foreground">
-                Created by{" "}
+            <div className="text-sm text-muted-foreground flex items-center justify-center md:justify-start gap-1.5">
+                <span>Created by</span>
                 <span className="text-foreground font-medium">{playlist.owner}</span>
-                {" \u2022 "}
-                {tracks.length} songs, about {totalMinutes} min
-            </p>
+                {playlist.ownerIsVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                <span>{" \u2022 "}</span>
+                <span>{tracks.length} songs, about {totalMinutes} min</span>
+            </div>
             <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 pt-2">
                 <Button size="lg" onClick={handlePlayPlaylist}>
                     <Play className="mr-2 h-5 w-5"/>

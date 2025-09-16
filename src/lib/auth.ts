@@ -1,4 +1,5 @@
 
+
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -37,6 +38,7 @@ const adaptFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
     email: firebaseUser.email || '',
     photoURL: localPhoto || firebaseUser.photoURL || 'https://i.postimg.cc/SswWC87w/streamtune.png',
     isAdmin: dbUser.isAdmin || false,
+    isVerified: dbUser.isVerified || false, // Add isVerified
   };
 };
 
@@ -71,9 +73,10 @@ const syncUserToFirestore = async (user: FirebaseUser) => {
     photoURL: user.photoURL,
   };
   
-  // Only write isAdmin if it's a new user, to not overwrite existing admin status
+  // Only write isAdmin/isVerified if it's a new user, to not overwrite existing status
   if (!docSnap.exists()) {
     userData.isAdmin = false;
+    userData.isVerified = false;
   }
   
   await setDoc(userRef, userData, { merge: true });

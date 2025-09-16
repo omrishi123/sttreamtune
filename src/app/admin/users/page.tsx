@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { getAllUsers, updateUserRole } from '@/lib/admin-actions';
+import { getAllUsers, updateUserRole, updateUserVerification } from '@/lib/admin-actions';
 import { UsersTable } from './_components/users-table';
 import React, { useEffect, useState } from 'react';
 import type { User } from '@/lib/types';
@@ -17,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 
 function UsersPageSkeleton() {
   return (
@@ -36,12 +36,16 @@ function UsersPageSkeleton() {
   )
 }
 
+type DialogState = 
+  | { type: 'role'; user: User }
+  | { type: 'verify'; user: User }
+  | null;
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [dialogState, setDialogState] = useState<DialogState>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
@@ -61,26 +65,39 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  const handleRoleChange = async () => {
-    if (!selectedUser) return;
+  const handleConfirm = async () => {
+    if (!dialogState) return;
     setIsUpdating(true);
+
+    const { type, user } = dialogState;
+
     try {
-      const newAdminStatus = !selectedUser.isAdmin;
-      await updateUserRole(selectedUser.id, newAdminStatus);
-      setUsers(users.map(u => u.id === selectedUser.id ? { ...u, isAdmin: newAdminStatus } : u));
-      toast({
-        title: 'Success',
-        description: `${selectedUser.name}'s role has been updated.`,
-      });
+        if (type === 'role') {
+            const newAdminStatus = !user.isAdmin;
+            await updateUserRole(user.id, newAdminStatus);
+            setUsers(users.map(u => u.id === user.id ? { ...u, isAdmin: newAdminStatus } : u));
+            toast({
+                title: 'Success',
+                description: `${user.name}'s role has been updated.`,
+            });
+        } else if (type === 'verify') {
+            const newVerifiedStatus = !user.isVerified;
+            await updateUserVerification(user.id, newVerifiedStatus);
+             setUsers(users.map(u => u.id === user.id ? { ...u, isVerified: newVerifiedStatus } : u));
+            toast({
+                title: 'Success',
+                description: `${user.name}'s verification status has been updated.`,
+            });
+        }
     } catch (err: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: err.message || 'Failed to update user role.',
+        description: err.message || 'Failed to update user.',
       });
     } finally {
       setIsUpdating(false);
-      setSelectedUser(null);
+      setDialogState(null);
     }
   };
 
@@ -92,26 +109,45 @@ export default function AdminUsersPage() {
     return <div className="text-destructive">{error}</div>;
   }
 
+  const getDialogContent = () => {
+    if (!dialogState) return null;
+    if (dialogState.type === 'role') {
+        return {
+            title: 'Confirm Role Change',
+            description: `Are you sure you want to ${dialogState.user.isAdmin ? 'demote' : 'promote'} ${dialogState.user.name} to ${dialogState.user.isAdmin ? 'a regular User' : 'an Admin'}?`
+        }
+    }
+     if (dialogState.type === 'verify') {
+        return {
+            title: 'Confirm Verification',
+            description: `Are you sure you want to ${dialogState.user.isVerified ? 'remove verification from' : 'verify'} ${dialogState.user.name}?`
+        }
+    }
+    return null;
+  }
+
+  const dialogContent = getDialogContent();
+
   return (
     <>
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold mb-4">User Management</h2>
         <UsersTable 
           initialUsers={users}
-          onRoleChangeClick={setSelectedUser}
+          onRoleChangeClick={(user) => setDialogState({ type: 'role', user })}
+          onVerifyClick={(user) => setDialogState({ type: 'verify', user })}
         />
       </div>
-      <AlertDialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+      <AlertDialog open={!!dialogState} onOpenChange={() => setDialogState(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Role Change</AlertDialogTitle>
+            <AlertDialogTitle>{dialogContent?.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {selectedUser?.isAdmin ? 'demote' : 'promote'} <span className="font-bold">{selectedUser?.name}</span> to {selectedUser?.isAdmin ? 'a regular User' : 'an Admin'}?
+              {dialogContent?.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isUpdating}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRoleChange} disabled={isUpdating}>
+            <AlertDialogAction onClick={handleConfirm} disabled={isUpdating}>
               {isUpdating ? 'Updating...' : 'Confirm'}
             </AlertDialogAction>
           </AlertDialogFooter>

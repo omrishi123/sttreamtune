@@ -208,7 +208,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       trackIds: [],
       public: isPublic,
       owner: currentUser.name, 
-      ownerId: currentUser.id, // This is the crucial field for ownership
+      ownerId: currentUser.id,
+      ownerIsVerified: currentUser.isVerified, // Add verification status
       coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
       'data-ai-hint': 'playlist cover',
     };
