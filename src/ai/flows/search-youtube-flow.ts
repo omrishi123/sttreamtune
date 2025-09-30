@@ -1,19 +1,17 @@
 'use server';
 /**
- * @fileOverview A YouTube search utility.
+ * @fileOverview A YouTube search utility using the Invidious API.
  * 
- * - searchYoutube - A function that handles searching for videos on YouTube.
+ * - searchYoutube - A function that handles searching for videos on YouTube via Invidious.
  * - YoutubeSearchInput - The input type for the searchYoutube function.
  * - YoutubeSearchOutput - The return type for the searchYoutube function.
  */
 
 import { z } from 'zod';
 import { Track } from '@/lib/types';
-import 'dotenv/config';
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const YOUTUBE_API_URL = 'https://www.googleapis.com/youtube/v3/search';
-const YOUTUBE_VIDEOS_API_URL = 'https://www.googleapis.com/youtube/v3/videos';
+// Using a public Invidious instance. For production, self-hosting is recommended for stability.
+const INVIDIOUS_API_URL = 'https://yewtu.be/api/v1/search';
 
 const YoutubeSearchInputSchema = z.object({
   query: z.string().describe('The search query for YouTube.'),
@@ -34,73 +32,45 @@ const YoutubeSearchOutputSchema = z.array(
 );
 export type YoutubeSearchOutput = z.infer<typeof YoutubeSearchOutputSchema>;
 
-async function getVideosDurations(videoIds: string[]): Promise<Map<string, number>> {
-    if (!YOUTUBE_API_KEY) {
-        throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
-    }
-    const url = new URL(YOUTUBE_VIDEOS_API_URL);
-    url.searchParams.append('part', 'contentDetails');
-    url.searchParams.append('id', videoIds.join(','));
-    url.searchParams.append('key', YOUTUBE_API_KEY);
-  
-    const response = await fetch(url.toString());
-    const data = await response.json();
-  
-    const durations = new Map<string, number>();
-    if (data.items) {
-      for (const item of data.items) {
-        const durationISO = item.contentDetails.duration;
-        // Convert ISO 8601 duration to seconds
-        const match = durationISO.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-        const hours = (parseInt(match?.[1] ?? '0') || 0);
-        const minutes = (parseInt(match?.[2] ?? '0') || 0);
-        const seconds = (parseInt(match?.[3] ?? '0') || 0);
-        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-        durations.set(item.id, totalSeconds);
-      }
-    }
-    return durations;
-  }
-
 export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeSearchOutput> {
-  if (!YOUTUBE_API_KEY) {
-      throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
-  }
-  const url = new URL(YOUTUBE_API_URL);
-  url.searchParams.append('part', 'snippet');
-  url.searchParams.append('q', `${input.query} official audio`);
-  url.searchParams.append('key', YOUTUBE_API_KEY);
+  // The Invidious API expects a URL-encoded query string
+  const url = new URL(INVIDIOUS_API_URL);
+  url.searchParams.append('q', input.query);
   url.searchParams.append('type', 'video');
-  url.searchParams.append('maxResults', '10');
 
-  const response = await fetch(url.toString());
+  try {
+    const response = await fetch(url.toString());
 
-  if (!response.ok) {
-      const errorText = await response.text();
-      console.error("YouTube API Error:", errorText);
-      throw new Error(`YouTube API request failed with status ${response.status}`);
-  }
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Invidious API Error:", errorText);
+        throw new Error(`Invidious API request failed with status ${response.status}`);
+    }
 
-  const data = await response.json();
-  
-  if (data.error || !data.items) {
-    console.error('YouTube API Search Error:', data.error);
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      console.error('Invidious API Search Error: Invalid response format');
+      return [];
+    }
+    
+    // Map the Invidious response format to our internal Track type
+    const tracks: Track[] = data.map((item: any) => ({
+      id: item.videoId,
+      youtubeVideoId: item.videoId,
+      title: item.title,
+      artist: item.author,
+      album: 'YouTube', // Invidious doesn't provide an album, so we use a default
+      artwork: `https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`, // Construct the artwork URL
+      duration: item.lengthSeconds || 0,
+      'data-ai-hint': 'youtube video'
+    })).slice(0, 10); // Limit to 10 results to match previous behavior
+    
+    return tracks;
+
+  } catch (error) {
+    console.error("Failed to fetch or parse Invidious search results:", error);
+    // On any failure, return an empty array to prevent app crashes.
     return [];
   }
-
-  const videoIds = data.items.map((item: any) => item.id.videoId).filter(Boolean);
-  const durations = await getVideosDurations(videoIds);
-
-  const tracks: Track[] = data.items.map((item: any) => ({
-    id: item.id.videoId,
-    youtubeVideoId: item.id.videoId,
-    title: item.snippet.title,
-    artist: item.snippet.channelTitle,
-    album: 'YouTube',
-    artwork: item.snippet.thumbnails.high.url,
-    duration: durations.get(item.id.videoId) || 0,
-    'data-ai-hint': 'youtube video'
-  }));
-  
-  return tracks;
 }
