@@ -1,8 +1,9 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
@@ -13,21 +14,22 @@ import { useToast } from "@/hooks/use-toast";
 import { clearAllRecommendationCaches, updateSearchHistory } from "@/lib/recommendations";
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<YoutubeSearchOutput>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { setQueueAndPlay } = usePlayer();
   const { addTracksToCache } = useUserData();
   const { toast } = useToast();
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query) return;
+  const handleSearch = async (searchQuery: string) => {
+    if (!searchQuery) return;
 
     setIsLoading(true);
     setResults([]);
     try {
-      const searchResults = await searchYoutube({ query });
+      const searchResults = await searchYoutube({ query: searchQuery });
       addTracksToCache(searchResults);
       setResults(searchResults);
        if (searchResults.length === 0) {
@@ -37,7 +39,7 @@ export default function SearchPage() {
         });
       } else {
         // On successful search, update history and clear old recommendations
-        updateSearchHistory(query);
+        updateSearchHistory(searchQuery);
         clearAllRecommendationCaches();
       }
     } catch (error: any) {
@@ -55,6 +57,18 @@ export default function SearchPage() {
     }
   };
 
+  useEffect(() => {
+    if (initialQuery) {
+        handleSearch(initialQuery);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
+
+  const onFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(query);
+  };
+
   const handlePlayTrack = (trackId: string) => {
     setQueueAndPlay(results, trackId);
   };
@@ -63,7 +77,7 @@ export default function SearchPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-bold font-headline tracking-tight">Search</h1>
-        <form onSubmit={handleSearch} className="mt-4">
+        <form onSubmit={onFormSubmit} className="mt-4">
           <div className="flex gap-2">
             <Input
               type="search"

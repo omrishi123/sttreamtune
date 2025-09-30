@@ -14,8 +14,8 @@ import { useUserData } from "@/context/user-data-context";
 import { PlaylistCard } from "@/components/playlist-card";
 import { AddPlaylistDialog } from "@/components/add-playlist-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Sparkles, Tv, Settings } from "lucide-react";
-import { Playlist, User, Channel } from "@/lib/types";
+import { Plus, Upload, Sparkles, Tv, Settings, User } from "lucide-react";
+import { Playlist, User as AppUser, Channel } from "@/lib/types";
 import { ImportPlaylistDialog } from "@/components/import-playlist-dialog";
 import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
 import { ImportChannelDialog } from "@/components/import-channel-dialog";
@@ -160,7 +160,7 @@ const ChannelGrid = ({ channels }: { channels: Channel[] }) => {
 
 export default function LibraryPage() {
   const { playlists: userPrivatePlaylists, likedSongs, getTrackById, communityPlaylists, channels } = useUserData();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   
   useEffect(() => {
     const unsubscribe = onAuthChange(setCurrentUser);
@@ -252,7 +252,7 @@ export default function LibraryPage() {
         <TabsList>
           <TabsTrigger value="playlists">Playlists</TabsTrigger>
           <TabsTrigger value="channels">Channels</TabsTrigger>
-          <TabsTrigger value="artists" disabled>Artists</TabsTrigger>
+          <TabsTrigger value="artists" asChild><Link href="/artists">Artists</Link></TabsTrigger>
           <TabsTrigger value="albums" disabled>Albums</TabsTrigger>
         </TabsList>
 
