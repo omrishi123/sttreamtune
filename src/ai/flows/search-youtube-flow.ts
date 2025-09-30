@@ -112,7 +112,7 @@ export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeS
           'data-ai-hint': 'youtube video'
         };
       })
-      .slice(0, 15); // Limit results to a reasonable number
+      .slice(0, 150); // Limit results to a reasonable number
 
     return tracks;
 

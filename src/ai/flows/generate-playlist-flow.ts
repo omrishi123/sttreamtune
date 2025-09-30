@@ -73,7 +73,7 @@ const generatePlaylistFlow = ai.defineFlow(
 
     // Step 2: Generate cover art in parallel
     const imagePromise = ai.generate({
-        model: googleAI.model('gemini-1.5-flash'),
+        model: googleAI.model('gemini-2.5-flash'),
         prompt: `Album cover for a playlist about ${suggestion.coverArtPrompt}. Clean, modern, vibrant, high-resolution.`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
