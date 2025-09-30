@@ -43,7 +43,7 @@ const generateRecommendationsFlow = ai.defineFlow(
       name: 'recommendationSuggestionPrompt',
       input: { schema: GenerateRecommendationsInputSchema },
       output: { schema: RecommendationSuggestionSchema },
-      model: googleAI.model('gemini-1.5-flash'),
+      model: googleAI.model('gemini-2.5-flash'),
       prompt: `You are a music expert and DJ. Based on the user's recent search history, recommend 15 new and interesting songs that they might like.
       Provide a diverse list of tracks that match the genres and artists they have searched for.
 
