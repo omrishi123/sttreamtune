@@ -126,16 +126,15 @@ export default function PlaylistPage() {
 
   const handleTrackAdded = (newTrack: Track) => {
     if (!playlist) return;
-    // This function will be called from the AddSongsDialog
-    // It optimistically updates the UI
     addTrackToPlaylist(playlist.id, newTrack); 
     setTracks(currentTracks => {
         if (currentTracks.some(t => t.id === newTrack.id)) {
             return currentTracks;
         }
-        // Also update the track list in the playlist object itself for consistency
         if (playlist) {
-            setPlaylist({...playlist, trackIds: [...playlist.trackIds, newTrack.id]});
+            const updatedTrackIds = [...playlist.trackIds, newTrack.id];
+            const updatedTracks = [...currentTracks, newTrack];
+            setPlaylist({...playlist, trackIds: updatedTrackIds, tracks: updatedTracks });
         }
         return [...currentTracks, newTrack];
     });
@@ -151,17 +150,15 @@ export default function PlaylistPage() {
     setPlaylist(updatedPlaylist);
     setTracks(newTracks);
 
-    // This logic is for channel playlists specifically
     if (playlist.isChannelPlaylist) {
-      const channelId = playlist.id; // In this case, the playlist ID is the channel ID
+      const channelId = playlist.id;
       const newChannelData = {
           id: channelId,
           name: playlist.name,
           logo: playlist.coverArt,
-          uploads: newTracks, // Update the uploads list
-          playlists: [] // This view only deals with the 'uploads' part as a playlist
+          uploads: newTracks,
+          playlists: [] 
       };
-      // Note: This is a simplified update. A more complex app might need to fetch the full channel data.
       updateChannel(newChannelData);
     }
 
@@ -315,7 +312,7 @@ export default function PlaylistPage() {
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the
                             playlist "{playlist.name}".
-                        </Description>
+                        </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
