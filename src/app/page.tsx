@@ -81,7 +81,7 @@ export default function HomePage() {
         setUserGenres(preferences.genres);
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recentlyPlayed, userPlaylists, communityPlaylists]); // Depend on user data to refetch
+  }, []); // Changed: Removed dependencies to only run on initial load
 
   const featuredPlaylists = useMemo(() => {
     if (!communityPlaylists) return [];

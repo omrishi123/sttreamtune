@@ -77,7 +77,12 @@ const parseYouTubeData = (data: any): { tracks: Track[], continuationToken: stri
     }
     
     const tracks: Track[] = itemSection
-      .filter((item: any) => item.videoRenderer)
+      .filter((item: any) => {
+        if (!item.videoRenderer) return false;
+        // Filter out shorts: Check if duration is too short (less than 90 seconds)
+        const duration = parseDuration(item.videoRenderer.lengthText?.simpleText);
+        return duration >= 90;
+      })
       .map((item: any) => {
         const renderer = item.videoRenderer;
         const title = renderer.title?.runs?.[0]?.text || 'Unknown Title';
