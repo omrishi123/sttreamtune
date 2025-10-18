@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Image from "next/image";
@@ -128,7 +127,7 @@ export default function PlaylistPage() {
   const handleTrackAdded = (newTrack: Track) => {
     // This function will be called from the AddSongsDialog
     // It optimistically updates the UI
-    addTrackToPlaylist(playlist!.id, newTrack.id);
+    addTrackToPlaylist(playlist!.id, newTrack.id, newTrack); // Pass the full track object
     setTracks(currentTracks => {
         if (currentTracks.some(t => t.id === newTrack.id)) {
             return currentTracks;

@@ -25,7 +25,7 @@ interface UserDataContextType extends UserData {
   addRecentlyPlayed: (trackId: string) => void;
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description: string, isPublic: boolean, isVerified?: boolean) => Promise<void>;
-  addTrackToPlaylist: (playlistId: string, trackId: string) => void;
+  addTrackToPlaylist: (playlistId: string, trackId: string, track?: Track) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<{ success: boolean; message: string; }>;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
@@ -225,7 +225,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
+  const addTrackToPlaylist = async (playlistId: string, trackId: string, track?: Track) => {
     const playlist = getPlaylistById(playlistId);
     if (!playlist || !currentUser) return;
 
@@ -239,7 +239,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
             return;
         }
-        const trackToAdd = getTrackById(trackId);
+        const trackToAdd = track || getTrackById(trackId);
         if (!trackToAdd) {
             console.error("Cannot add a track that is not in cache to a public playlist.");
             return;
