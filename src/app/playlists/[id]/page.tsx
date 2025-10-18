@@ -125,9 +125,10 @@ export default function PlaylistPage() {
   }, [id, fetchPlaylistData]);
 
   const handleTrackAdded = (newTrack: Track) => {
+    if (!playlist) return;
     // This function will be called from the AddSongsDialog
     // It optimistically updates the UI
-    addTrackToPlaylist(playlist!.id, newTrack.id, newTrack); // Pass the full track object
+    addTrackToPlaylist(playlist.id, newTrack); 
     setTracks(currentTracks => {
         if (currentTracks.some(t => t.id === newTrack.id)) {
             return currentTracks;

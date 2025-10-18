@@ -51,6 +51,7 @@ export const PlaylistSection: React.FC<PlaylistSectionProps> = ({
       };
       fetchPlaylists();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPersonalized, title]);
 
   if (!isPersonalized && (!playlists || playlists.length === 0)) {

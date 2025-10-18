@@ -1,5 +1,4 @@
 
-
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import type { User, UserData, Playlist, Track, Channel } from '@/lib/types';
@@ -25,7 +24,7 @@ interface UserDataContextType extends UserData {
   addRecentlyPlayed: (trackId: string) => void;
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description: string, isPublic: boolean, isVerified?: boolean) => Promise<void>;
-  addTrackToPlaylist: (playlistId: string, trackId: string, track?: Track) => void;
+  addTrackToPlaylist: (playlistId: string, track: Track) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<{ success: boolean; message: string; }>;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
@@ -107,7 +106,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       });
       setCommunityPlaylists(playlists);
     }, (error) => {
-        console.error("Firestore (11.9.0): Uncaught Error in snapshot listener:", error)
+        console.error("Firestore snapshot error:", error)
     });
 
     return () => unsubscribe();
@@ -225,7 +224,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const addTrackToPlaylist = async (playlistId: string, trackId: string, track?: Track) => {
+  const addTrackToPlaylist = async (playlistId: string, track: Track) => {
     const playlist = getPlaylistById(playlistId);
     if (!playlist || !currentUser) return;
 
@@ -239,18 +238,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
             return;
         }
-        const trackToAdd = track || getTrackById(trackId);
-        if (!trackToAdd) {
-            console.error("Cannot add a track that is not in cache to a public playlist.");
-            return;
-        }
+        
         const playlistRef = doc(db, 'communityPlaylists', playlistId);
         try {
             await updateDoc(playlistRef, {
-                tracks: arrayUnion(trackToAdd),
-                trackIds: arrayUnion(trackId)
+                tracks: arrayUnion(track),
+                trackIds: arrayUnion(track.id)
             });
-            toast({ title: 'Added to playlist', description: `"${trackToAdd.title}" has been added.` });
+            toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
         } catch (error: any) {
             console.error("Error updating public playlist:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
@@ -263,7 +258,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             
             if (!targetPlaylist) return prev;
 
-            const isTrackAlreadyInPlaylist = targetPlaylist.trackIds.includes(trackId);
+            const isTrackAlreadyInPlaylist = targetPlaylist.trackIds.includes(track.id);
             if (isTrackAlreadyInPlaylist) {
                 wasAdded = false; // Track was already there
                 return prev;
@@ -271,7 +266,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
             wasAdded = true; // Track will be added
             const updatedPlaylists = currentPlaylists.map(p =>
-                p.id === playlistId ? { ...p, trackIds: [...p.trackIds, trackId] } : p
+                p.id === playlistId ? { ...p, trackIds: [...p.trackIds, track.id] } : p
             );
             return { ...prev, playlists: updatedPlaylists };
         });
