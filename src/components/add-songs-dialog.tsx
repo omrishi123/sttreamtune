@@ -20,7 +20,7 @@ import { useUserData } from '@/context/user-data-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Icons } from './icons';
 import { ScrollArea } from './ui/scroll-area';
-import { Check } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 
 interface AddSongsDialogProps {
   playlist: Playlist;
