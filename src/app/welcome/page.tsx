@@ -65,9 +65,6 @@ export default function WelcomePage() {
     // Brief delay to show loading state before redirecting
     setTimeout(() => {
         router.push('/');
-        // After pushing, force a reload of data on the new page.
-        // This is more reliable than window.location and keeps the user in-app.
-        router.refresh();
     }, 500);
   };
   

@@ -100,6 +100,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [isReadyForApp, setIsReadyForApp] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(false);
   
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
 
@@ -113,7 +114,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             setUser(fbUser);
             if (hasSelectedPreferences()) {
                 setIsReadyForApp(true);
-            } else {
+                setIsFirstLoad(false);
+            } else if (!isWelcomePage) {
+                setIsFirstLoad(true);
                 router.replace('/welcome');
             }
         } else {
@@ -122,9 +125,17 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [user, router]);
+  }, [user, router, isWelcomePage]);
+
+  // This effect handles the case where the user lands directly on the welcome page.
+  useEffect(() => {
+      if (isWelcomePage) {
+          setIsReadyForApp(true);
+          setIsFirstLoad(true);
+      }
+  }, [isWelcomePage]);
   
-  if (isAuthPage || isWelcomePage) {
+  if (isAuthPage || (isWelcomePage && user)) {
     return <>{children}</>;
   }
 
