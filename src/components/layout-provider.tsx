@@ -16,124 +16,76 @@ import { cn } from "@/lib/utils";
 import { hasSelectedPreferences, clearUserPreferences } from "@/lib/preferences";
 import { pingUserActivity } from "@/lib/user-activity";
 
-const loadingSubtitles = [
-    "Tuning your vibe…",
-    "Finding your rhythm…",
-    "Warming up the equalizer…",
-    "Curating the perfect flow…"
-];
-
 interface Particle {
   id: number;
-  char: string;
   style: React.CSSProperties;
 }
 
-function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
-    const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
+const DiyaIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" {...props}>
+        <defs>
+            <radialGradient id="flameGradient">
+                <stop offset="0%" stopColor="#FFD700" />
+                <stop offset="60%" stopColor="#FFA500" />
+                <stop offset="100%" stopColor="#FF4500" stopOpacity="0" />
+            </radialGradient>
+        </defs>
+        <path d="M10 80 Q 50 100 90 80 Q 50 90 10 80" fill="#FFC0CB" stroke="#A52A2A" strokeWidth="2" />
+        <path d="M40 70 Q 50 80 60 70" fill="none" stroke="#FF4500" strokeWidth="2" />
+        <ellipse cx="50" cy="55" rx="10" ry="20" fill="url(#flameGradient)" className="animate-flicker" />
+    </svg>
+);
+
+function DiwaliLoadingScreen({ isVisible }: { isVisible: boolean }) {
     const [particles, setParticles] = useState<Particle[]>([]);
-    const [progress, setProgress] = useState(0);
 
     const spawnParticle = useCallback(() => {
-        const notes = ["♪", "♫", "♬", "𝄞"];
         const newParticle: Particle = {
             id: Date.now() + Math.random(),
-            char: notes[Math.floor(Math.random() * notes.length)],
             style: {
-                left: `${Math.random() * 100}vw`,
-                animationDelay: `${Math.random() * 3}s`,
-                fontSize: `${14 + Math.random() * 20}px`,
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                width: `${2 + Math.random() * 3}px`,
+                height: `${2 + Math.random() * 3}px`,
             },
         };
-
-        setParticles(prev => {
-            const newParticles = [...prev, newParticle];
-            // Limit the number of particles to avoid performance issues
-            if (newParticles.length > 50) {
-                return newParticles.slice(newParticles.length - 50);
-            }
-            return newParticles;
-        });
-
+        setParticles(prev => [...prev, newParticle].slice(-50));
     }, []);
 
     useEffect(() => {
         if (!isVisible) return;
-    
-        const particleInterval = setInterval(spawnParticle, 150);
-        
+        const particleInterval = setInterval(spawnParticle, 200);
         return () => clearInterval(particleInterval);
-    }, [spawnParticle, isVisible]);
-    
-
-    useEffect(() => {
-        if (!isVisible) return;
-        const progressTimer = setInterval(() => {
-            setProgress(oldProgress => {
-                if (oldProgress >= 100) {
-                    clearInterval(progressTimer);
-                    return 100;
-                }
-                return oldProgress + 5;
-            });
-        }, 175); 
-
-        const subtitleInterval = setInterval(() => {
-            setSubtitle(prev => {
-                const currentIndex = loadingSubtitles.indexOf(prev);
-                return loadingSubtitles[(currentIndex + 1) % loadingSubtitles.length];
-            });
-        }, 1200);
-
-        return () => {
-            clearInterval(progressTimer);
-            clearInterval(subtitleInterval);
-        };
-    }, [isVisible]);
+    }, [isVisible, spawnParticle]);
 
     return (
          <div className={cn(
-            "fixed inset-0 z-[200] overflow-hidden bg-[#0b1020] transition-opacity duration-700 ease-in-out",
+            "fixed inset-0 z-[200] overflow-hidden bg-[#2C143D] transition-opacity duration-700 ease-in-out",
             isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
          )}>
-            <div className="fixed inset-0 bg-gradient-to-br from-[#1e1e2f] via-[#3b0066] to-[#001f54] bg-[size:300%_300%] animate-gradient-move filter saturate-110"></div>
-            <div 
-                className="fixed inset-[-100px] animate-drift mix-blend-soft-light opacity-45 pointer-events-none" 
-                style={{backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.05'/></svg>")`}}
-            ></div>
+            <div className="fixed inset-0 bg-gradient-to-br from-[#2C143D] via-[#5A2C6D] to-[#FF8C00] bg-[size:200%_200%] animate-gradient-move filter saturate-125"></div>
             
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 {particles.map(p => (
-                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float text-white" style={p.style}>
-                        {p.char}
-                    </div>
+                    <div key={p.id} className="absolute rounded-full bg-yellow-300/80 animate-sparkle" style={p.style}></div>
                 ))}
             </div>
 
-            <div className="fixed inset-0 grid place-items-center p-6">
-                <div className="w-full max-w-[520px] rounded-3xl p-7 text-center shadow-[0_30px_80px_rgba(0,0,0,.35),inset_0_0_0_1px_rgba(255,255,255,.08)] bg-white/5 backdrop-blur-lg">
-                    <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse text-shadow-[0_4px_30px_rgba(167,139,250,.45)] text-white">
-                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,_#7cf6ff,_transparent_55%),linear-gradient(135deg,_rgba(124,246,255,.55),_rgba(167,139,250,.5))] shadow-[0_10px_30px_rgba(124,246,255,.35),inset_0_0_18px_rgba(255,255,255,.25)]">
-                            <Icons.logo className="h-6 w-6 text-white"/>
-                        </div>
-                        <span className="text-white">StreamTune</span>
-                    </div>
+            <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white p-6">
+                <DiyaIcon className="w-24 h-24 mb-4" />
 
-                     <div className="flex justify-center gap-2 my-5 h-8 items-end">
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.4s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.3s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.2s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.1s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader"></span>
-                    </div>
-
-                    <div className="text-base opacity-85 text-white">{subtitle}</div>
-                    <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
-
-                    <div className="mt-4 p-2 rounded-lg bg-primary/20 border border-primary/30">
-                        <p className="text-xs text-primary font-semibold">{'{App Made by Om Rishi -ig-@om_ki_tech_18 }'}</p>
-                    </div>
+                <h1 className="text-4xl md:text-5xl font-bold text-shadow-[0_2px_15px_rgba(255,223,0,0.5)] font-headline" style={{ fontFamily: 'cursive' }}>
+                    Happy Diwali
+                </h1>
+                <p className="mt-2 text-lg opacity-80">from the StreamTune Team</p>
+                
+                <div className="mt-8 flex justify-center gap-3 h-8 items-end">
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse [animation-delay:-0.4s]"></span>
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse [animation-delay:-0.2s]"></span>
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
                 </div>
+                 <p className="mt-2 text-sm text-yellow-200/70">Lighting up your world with music...</p>
             </div>
         </div>
     );
@@ -155,7 +107,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthChange((fbUser) => {
         if(fbUser) {
             pingUserActivity(fbUser);
-            // If the user changes, reset their preferences to force re-selection
             if(user && user.id !== fbUser.id) {
                 clearUserPreferences();
             }
@@ -179,7 +130,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <AnimatedLoadingScreen isVisible={!isReadyForApp} />
+      <DiwaliLoadingScreen isVisible={!isReadyForApp} />
       
       {isReadyForApp && user ? (
          <div className="transition-opacity duration-500 ease-in-out opacity-100">
