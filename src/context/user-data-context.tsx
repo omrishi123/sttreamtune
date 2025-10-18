@@ -24,7 +24,7 @@ interface UserDataContextType extends UserData {
   addRecentlyPlayed: (trackId: string) => void;
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description: string, isPublic: boolean, isVerified?: boolean) => Promise<void>;
-  addTrackToPlaylist: (playlistId: string, trackId: string) => void;
+  addTrackToPlaylist: (playlistId: string, track: Track) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<{ success: boolean; message: string; }>;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
@@ -230,7 +230,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
+  const addTrackToPlaylist = async (playlistId: string, track: Track) => {
     const playlist = getPlaylistById(playlistId);
     if (!playlist || !currentUser) return;
   
@@ -245,46 +245,35 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
         
-        const trackToAdd = getTrackById(trackId);
-        if (!trackToAdd) {
-            console.error("Cannot add a track that is not in cache to a public playlist.");
-            return;
-        }
         const playlistRef = doc(db, 'communityPlaylists', playlistId);
         try {
             await updateDoc(playlistRef, {
-                tracks: arrayUnion(trackToAdd),
-                trackIds: arrayUnion(trackId)
+                tracks: arrayUnion(track),
+                trackIds: arrayUnion(track.id)
             });
-            toast({ title: 'Added to playlist', description: `"${trackToAdd.title}" has been added.` });
+            toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
         } catch (error: any) {
             console.error("Error updating public playlist:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
         }
-    } else {
-        // Use functional update to prevent race conditions
-        setUserData(prev => {
-            const newPlaylists = prev.playlists.map(p => {
-                if (p.id === playlistId) {
-                    if (p.trackIds.includes(trackId)) {
-                        // If track is already present, return original playlist to avoid re-render
-                        return p;
-                    }
-                    return { ...p, trackIds: [...p.trackIds, trackId] };
-                }
-                return p;
-            });
+    } else { // Private Playlist Logic
+        
+        const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
+        if (targetPlaylist && targetPlaylist.trackIds.includes(track.id)) {
+            toast({ title: 'Already in playlist', description: `"${track.title}" is already in the playlist.` });
+            return;
+        }
 
-            // Check if an update actually happened
-            const oldPlaylist = prev.playlists.find(p => p.id === playlistId);
-            if (oldPlaylist && !oldPlaylist.trackIds.includes(trackId)) {
-                toast({ title: 'Added to playlist', description: 'Song has been added.' });
-            } else {
-                toast({ title: 'Already in playlist', description: 'This song is already in the playlist.' });
-            }
-            
-            return { ...prev, playlists: newPlaylists };
-        });
+        setUserData(prev => ({
+            ...prev,
+            playlists: prev.playlists.map(p =>
+                p.id === playlistId
+                    ? { ...p, trackIds: [...p.trackIds, track.id] }
+                    : p
+            ),
+        }));
+        
+        toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
     }
   };
 
@@ -500,5 +489,7 @@ export const useUserData = (): UserDataContextType => {
   }
   return context;
 };
+
+    
 
     

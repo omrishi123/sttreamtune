@@ -126,15 +126,15 @@ export default function PlaylistPage() {
 
   const handleTrackAdded = (newTrack: Track) => {
     if (!playlist) return;
+
+    // Call the context function to handle the logic
     addTrackToPlaylist(playlist.id, newTrack); 
+    
+    // Immediately update the UI state
     setTracks(currentTracks => {
+        // Prevent adding duplicates to the view
         if (currentTracks.some(t => t.id === newTrack.id)) {
             return currentTracks;
-        }
-        if (playlist) {
-            const updatedTrackIds = [...playlist.trackIds, newTrack.id];
-            const updatedTracks = [...currentTracks, newTrack];
-            setPlaylist({...playlist, trackIds: updatedTrackIds, tracks: updatedTracks });
         }
         return [...currentTracks, newTrack];
     });
