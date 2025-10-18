@@ -34,21 +34,27 @@ const PlaylistSuggestionSchema = z.object({
     })).describe('A list of 15-20 songs that fit the prompt. Include a mix of popular and lesser-known tracks if possible.'),
 });
 
-export async function generatePlaylist(input: GeneratePlaylistInput): Promise<GeneratePlaylistResponse> {
-  const { playlist, tracks, generatedCoverArt } = await generatePlaylistFlow(input);
-  // Return the generatedCoverArt separately so the frontend can display it immediately,
-  // but it's not saved to the database for public playlists to avoid size limit errors.
-  return { playlist, tracks, generatedCoverArt };
+// The response from the top-level function no longer includes generatedCoverArt
+const SimpleGeneratePlaylistResponseSchema = z.object({
+  playlist: GeneratePlaylistResponseSchema.shape.playlist,
+  tracks: GeneratePlaylistResponseSchema.shape.tracks,
+});
+export type SimpleGeneratePlaylistResponse = z.infer<typeof SimpleGeneratePlaylistResponseSchema>;
+
+
+export async function generatePlaylist(input: GeneratePlaylistInput): Promise<SimpleGeneratePlaylistResponse> {
+  const { playlist, tracks } = await generatePlaylistFlow(input);
+  return { playlist, tracks };
 }
 
 const generatePlaylistFlow = ai.defineFlow(
   {
     name: 'generatePlaylistFlow',
     inputSchema: GeneratePlaylistInputSchema,
+    // Output schema is simplified, no longer returning generatedCoverArt
     outputSchema: z.object({
       playlist: GeneratePlaylistResponseSchema.shape.playlist,
       tracks: GeneratePlaylistResponseSchema.shape.tracks,
-      generatedCoverArt: z.string().optional(),
     }),
   },
   async (input) => {
@@ -70,34 +76,23 @@ const generatePlaylistFlow = ai.defineFlow(
     if (!suggestion) {
       throw new Error('Could not generate playlist suggestions.');
     }
-
-    // Step 2: Generate cover art in parallel
-    const imagePromise = ai.generate({
-        model: googleAI.model('gemini-1.5-flash-preview'),
-        prompt: `Album cover for a playlist about ${suggestion.coverArtPrompt}. Clean, modern, vibrant, high-resolution.`,
-        config: {
-          responseModalities: ['TEXT', 'IMAGE'],
-        },
-    });
     
-    // Step 3: Search for each song on YouTube in parallel
+    // Step 2: Search for each song on YouTube in parallel
     const searchPromises = suggestion.songs.map(song => 
       searchYoutube({ query: `${song.title} by ${song.artist}` })
     );
 
-    const [imageResponse, ...searchResults] = await Promise.all([imagePromise, ...searchPromises]);
+    const searchResults = await Promise.all(searchPromises);
     
-    // Step 4: Consolidate results
+    // Step 3: Consolidate results
     const foundTracks: YoutubeSearchOutput = searchResults
       .map(res => res[0]) // Take the top result for each search
       .filter((track): track is NonNullable<typeof track> => track !== null && track !== undefined);
 
-    const generatedCoverArt = imageResponse.media?.url;
-
     // Use the first track's artwork as the cover, or a placeholder if no tracks are found.
     const coverArtUrl = foundTracks.length > 0 ? foundTracks[0].artwork : 'https://i.postimg.cc/SswWC87w/streamtune.png';
 
-    // Step 5: Format the final playlist object
+    // Step 4: Format the final playlist object
     const finalPlaylist = {
       id: input.playlistId, // Use the ID passed from the client
       name: suggestion.name,
@@ -113,9 +108,6 @@ const generatePlaylistFlow = ai.defineFlow(
     return {
       playlist: finalPlaylist,
       tracks: foundTracks,
-      // For private playlists, we can return the AI-generated art for immediate use.
-      // The dialog component will decide whether to use it.
-      generatedCoverArt: generatedCoverArt, 
     };
   }
 );

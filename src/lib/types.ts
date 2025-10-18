@@ -64,6 +64,7 @@ export interface UserActivity {
   isGuest: boolean;
 }
 
+// This schema still defines the full possible response from the flow
 export const GeneratePlaylistResponseSchema = z.object({
   playlist: z.object({
     id: z.string(),
@@ -90,8 +91,11 @@ export const GeneratePlaylistResponseSchema = z.object({
       'data-ai-hint': z.optional(z.string()),
     })
   ),
+  // generatedCoverArt is now optional as it's no longer always created
   generatedCoverArt: z.string().optional(),
 });
+
+// This is the type for the full response, which may or may not have generatedCoverArt
 export type GeneratePlaylistResponse = z.infer<
   typeof GeneratePlaylistResponseSchema
 >;
