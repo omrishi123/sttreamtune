@@ -25,6 +25,27 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getUserPreferences } from '@/lib/preferences';
 import { PlaylistSection } from '@/components/playlist-section';
 
+// Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
+const serializeTimestamps = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(serializeTimestamps);
+  }
+  const newObj: { [key: string]: any } = {};
+  for (const key in obj) {
+    const value = obj[key];
+    if (value && typeof value.toDate === 'function') {
+      newObj[key] = value.toDate().toISOString();
+    } else {
+      newObj[key] = serializeTimestamps(value);
+    }
+  }
+  return newObj;
+};
+
+
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { communityPlaylists, recentlyPlayed, playlists: userPlaylists, getTrackById, addTracksToCache } = useUserData();
@@ -37,10 +58,16 @@ export default function HomePage() {
           setLoadingRecommendations(true);
           const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
           if (recentTracks.length > 0 || userPlaylists.length > 0) {
+            
+            // Serialize data before sending it to the server function
+            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+            const plainUserPlaylists = serializeTimestamps(userPlaylists);
+            const plainRecentTracks = serializeTimestamps(recentTracks);
+
             const { tracks } = await generateRecommendations({
-                recentlyPlayed: recentTracks,
-                userPlaylists,
-                communityPlaylists,
+                recentlyPlayed: plainRecentTracks,
+                userPlaylists: plainUserPlaylists,
+                communityPlaylists: plainCommunityPlaylists,
             });
             addTracksToCache(tracks);
             setRecommendedTracks(tracks);
