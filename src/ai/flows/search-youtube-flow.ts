@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A YouTube search utility that directly scrapes YouTube's search results.
+ * @fileOverview A YouTube search utility that directly scrapes YouTube's search results and supports pagination.
  * 
- * - searchYoutube - A function that handles searching for videos by parsing YouTube's HTML response.
+ * - searchYoutube - A function that handles searching for videos by parsing YouTube's HTML response and handling continuation tokens.
  * - YoutubeSearchInput - The input type for the searchYoutube function.
  * - YoutubeSearchOutput - The return type for the searchYoutube function.
  */
@@ -12,26 +12,30 @@ import { z } from 'zod';
 import { Track } from '@/lib/types';
 
 const YOUTUBE_SEARCH_URL = 'https://www.youtube.com/results';
+const YOUTUBE_API_URL = 'https://www.youtube.com/youtubei/v1/search';
 
 const YoutubeSearchInputSchema = z.object({
   query: z.string().describe('The search query for YouTube.'),
+  continuationToken: z.string().optional().describe('The token for fetching the next page of results.'),
 });
 export type YoutubeSearchInput = z.infer<typeof YoutubeSearchInputSchema>;
 
-const YoutubeSearchOutputSchema = z.array(
-  z.object({
-    id: z.string(),
-    youtubeVideoId: z.string(),
-    title: z.string(),
-    artist: z.string(),
-    album: z.string(),
-    artwork: z.string(),
-    duration: z.number(),
-    'data-ai-hint': z.optional(z.string()),
-  })
-);
+const YoutubeSearchOutputSchema = z.object({
+    tracks: z.array(
+        z.object({
+            id: z.string(),
+            youtubeVideoId: z.string(),
+            title: z.string(),
+            artist: z.string(),
+            album: z.string(),
+            artwork: z.string(),
+            duration: z.number(),
+            'data-ai-hint': z.optional(z.string()),
+        })
+    ),
+    nextContinuationToken: z.string().nullable(),
+});
 export type YoutubeSearchOutput = z.infer<typeof YoutubeSearchOutputSchema>;
-
 
 // Helper function to parse duration from "H:M:S" or "M:S" format to seconds
 const parseDuration = (durationText: string | undefined): number => {
@@ -51,48 +55,27 @@ const parseDuration = (durationText: string | undefined): number => {
     return seconds;
 };
 
-export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeSearchOutput> {
-  const url = new URL(YOUTUBE_SEARCH_URL);
-  url.searchParams.append('search_query', input.query);
-
-  try {
-    const response = await fetch(url.toString(), {
-      headers: {
-        // Using a common user-agent can help avoid being blocked
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("YouTube Scraping Error:", errorText);
-        throw new Error(`YouTube scraping failed with status ${response.status}`);
-    }
-
-    const html = await response.text();
+// Helper function to extract tracks and continuation token from YouTube's data structure
+const parseYouTubeData = (data: any): { tracks: Track[], continuationToken: string | null } => {
+    const contents = data?.onResponseReceivedCommands?.[0]?.appendContinuationItemsAction?.continuationItems ||
+                     data?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
     
-    // Find the script tag containing 'ytInitialData'
-    const match = html.match(/var ytInitialData = (.*?);<\/script>/);
-    if (!match || !match[1]) {
-      console.error('Could not find ytInitialData in YouTube response.');
-      return [];
-    }
-
-    const data = JSON.parse(match[1]);
-
-    // Navigate the complex JSON structure to find video results
-    const contents = data?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
     if (!contents || !Array.isArray(contents)) {
-        console.error('Invalid data structure in ytInitialData.');
-        return [];
-    }
-    
-    const itemSection = contents.find((c: any) => c.itemSectionRenderer)?.itemSectionRenderer?.contents;
-    if (!itemSection) {
-        console.error('Could not find itemSectionRenderer in contents.');
-        return [];
+        console.error('Invalid data structure in parseYouTubeData.');
+        return { tracks: [], continuationToken: null };
     }
 
+    let itemSection = contents.find((c: any) => c.itemSectionRenderer)?.itemSectionRenderer?.contents;
+    
+    if (!itemSection && contents.length > 0) {
+        itemSection = contents;
+    }
+
+    if (!itemSection) {
+        console.error('Could not find itemSectionRenderer in contents for tracks.');
+        return { tracks: [], continuationToken: null };
+    }
+    
     const tracks: Track[] = itemSection
       .filter((item: any) => item.videoRenderer)
       .map((item: any) => {
@@ -113,11 +96,65 @@ export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeS
         };
       });
 
-    return tracks;
+    // Find the continuation token for the next page
+    const continuationItem = contents.find((c: any) => c.continuationItemRenderer)?.continuationItemRenderer;
+    const continuationToken = continuationItem?.continuationEndpoint?.continuationCommand?.token || null;
+      
+    return { tracks, continuationToken };
+};
+
+
+export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeSearchOutput> {
+  const commonHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+  };
+
+  try {
+    let response;
+    let data;
+
+    if (input.continuationToken) {
+      // Logic for fetching subsequent pages
+      response = await fetch(YOUTUBE_API_URL, {
+        method: 'POST',
+        headers: { ...commonHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context: {
+            client: {
+              clientName: "WEB",
+              clientVersion: "2.20210721.00.00",
+            },
+          },
+          continuation: input.continuationToken,
+        }),
+      });
+      data = await response.json();
+    } else {
+      // Logic for the initial search
+      const url = new URL(YOUTUBE_SEARCH_URL);
+      url.searchParams.append('search_query', input.query);
+      response = await fetch(url.toString(), { headers: commonHeaders });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`YouTube scraping failed with status ${response.status}: ${errorText}`);
+      }
+      
+      const html = await response.text();
+      const match = html.match(/var ytInitialData = (.*?);<\/script>/);
+      if (!match || !match[1]) {
+        throw new Error('Could not find ytInitialData in YouTube response.');
+      }
+      data = JSON.parse(match[1]);
+    }
+
+    const { tracks, continuationToken: nextContinuationToken } = parseYouTubeData(data);
+    
+    return { tracks, nextContinuationToken };
 
   } catch (error) {
     console.error("Failed to fetch or parse YouTube search results:", error);
-    // On any failure, return an empty array to prevent app crashes.
-    return [];
+    return { tracks: [], nextContinuationToken: null };
   }
 }

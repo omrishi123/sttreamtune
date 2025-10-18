@@ -6,39 +6,61 @@ import Image from "next/image";
 import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Play, Loader2 } from "lucide-react";
 import { searchYoutube, YoutubeSearchOutput } from "@/ai/flows/search-youtube-flow";
 import { usePlayer } from "@/context/player-context";
 import { useUserData } from "@/context/user-data-context";
 import { useToast } from "@/hooks/use-toast";
 import { clearAllRecommendationCaches, updateSearchHistory } from "@/lib/recommendations";
+import { Track } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState<YoutubeSearchOutput>([]);
+  const [results, setResults] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [continuationToken, setContinuationToken] = useState<string | null>(null);
+
   const { setQueueAndPlay } = usePlayer();
   const { addTracksToCache } = useUserData();
   const { toast } = useToast();
 
-  const handleSearch = async (searchQuery: string) => {
+  const handleSearch = async (searchQuery: string, isNewSearch: boolean = true) => {
     if (!searchQuery) return;
 
-    setIsLoading(true);
-    setResults([]);
+    if (isNewSearch) {
+      setIsLoading(true);
+      setResults([]);
+      setContinuationToken(null);
+    } else {
+      setIsFetchingMore(true);
+    }
+
     try {
-      const searchResults = await searchYoutube({ query: searchQuery });
-      addTracksToCache(searchResults);
-      setResults(searchResults);
-       if (searchResults.length === 0) {
+      const searchResults = await searchYoutube({ 
+        query: searchQuery,
+        continuationToken: isNewSearch ? undefined : continuationToken ?? undefined,
+      });
+
+      addTracksToCache(searchResults.tracks);
+      
+      if (isNewSearch) {
+        setResults(searchResults.tracks);
+      } else {
+        setResults(prev => [...prev, ...searchResults.tracks]);
+      }
+      
+      setContinuationToken(searchResults.nextContinuationToken);
+
+       if (isNewSearch && searchResults.tracks.length === 0) {
         toast({
           title: "No results found",
           description: "Try a different search term.",
         });
-      } else {
-        // On successful search, update history and clear old recommendations
+      } else if (isNewSearch) {
         updateSearchHistory(searchQuery);
         clearAllRecommendationCaches();
       }
@@ -54,6 +76,7 @@ export default function SearchPage() {
       });
     } finally {
       setIsLoading(false);
+      setIsFetchingMore(false);
     }
   };
 
@@ -72,6 +95,12 @@ export default function SearchPage() {
   const handlePlayTrack = (trackId: string) => {
     setQueueAndPlay(results, trackId);
   };
+
+  const loadMore = () => {
+    if (query && continuationToken) {
+      handleSearch(query, false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -96,7 +125,9 @@ export default function SearchPage() {
       <section>
         <h2 className="text-xl font-semibold font-headline mb-4">Results</h2>
         {isLoading && results.length === 0 ? (
-          <p>Loading...</p>
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-md" />)}
+          </div>
         ) : (
           <div className="space-y-2">
             {results.map((track) => (
@@ -123,6 +154,20 @@ export default function SearchPage() {
                 </Button>
               </div>
             ))}
+          </div>
+        )}
+        {continuationToken && !isLoading && (
+          <div className="flex justify-center mt-6">
+            <Button onClick={loadMore} disabled={isFetchingMore}>
+              {isFetchingMore ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                "Load More"
+              )}
+            </Button>
           </div>
         )}
       </section>
