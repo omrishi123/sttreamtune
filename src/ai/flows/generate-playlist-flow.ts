@@ -11,7 +11,8 @@
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
-import { searchYoutube, YoutubeSearchOutput } from './search-youtube-flow';
+import { searchYoutube } from './search-youtube-flow';
+import type { YoutubeSearchOutput } from './search-youtube-flow';
 import { GeneratePlaylistResponse, GeneratePlaylistResponseSchema } from '@/lib/types';
 import { nanoid } from 'nanoid';
 
@@ -20,6 +21,7 @@ const GeneratePlaylistInputSchema = z.object({
   userId: z.string().describe("The ID of the user creating the playlist."),
   userName: z.string().describe("The name of the user creating the playlist."),
   isPublic: z.boolean().describe("Whether the playlist should be public."),
+  isVerified: z.boolean().describe("Whether the creating user is verified."), // Add isVerified
   playlistId: z.string().describe("A pre-generated unique ID for the playlist."),
 });
 export type GeneratePlaylistInput = z.infer<typeof GeneratePlaylistInputSchema>;
@@ -34,7 +36,6 @@ const PlaylistSuggestionSchema = z.object({
     })).describe('A list of 15-20 songs that fit the prompt. Include a mix of popular and lesser-known tracks if possible.'),
 });
 
-// The response from the top-level function no longer includes generatedCoverArt
 const SimpleGeneratePlaylistResponseSchema = z.object({
   playlist: GeneratePlaylistResponseSchema.shape.playlist,
   tracks: GeneratePlaylistResponseSchema.shape.tracks,
@@ -51,7 +52,6 @@ const generatePlaylistFlow = ai.defineFlow(
   {
     name: 'generatePlaylistFlow',
     inputSchema: GeneratePlaylistInputSchema,
-    // Output schema is simplified, no longer returning generatedCoverArt
     outputSchema: z.object({
       playlist: GeneratePlaylistResponseSchema.shape.playlist,
       tracks: GeneratePlaylistResponseSchema.shape.tracks,
@@ -85,29 +85,38 @@ const generatePlaylistFlow = ai.defineFlow(
     const searchResults = await Promise.all(searchPromises);
     
     // Step 3: Consolidate results
-    const foundTracks: YoutubeSearchOutput = searchResults
-      .map(res => res[0]) // Take the top result for each search
+    const foundTracks: YoutubeSearchOutput['tracks'] = searchResults
+      .flatMap(res => res.tracks) // Use flatMap to handle multiple results per search if any
       .filter((track): track is NonNullable<typeof track> => track !== null && track !== undefined);
 
-    // Use the first track's artwork as the cover, or a placeholder if no tracks are found.
-    const coverArtUrl = foundTracks.length > 0 ? foundTracks[0].artwork : 'https://i.postimg.cc/SswWC87w/streamtune.png';
+    const uniqueTracks: typeof foundTracks = [];
+    const seenIds = new Set();
+    for (const track of foundTracks) {
+        if (!seenIds.has(track.id)) {
+            uniqueTracks.push(track);
+            seenIds.add(track.id);
+        }
+    }
+
+    const coverArtUrl = uniqueTracks.length > 0 ? uniqueTracks[0].artwork : 'https://i.postimg.cc/SswWC87w/streamtune.png';
 
     // Step 4: Format the final playlist object
     const finalPlaylist = {
-      id: input.playlistId, // Use the ID passed from the client
+      id: input.playlistId,
       name: suggestion.name,
       description: suggestion.description,
       owner: input.userName,
       public: input.isPublic,
-      trackIds: foundTracks.map(track => track.id),
-      coverArt: coverArtUrl, // Use the first track's artwork or a placeholder.
-      ownerId: input.userId, // Ensure the ownerId is always set
+      trackIds: uniqueTracks.map(track => track.id),
+      coverArt: coverArtUrl,
+      ownerId: input.userId,
+      ownerIsVerified: input.isVerified, // Set the verification status
       'data-ai-hint': suggestion.coverArtPrompt,
     };
     
     return {
       playlist: finalPlaylist,
-      tracks: foundTracks,
+      tracks: uniqueTracks,
     };
   }
 );

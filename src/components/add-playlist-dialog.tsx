@@ -72,7 +72,8 @@ export function AddPlaylistDialog({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
-      await createPlaylist(name, description, isPublic);
+      // Pass the user's verification status to the createPlaylist function
+      await createPlaylist(name, description, isPublic, user.isVerified);
       toast({
         title: 'Playlist Created!',
         description: `"${name}" has been created.`,

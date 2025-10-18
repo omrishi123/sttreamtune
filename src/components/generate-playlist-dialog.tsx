@@ -88,7 +88,8 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
         userId: user.id,
         userName: user.name,
         isPublic: isPublic,
-        playlistId: newPlaylistId, // Pass the generated ID to the flow
+        isVerified: !!user.isVerified, // Pass user's verification status
+        playlistId: newPlaylistId,
       });
 
       if (!result || !result.playlist || !result.tracks) {
@@ -99,20 +100,16 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       
       const playlistToSave = { ...result.playlist };
       
-      // *** FIX: Ensure ownerId is always set on the playlist before saving ***
       playlistToSave.ownerId = user.id;
 
       if (isPublic) {
-         // For public playlists, we save to Firestore with the consistent ID.
          const publicPlaylistData = {
           ...playlistToSave,
           tracks: result.tracks,
           createdAt: serverTimestamp(),
          }
-         // Use setDoc with the pre-generated ID
          await setDoc(doc(db, "communityPlaylists", newPlaylistId), publicPlaylistData);
       } else {
-        // For private playlists, add the version with the (potentially AI-generated) cover art
         addPlaylist(playlistToSave);
       }
 
@@ -126,13 +123,10 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       setIsPublic(false);
     } catch (error: any) {
       console.error('Failed to generate playlist:', error);
-      const isFirestoreError = error.message?.includes('longer than 1048487 bytes');
       toast({
         variant: 'destructive',
         title: 'Generation Failed',
-        description: isFirestoreError
-            ? 'The generated cover art was too large to save. Please try a different prompt.'
-            : (error.message || 'Could not generate the playlist. Please try a different prompt.'),
+        description: error.message || 'Could not generate the playlist. Please try a different prompt.',
       });
     } finally {
       setIsLoading(false);

@@ -105,18 +105,18 @@ export function ImportPlaylistDialog({ children }: { children: React.ReactNode }
 
       const importedPlaylistData: Playlist = {
         ...playlistDetails,
-        id: newPlaylistId, // Use the new, consistent ID
+        id: newPlaylistId,
         trackIds: tracks.map(t => t.id),
         public: isPublic,
         owner: user.name,
-        ownerId: user.id, // Ensure ownerId is always set
+        ownerId: user.id,
+        ownerIsVerified: !!user.isVerified, // Pass user's verification status
       };
 
       if(isPublic) {
-        // Use setDoc with the pre-generated ID
         await setDoc(doc(db, "communityPlaylists", newPlaylistId), {
           ...importedPlaylistData,
-          tracks: tracks, // Embed full track objects
+          tracks: tracks,
           createdAt: serverTimestamp(),
         });
       } else {

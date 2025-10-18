@@ -24,7 +24,7 @@ interface UserDataContextType extends UserData {
   toggleLike: (trackId: string) => void;
   addRecentlyPlayed: (trackId: string) => void;
   getTrackById: (trackId: string) => Track | undefined;
-  createPlaylist: (name: string, description: string, isPublic: boolean) => Promise<void>;
+  createPlaylist: (name: string, description: string, isPublic: boolean, isVerified?: boolean) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, trackId: string) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<{ success: boolean; message: string; }>;
@@ -49,7 +49,6 @@ const getInitialUserData = (userId: string): UserData => {
     const storedData = window.localStorage.getItem(`userData-${userId}`);
     if (storedData) {
       const parsedData = JSON.parse(storedData);
-      // Ensure channels array exists for backward compatibility
       return { ...defaults, ...parsedData, channels: parsedData.channels || [] };
     }
   } catch (error) {
@@ -85,7 +84,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
-  // Subscribe to auth changes
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
       setCurrentUser(user);
@@ -93,7 +91,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         setUserData(getInitialUserData(user.id));
         setTrackCache(getInitialTrackCache());
       } else {
-        // Handle logout case
         setUserData({ likedSongs: [], playlists: [], recentlyPlayed: [], channels: [] });
       }
        setIsInitialized(true);
@@ -101,13 +98,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch community playlists from Firestore in real-time
   useEffect(() => {
     const q = query(collection(db, "communityPlaylists"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const playlists: Playlist[] = [];
       querySnapshot.forEach((doc) => {
-        // *** FIX: Ensure the document's own ID is used as the primary ID for the playlist object ***
         playlists.push({ ...doc.data(), id: doc.id } as Playlist);
       });
       setCommunityPlaylists(playlists);
@@ -118,7 +113,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  // Persist user data to local storage
   useEffect(() => {
     if (!isInitialized || !currentUser) return;
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -130,7 +124,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [userData, currentUser, isInitialized]);
 
-  // Persist track cache to local storage
   useEffect(() => {
     if (!isInitialized || !currentUser) return;
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -185,19 +178,17 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addPlaylist = (playlist: Playlist) => {
-      // For private playlists, we add them directly to local state
       setUserData(prev => ({
         ...prev,
         playlists: [playlist, ...prev.playlists],
       }));
   };
   
-  const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false) => {
+  const createPlaylist = async (name: string, description: string = '', isPublic: boolean = false, isVerified: boolean = false) => {
     if (!currentUser) {
       throw new Error("Cannot create playlist: no user is logged in.");
     }
     
-    // Explicitly block guest users from creating public playlists
     if (currentUser.id === 'guest' && isPublic) {
       throw new Error("Guest users cannot create public playlists. Please log in.");
     }
@@ -209,22 +200,21 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       public: isPublic,
       owner: currentUser.name, 
       ownerId: currentUser.id,
-      ownerIsVerified: currentUser.isVerified, // Add verification status
+      ownerIsVerified: isVerified, // Set verification status from parameter
       coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
       'data-ai-hint': 'playlist cover',
     };
 
     if (isPublic) {
       try {
-        // Save to Firestore. The real-time listener will handle adding it to the local state.
         await addDoc(collection(db, "communityPlaylists"), {
           ...newPlaylistData,
-          tracks: [], // Initialize with empty tracks array
+          tracks: [],
           createdAt: serverTimestamp(),
         });
       } catch (e) {
         console.error("Error adding document: ", e);
-        throw e; // re-throw to be caught by the dialog
+        throw e;
       }
     } else {
         const newLocalPlaylist: Playlist = {
@@ -286,7 +276,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             return { ...prev, playlists: updatedPlaylists };
         });
 
-        // Trigger toast outside of the setter function
         if (wasAdded) {
             toast({ title: 'Added to playlist', description: 'Song has been added.' });
         } else {
@@ -301,7 +290,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     if (!playlist || !currentUser) return;
 
     if (playlist.public) {
-        // For public playlists in Firestore - use the secure flow
         const result = await removeTrackFromPublicPlaylist({
             playlistId: playlist.id,
             trackIdToRemove: trackId,
@@ -317,7 +305,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             });
         }
     } else if (playlist.isChannelPlaylist) {
-        // Handle local channel playlists
         const channel = userData.channels.find(c => c.id === playlist.id);
         if (channel) {
             const updatedUploads = channel.uploads.filter(t => t.id !== trackId);
@@ -326,7 +313,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             toast({ title: "Track Removed", description: "The track has been removed from the channel's uploads."});
         }
     } else {
-      // For private playlists in local storage
       setUserData(prev => ({
         ...prev,
         playlists: prev.playlists.map(p =>
@@ -350,7 +336,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         });
         return result;
     } else if (playlist.isChannelPlaylist) {
-      // Find the channel that contains this playlist and remove it
       let channelIdContainingPlaylist: string | null = null;
       const updatedChannels = userData.channels.map(channel => {
           const playlistExists = channel.playlists.some(p => p.id === playlistId);
@@ -375,7 +360,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       }
 
     } else {
-      // It's a private playlist, remove from local state
       setUserData(prev => ({
         ...prev,
         playlists: prev.playlists.filter(p => p.id !== playlistId),
@@ -415,17 +399,14 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       };
     }
     
-    // Check local/private playlists first
     const userPlaylist = userData.playlists.find(p => p.id === playlistId);
     if (userPlaylist) return userPlaylist;
 
-    // Check firestore/community playlists next
     const communityPlaylist = communityPlaylists.find(p => p.id === playlistId);
     if (communityPlaylist) return communityPlaylist;
     
-    // Check channel playlists
     for (const channel of userData.channels) {
-        if (channel.id === playlistId) { // For the main "uploads" list
+        if (channel.id === playlistId) {
              return {
                 id: channel.id,
                 name: channel.name,
@@ -440,14 +421,11 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         }
         const channelPlaylist = channel.playlists.find(p => p.id === playlistId);
         if (channelPlaylist) {
-            // Because tracks are not stored inside the channel playlist object, we need to fetch them
             const tracks = channelPlaylist.trackIds.map(id => getTrackById(id)).filter(Boolean) as Track[];
             return {...channelPlaylist, tracks, isChannelPlaylist: true};
         }
     }
 
-
-    // Finally, check the temporary cache for fetched YT playlists
     return getCachedSinglePlaylist(playlistId);
   }
 
