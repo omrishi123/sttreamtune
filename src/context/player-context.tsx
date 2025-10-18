@@ -39,6 +39,8 @@ interface PlayerContextType {
   setSleepTimer: (durationInMillis: number) => void;
   isNowPlayingOpen: boolean;
   setIsNowPlayingOpen: (isOpen: boolean) => void;
+  isMinimized: boolean;
+  setIsMinimized: (isMinimized: boolean) => void;
   videoPlayerRef: React.RefObject<YouTube | null>;
   reorderQueue: (sourceIndex: number, destinationIndex: number) => void;
 }
@@ -54,6 +56,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isNativePlayback, setIsNativePlayback] = useState(false);
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -374,6 +377,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setSleepTimer,
     isNowPlayingOpen,
     setIsNowPlayingOpen,
+    isMinimized,
+    setIsMinimized,
     videoPlayerRef,
     reorderQueue,
   };
@@ -414,3 +419,5 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
+
+    

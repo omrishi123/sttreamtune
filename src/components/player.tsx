@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
 import {
   Play,
@@ -15,7 +15,9 @@ import {
   Heart,
   Timer,
   Youtube,
+  Minus,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -44,6 +46,64 @@ const EqualizerBars = ({ isPlaying }: { isPlaying: boolean }) => (
     </div>
 );
 
+const FloatingPlayer = () => {
+    const { 
+        currentTrack, 
+        isPlaying,
+        play,
+        pause,
+        isMinimized,
+        setIsMinimized,
+    } = usePlayer();
+    const constraintsRef = useRef(null);
+
+    if (!currentTrack || !isMinimized) {
+        return null;
+    }
+    
+    const handlePlayPause = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent the click from expanding the player
+        if (isPlaying) {
+            pause();
+        } else {
+            play();
+        }
+    }
+
+    return (
+        <motion.div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-[100]">
+            <motion.div
+                drag
+                dragConstraints={constraintsRef}
+                dragMomentum={false}
+                className="absolute bottom-24 right-4 pointer-events-auto group"
+                onClick={() => setIsMinimized(false)}
+            >
+                <div className="relative w-16 h-16 rounded-full shadow-2xl cursor-grab active:cursor-grabbing">
+                     <Image
+                        src={currentTrack.artwork}
+                        alt={currentTrack.title}
+                        width={64}
+                        height={64}
+                        className="rounded-full object-cover"
+                        unoptimized
+                    />
+                    <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                         <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-12 w-12 rounded-full backdrop-blur-sm bg-black/20 hover:bg-black/40 text-white"
+                            onClick={handlePlayPause}
+                         >
+                            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                        </Button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
 
 export function Player() {
   const { 
@@ -60,6 +120,8 @@ export function Player() {
     setSleepTimer,
     isNowPlayingOpen,
     setIsNowPlayingOpen,
+    isMinimized,
+    setIsMinimized,
   } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
@@ -101,6 +163,10 @@ export function Player() {
   
   const isCurrentTrackLiked = isLiked(currentTrack.id);
 
+  if (isMinimized) {
+      return <FloatingPlayer />;
+  }
+
   if (isMobile) {
     return (
        <footer className="fixed bottom-16 left-0 right-0 bg-card/70 border-t border-border/50 px-4 py-3 flex flex-col gap-2 text-card-foreground shadow-lg z-40 backdrop-blur-lg">
@@ -123,10 +189,12 @@ export function Player() {
             </div>
           </div>
           <div className="flex items-center">
+              <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
+                  <Minus className="h-5 w-5" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={handleToggleLike}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
-              <AddToPlaylistMenu track={currentTrack} />
           </div>
         </div>
 
@@ -295,6 +363,9 @@ export function Player() {
           <Button variant="ghost" size="icon" onClick={() => setIsNowPlayingOpen(true)}>
               <Youtube className="h-5 w-5" />
           </Button>
+           <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
+              <Minus className="h-5 w-5" />
+           </Button>
           <QueueSheet />
         </div>
       </div>
@@ -302,3 +373,5 @@ export function Player() {
     </footer>
   );
 }
+
+    
