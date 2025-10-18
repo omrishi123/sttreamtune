@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
@@ -28,39 +28,65 @@ export default function SearchPage() {
   const { addTracksToCache } = useUserData();
   const { toast } = useToast();
 
-  const handleSearch = async (searchQuery: string, isNewSearch: boolean = true) => {
-    if (!searchQuery) return;
+  const observer = useRef<IntersectionObserver>();
 
-    if (isNewSearch) {
-      setIsLoading(true);
-      setResults([]);
-      setContinuationToken(null);
-    } else {
-      setIsFetchingMore(true);
-    }
-
+  const loadMore = useCallback(async () => {
+    if (!query || !continuationToken || isFetchingMore) return;
+    
+    setIsFetchingMore(true);
     try {
       const searchResults = await searchYoutube({ 
-        query: searchQuery,
-        continuationToken: isNewSearch ? undefined : continuationToken ?? undefined,
+        query: query,
+        continuationToken: continuationToken,
       });
-
       addTracksToCache(searchResults.tracks);
-      
-      if (isNewSearch) {
-        setResults(searchResults.tracks);
-      } else {
-        setResults(prev => [...prev, ...searchResults.tracks]);
+      setResults(prev => [...prev, ...searchResults.tracks]);
+      setContinuationToken(searchResults.nextContinuationToken);
+    } catch (error: any) {
+      console.error("Failed to fetch more results:", error);
+      toast({
+        variant: "destructive",
+        title: "Error loading more results",
+        description: "Could not fetch the next set of songs.",
+      });
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [query, continuationToken, isFetchingMore, addTracksToCache, toast]);
+
+  const lastTrackElementRef = useCallback((node: HTMLDivElement) => {
+    if (isLoading) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && continuationToken && !isFetchingMore) {
+        loadMore();
       }
-      
+    });
+
+    if (node) observer.current.observe(node);
+  }, [isLoading, continuationToken, isFetchingMore, loadMore]);
+
+
+  const handleSearch = async (searchQuery: string) => {
+    if (!searchQuery) return;
+
+    setIsLoading(true);
+    setResults([]);
+    setContinuationToken(null);
+
+    try {
+      const searchResults = await searchYoutube({ query: searchQuery });
+      addTracksToCache(searchResults.tracks);
+      setResults(searchResults.tracks);
       setContinuationToken(searchResults.nextContinuationToken);
 
-       if (isNewSearch && searchResults.tracks.length === 0) {
+       if (searchResults.tracks.length === 0) {
         toast({
           title: "No results found",
           description: "Try a different search term.",
         });
-      } else if (isNewSearch) {
+      } else {
         updateSearchHistory(searchQuery);
         clearAllRecommendationCaches();
       }
@@ -76,7 +102,6 @@ export default function SearchPage() {
       });
     } finally {
       setIsLoading(false);
-      setIsFetchingMore(false);
     }
   };
 
@@ -95,12 +120,6 @@ export default function SearchPage() {
   const handlePlayTrack = (trackId: string) => {
     setQueueAndPlay(results, trackId);
   };
-
-  const loadMore = () => {
-    if (query && continuationToken) {
-      handleSearch(query, false);
-    }
-  }
 
   return (
     <div className="space-y-8">
@@ -130,44 +149,39 @@ export default function SearchPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {results.map((track) => (
-              <div
-                key={track.id}
-                className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50 transition-colors group cursor-pointer"
-                onClick={() => handlePlayTrack(track.id)}
-              >
-                <Image
-                  src={track.artwork}
-                  alt={track.title}
-                  width={48}
-                  height={48}
-                  className="rounded-md"
-                  data-ai-hint={track['data-ai-hint']}
-                  unoptimized
-                />
-                <div className="flex-1">
-                  <p className="font-semibold">{track.title}</p>
-                  <p className="text-sm text-muted-foreground">{track.artist}</p>
+            {results.map((track, index) => {
+              const isLastElement = results.length === index + 1;
+              return (
+                <div
+                  key={track.id}
+                  ref={isLastElement ? lastTrackElementRef : null}
+                  className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50 transition-colors group cursor-pointer"
+                  onClick={() => handlePlayTrack(track.id)}
+                >
+                  <Image
+                    src={track.artwork}
+                    alt={track.title}
+                    width={48}
+                    height={48}
+                    className="rounded-md"
+                    data-ai-hint={track['data-ai-hint']}
+                    unoptimized
+                  />
+                  <div className="flex-1">
+                    <p className="font-semibold">{track.title}</p>
+                    <p className="text-sm text-muted-foreground">{track.artist}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
+                    <Play className="h-5 w-5" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
-                  <Play className="h-5 w-5" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
-        {continuationToken && !isLoading && (
-          <div className="flex justify-center mt-6">
-            <Button onClick={loadMore} disabled={isFetchingMore}>
-              {isFetchingMore ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                "Load More"
-              )}
-            </Button>
+        {isFetchingMore && (
+          <div className="flex justify-center items-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         )}
       </section>
