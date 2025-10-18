@@ -30,27 +30,33 @@ export const PlaylistSection: React.FC<PlaylistSectionProps> = ({
   const [isLoading, setIsLoading] = useState(isPersonalized);
 
   useEffect(() => {
+    let isMounted = true;
     if (isPersonalized) {
       const fetchPlaylists = async () => {
         setIsLoading(true);
         try {
           const cachedPlaylists = getCachedRecommendedPlaylists(title);
           if (cachedPlaylists) {
-            setPlaylists(cachedPlaylists);
+            if (isMounted) setPlaylists(cachedPlaylists);
           } else {
             const results = await getYoutubePlaylists({ query: `${title} music playlist` });
-            setPlaylists(results);
-            cacheRecommendedPlaylists(title, results);
+            if (isMounted) {
+                setPlaylists(results);
+                cacheRecommendedPlaylists(title, results);
+            }
           }
         } catch (error) {
           console.error(`Failed to fetch playlists for ${title}:`, error);
-          setPlaylists([]);
+          if (isMounted) setPlaylists([]);
         } finally {
-          setIsLoading(false);
+          if (isMounted) setIsLoading(false);
         }
       };
       fetchPlaylists();
     }
+    return () => {
+      isMounted = false;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPersonalized, title]);
 
@@ -91,3 +97,5 @@ export const PlaylistSection: React.FC<PlaylistSectionProps> = ({
     </section>
   );
 };
+
+    

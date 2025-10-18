@@ -24,7 +24,7 @@ interface UserDataContextType extends UserData {
   addRecentlyPlayed: (trackId: string) => void;
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description: string, isPublic: boolean, isVerified?: boolean) => Promise<void>;
-  addTrackToPlaylist: (playlistId: string, track: Track) => void;
+  addTrackToPlaylist: (playlistId: string, trackId: string) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<{ success: boolean; message: string; }>;
   getPlaylistById: (playlistId: string) => Playlist | undefined;
@@ -98,6 +98,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    if (!isInitialized) return; // Prevent running on initial mount before user is set
     const q = query(collection(db, "communityPlaylists"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const playlists: Playlist[] = [];
@@ -106,11 +107,16 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       });
       setCommunityPlaylists(playlists);
     }, (error) => {
-        console.error("Firestore snapshot error:", error)
+        console.error("Firestore snapshot error:", error);
+        toast({
+            variant: "destructive",
+            title: "Connection Error",
+            description: "Could not sync community playlists. Please check your connection."
+        })
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isInitialized, toast]);
 
   useEffect(() => {
     if (!isInitialized || !currentUser) return;
@@ -224,60 +230,63 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const addTrackToPlaylist = async (playlistId: string, track: Track) => {
+  const addTrackToPlaylist = async (playlistId: string, trackId: string) => {
     const playlist = getPlaylistById(playlistId);
     if (!playlist || !currentUser) return;
-
+  
     if (playlist.isChannelPlaylist) {
         toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'Cannot add tracks to a channel playlist.' });
         return;
     }
-
+  
     if (playlist.public) {
         if (playlist.ownerId !== currentUser.id && !currentUser.isAdmin) {
             toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
             return;
         }
         
+        const trackToAdd = getTrackById(trackId);
+        if (!trackToAdd) {
+            console.error("Cannot add a track that is not in cache to a public playlist.");
+            return;
+        }
         const playlistRef = doc(db, 'communityPlaylists', playlistId);
         try {
             await updateDoc(playlistRef, {
-                tracks: arrayUnion(track),
-                trackIds: arrayUnion(track.id)
+                tracks: arrayUnion(trackToAdd),
+                trackIds: arrayUnion(trackId)
             });
-            toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
+            toast({ title: 'Added to playlist', description: `"${trackToAdd.title}" has been added.` });
         } catch (error: any) {
             console.error("Error updating public playlist:", error);
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
         }
     } else {
-        let wasAdded = false;
+        // Use functional update to prevent race conditions
         setUserData(prev => {
-            const currentPlaylists = prev.playlists;
-            const targetPlaylist = currentPlaylists.find(p => p.id === playlistId);
-            
-            if (!targetPlaylist) return prev;
+            const newPlaylists = prev.playlists.map(p => {
+                if (p.id === playlistId) {
+                    if (p.trackIds.includes(trackId)) {
+                        // If track is already present, return original playlist to avoid re-render
+                        return p;
+                    }
+                    return { ...p, trackIds: [...p.trackIds, trackId] };
+                }
+                return p;
+            });
 
-            const isTrackAlreadyInPlaylist = targetPlaylist.trackIds.includes(track.id);
-            if (isTrackAlreadyInPlaylist) {
-                wasAdded = false; // Track was already there
-                return prev;
+            // Check if an update actually happened
+            const oldPlaylist = prev.playlists.find(p => p.id === playlistId);
+            if (oldPlaylist && !oldPlaylist.trackIds.includes(trackId)) {
+                toast({ title: 'Added to playlist', description: 'Song has been added.' });
+            } else {
+                toast({ title: 'Already in playlist', description: 'This song is already in the playlist.' });
             }
-
-            wasAdded = true; // Track will be added
-            const updatedPlaylists = currentPlaylists.map(p =>
-                p.id === playlistId ? { ...p, trackIds: [...p.trackIds, track.id] } : p
-            );
-            return { ...prev, playlists: updatedPlaylists };
+            
+            return { ...prev, playlists: newPlaylists };
         });
-
-        if (wasAdded) {
-            toast({ title: 'Added to playlist', description: 'Song has been added.' });
-        } else {
-            toast({ title: 'Already in playlist', description: 'This song is already in the playlist.' });
-        }
     }
-};
+  };
 
 
   const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
@@ -491,3 +500,5 @@ export const useUserData = (): UserDataContextType => {
   }
   return context;
 };
+
+    

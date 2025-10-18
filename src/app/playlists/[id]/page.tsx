@@ -128,10 +128,14 @@ export default function PlaylistPage() {
     if (!playlist) return;
     // This function will be called from the AddSongsDialog
     // It optimistically updates the UI
-    addTrackToPlaylist(playlist.id, newTrack); 
+    addTrackToPlaylist(playlist.id, newTrack.id); 
     setTracks(currentTracks => {
         if (currentTracks.some(t => t.id === newTrack.id)) {
             return currentTracks;
+        }
+        // Also update the track list in the playlist object itself for consistency
+        if (playlist) {
+            setPlaylist({...playlist, trackIds: [...playlist.trackIds, newTrack.id]});
         }
         return [...currentTracks, newTrack];
     });
@@ -311,7 +315,7 @@ export default function PlaylistPage() {
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the
                             playlist "{playlist.name}".
-                        </AlertDialogDescription>
+                        </Description>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -336,3 +340,5 @@ export default function PlaylistPage() {
     </div>
   );
 }
+
+    
