@@ -1,75 +1,148 @@
+
 'use server';
 /**
- * @fileOverview A YouTube live stream search utility.
- * 
- * - searchLiveStreams - A function that handles searching for live videos on YouTube.
+ * @fileOverview A YouTube live stream search utility using direct scraping.
+ *
+ * - searchLiveStreams - A function that handles searching for live videos by scraping YouTube's HTML response.
  * - LiveStreamSearchInput - The input type for the searchLiveStreams function.
  * - LiveStreamSearchOutput - The return type for the searchLiveStreams function.
  */
 
 import { z } from 'zod';
 import { Track } from '@/lib/types';
-import 'dotenv/config';
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const YOUTUBE_API_URL = 'https://www.googleapis.com/youtube/v3/search';
+const YOUTUBE_SEARCH_URL = 'https://www.youtube.com/results';
+const YOUTUBE_API_URL = 'https://www.youtube.com/youtubei/v1/search';
 
 const LiveStreamSearchInputSchema = z.object({
   query: z.string().describe('The search query for YouTube live streams.'),
+  continuationToken: z.string().optional().describe('The token for fetching the next page of results.'),
 });
 export type LiveStreamSearchInput = z.infer<typeof LiveStreamSearchInputSchema>;
 
-const LiveStreamSearchOutputSchema = z.array(
-  z.object({
-    id: z.string(),
-    youtubeVideoId: z.string(),
-    title: z.string(),
-    artist: z.string(), // Channel Title
-    album: z.string(), // Will be "Live"
-    artwork: z.string(),
-    duration: z.number(), // Will be 0 for live streams
-    'data-ai-hint': z.optional(z.string()),
-  })
-);
+const LiveStreamSearchOutputSchema = z.object({
+    tracks: z.array(
+        z.object({
+            id: z.string(),
+            youtubeVideoId: z.string(),
+            title: z.string(),
+            artist: z.string(),
+            album: z.string(),
+            artwork: z.string(),
+            duration: z.number(),
+            'data-ai-hint': z.optional(z.string()),
+        })
+    ),
+    nextContinuationToken: z.string().nullable(),
+});
 export type LiveStreamSearchOutput = z.infer<typeof LiveStreamSearchOutputSchema>;
 
+// Helper to check for a LIVE badge in the video metadata
+const isLive = (renderer: any): boolean => {
+    const badges = renderer?.badges;
+    if (badges && Array.isArray(badges)) {
+        return badges.some((badge: any) =>
+            badge.metadataBadgeRenderer?.style === 'BADGE_STYLE_TYPE_LIVE_NOW'
+        );
+    }
+    return false;
+};
+
+// Helper function to extract tracks and continuation token from YouTube's data structure
+const parseYouTubeData = (data: any): { tracks: Track[], continuationToken: string | null } => {
+    const contents = data?.onResponseReceivedCommands?.[0]?.appendContinuationItemsAction?.continuationItems ||
+                     data?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
+    
+    if (!contents || !Array.isArray(contents)) {
+        console.error('Invalid data structure in parseYouTubeData.');
+        return { tracks: [], continuationToken: null };
+    }
+
+    let itemSection = contents.find((c: any) => c.itemSectionRenderer)?.itemSectionRenderer?.contents;
+    
+    if (!itemSection && contents.length > 0) {
+        itemSection = contents;
+    }
+
+    if (!itemSection) {
+        console.error('Could not find itemSectionRenderer in contents for tracks.');
+        return { tracks: [], continuationToken: null };
+    }
+    
+    const tracks: Track[] = itemSection
+      // Filter for video renderers that are explicitly marked as LIVE
+      .filter((item: any) => item.videoRenderer && isLive(item.videoRenderer))
+      .map((item: any) => {
+        const renderer = item.videoRenderer;
+        return {
+          id: renderer.videoId,
+          youtubeVideoId: renderer.videoId,
+          title: renderer.title?.runs?.[0]?.text || 'Unknown Title',
+          artist: renderer.longBylineText?.runs?.[0]?.text || 'Unknown Artist',
+          album: 'Live Stream',
+          artwork: `https://i.ytimg.com/vi/${renderer.videoId}/hqdefault.jpg`,
+          duration: 0, // Duration is not applicable for live streams
+          'data-ai-hint': 'youtube live video'
+        };
+      });
+
+    // Find the continuation token for the next page
+    const continuationItem = contents.find((c: any) => c.continuationItemRenderer)?.continuationItemRenderer;
+    const continuationToken = continuationItem?.continuationEndpoint?.continuationCommand?.token || null;
+      
+    return { tracks, continuationToken };
+};
+
 export async function searchLiveStreams(input: LiveStreamSearchInput): Promise<LiveStreamSearchOutput> {
-  if (!YOUTUBE_API_KEY) {
-      throw new Error("YOUTUBE_API_KEY is not set in environment variables.");
+  const commonHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+  };
+
+  try {
+    let response;
+    let data;
+
+    if (input.continuationToken) {
+      // Logic for fetching subsequent pages
+      response = await fetch(YOUTUBE_API_URL, {
+        method: 'POST',
+        headers: { ...commonHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context: {
+            client: {
+              clientName: "WEB",
+              clientVersion: "2.20210721.00.00",
+            },
+          },
+          continuation: input.continuationToken,
+        }),
+      });
+      data = await response.json();
+    } else {
+      // Logic for the initial search, appending " live" to the query
+      const url = new URL(YOUTUBE_SEARCH_URL);
+      url.searchParams.append('search_query', `${input.query} live`);
+      response = await fetch(url.toString(), { headers: commonHeaders });
+
+      if (!response.ok) {
+        throw new Error(`YouTube scraping failed with status ${response.status}`);
+      }
+      
+      const html = await response.text();
+      const match = html.match(/var ytInitialData = (.*?);<\/script>/);
+      if (!match || !match[1]) {
+        throw new Error('Could not find ytInitialData in YouTube response.');
+      }
+      data = JSON.parse(match[1]);
+    }
+
+    const { tracks, continuationToken: nextContinuationToken } = parseYouTubeData(data);
+    
+    return { tracks, nextContinuationToken };
+
+  } catch (error) {
+    console.error("Failed to fetch or parse YouTube live search results:", error);
+    return { tracks: [], nextContinuationToken: null };
   }
-  const url = new URL(YOUTUBE_API_URL);
-  url.searchParams.append('part', 'snippet');
-  url.searchParams.append('q', input.query);
-  url.searchParams.append('key', YOUTUBE_API_KEY);
-  url.searchParams.append('type', 'video');
-  url.searchParams.append('eventType', 'live'); // This is the key parameter for live streams
-  url.searchParams.append('maxResults', '12');
-
-  const response = await fetch(url.toString());
-
-  if (!response.ok) {
-      const errorText = await response.text();
-      console.error("YouTube API Error:", errorText);
-      throw new Error(`YouTube API request failed with status ${response.status}`);
-  }
-
-  const data = await response.json();
-  
-  if (data.error || !data.items) {
-    console.error('YouTube API Live Search Error:', data.error);
-    return [];
-  }
-
-  const tracks: Track[] = data.items.map((item: any) => ({
-    id: item.id.videoId,
-    youtubeVideoId: item.id.videoId,
-    title: item.snippet.title,
-    artist: item.snippet.channelTitle,
-    album: 'Live Stream',
-    artwork: item.snippet.thumbnails.high.url,
-    duration: 0, // Duration is not applicable for live streams
-    'data-ai-hint': 'youtube live video'
-  }));
-  
-  return tracks;
 }
