@@ -15,7 +15,7 @@ import {
   Heart,
   Timer,
   Youtube,
-  Minus,
+  ChevronDown,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { usePlayer } from "@/context/player-context";
@@ -49,9 +49,6 @@ const EqualizerBars = ({ isPlaying }: { isPlaying: boolean }) => (
 const FloatingPlayer = () => {
     const { 
         currentTrack, 
-        isPlaying,
-        play,
-        pause,
         isMinimized,
         setIsMinimized,
     } = usePlayer();
@@ -61,15 +58,6 @@ const FloatingPlayer = () => {
         return null;
     }
     
-    const handlePlayPause = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent the click from expanding the player
-        if (isPlaying) {
-            pause();
-        } else {
-            play();
-        }
-    }
-
     return (
         <motion.div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-[100]">
             <motion.div
@@ -88,16 +76,6 @@ const FloatingPlayer = () => {
                         className="rounded-full object-cover"
                         unoptimized
                     />
-                    <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                         <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-12 w-12 rounded-full backdrop-blur-sm bg-black/20 hover:bg-black/40 text-white"
-                            onClick={handlePlayPause}
-                         >
-                            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                        </Button>
-                    </div>
                 </div>
             </motion.div>
         </motion.div>
@@ -190,7 +168,7 @@ export function Player() {
           </div>
           <div className="flex items-center">
               <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
-                  <Minus className="h-5 w-5" />
+                  <ChevronDown className="h-5 w-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleToggleLike}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
@@ -364,7 +342,7 @@ export function Player() {
               <Youtube className="h-5 w-5" />
           </Button>
            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
-              <Minus className="h-5 w-5" />
+              <ChevronDown className="h-5 w-5" />
            </Button>
           <QueueSheet />
         </div>
@@ -375,3 +353,5 @@ export function Player() {
 }
 
     
+
+
