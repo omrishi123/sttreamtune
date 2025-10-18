@@ -1,78 +1,114 @@
 
 'use server';
 /**
- * @fileOverview An AI-powered song recommender based on search history.
+ * @fileOverview An API-free, personalized song recommender.
  *
- * - generateRecommendations - A function that generates song recommendations.
- * - GenerateRecommendationsInput - The input type for the generateRecommendations function.
- * - GenerateRecommendationsOutput - The return type for the generateRecommendations function.
+ * This flow generates recommendations based on two main strategies:
+ * 1.  **Artist Affinity**: Finds the user's most played artists and searches for more of their content.
+ * 2.  **Playlist DNA**: Finds community playlists that share tracks with the user's private playlists and recommends songs from them.
+ *
+ * It uses the direct YouTube scraping search flow and supports pagination for infinite scrolling.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { searchYoutube, YoutubeSearchOutput } from './search-youtube-flow';
-import { googleAI } from '@genkit-ai/googleai';
+import type { Playlist, Track } from '@/lib/types';
 
+// Define input for the recommendation flow
 const GenerateRecommendationsInputSchema = z.object({
-  history: z.array(z.string()).describe('A list of the user\'s recent search queries.'),
+  recentlyPlayed: z.array(z.custom<Track>()).describe('A list of the user\'s recently played tracks with full metadata.'),
+  userPlaylists: z.array(z.custom<Playlist>()).describe('A list of the user\'s private playlists.'),
+  communityPlaylists: z.array(z.custom<Playlist>()).describe('A list of all public community playlists.'),
+  continuationToken: z.string().optional().describe('The token for fetching the next page of results.'),
 });
 export type GenerateRecommendationsInput = z.infer<typeof GenerateRecommendationsInputSchema>;
 
+// Define the output, which matches the YouTube search output for consistency
 export type GenerateRecommendationsOutput = YoutubeSearchOutput;
 
-const RecommendationSuggestionSchema = z.object({
-  songs: z.array(z.object({
-      title: z.string().describe('The title of the song.'),
-      artist: z.string().describe('The artist of the song.'),
-    })).describe('A list of 15 new songs that are similar to the user\'s search history. Do not include songs that are already in the history.'),
-});
 
-export async function generateRecommendations(input: GenerateRecommendationsInput): Promise<GenerateRecommendationsOutput> {
-  return generateRecommendationsFlow(input);
-}
+// Helper to find the most frequent artists from the user's listening history
+const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
+  if (!recentlyPlayed.length) return [];
+  const artistCounts: { [artist: string]: number } = {};
+  recentlyPlayed.forEach(track => {
+    if (track.artist !== 'Unknown Artist') {
+        artistCounts[track.artist] = (artistCounts[track.artist] || 0) + 1;
+    }
+  });
+  return Object.entries(artistCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, count)
+    .map(entry => entry[0]);
+};
 
-const generateRecommendationsFlow = ai.defineFlow(
-  {
-    name: 'generateRecommendationsFlow',
-    inputSchema: GenerateRecommendationsInputSchema,
-    outputSchema: z.custom<GenerateRecommendationsOutput>(),
-  },
-  async ({ history }) => {
-    // Step 1: Generate song ideas from the user's search history
-    const suggestionPrompt = ai.definePrompt({
-      name: 'recommendationSuggestionPrompt',
-      input: { schema: GenerateRecommendationsInputSchema },
-      output: { schema: RecommendationSuggestionSchema },
-      model: googleAI.model('gemini-2.5-flash'),
-      prompt: `You are a music expert and DJ. Based on the user's recent search history, recommend 15 new and interesting songs that they might like.
-      Provide a diverse list of tracks that match the genres and artists they have searched for.
+// Helper to find queries based on shared songs between user and community playlists
+const getPlaylistDnaQueries = (userPlaylists: Playlist[], communityPlaylists: Playlist[], count: number): string[] => {
+    if (!userPlaylists.length || !communityPlaylists.length) return [];
+    
+    const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
+    const dnaMatches: { query: string; score: number }[] = [];
 
-      User Search History:
-      {{#each history}}
-      - {{{this}}}
-      {{/each}}
-      `,
+    communityPlaylists.forEach(publicPlaylist => {
+        const matchCount = publicPlaylist.trackIds.filter(tid => userTrackIds.has(tid)).length;
+        if (matchCount > 0) {
+            // We use the public playlist name as a search query, weighted by how many songs it shares with the user's playlists.
+            dnaMatches.push({ query: publicPlaylist.name, score: matchCount });
+        }
     });
 
-    const { output: suggestion } = await suggestionPrompt({ history });
+    return dnaMatches
+        .sort((a, b) => b.score - a.score)
+        .slice(0, count)
+        .map(match => match.query);
+};
 
-    if (!suggestion || suggestion.songs.length === 0) {
-      console.log('AI did not generate any song suggestions.');
-      return [];
-    }
 
-    // Step 2: Search for each song on YouTube in parallel to get track details
-    const searchPromises = suggestion.songs.map(song => 
-      searchYoutube({ query: `${song.title} by ${song.artist}` })
-    );
-
-    const searchResults = await Promise.all(searchPromises);
+export async function generateRecommendations(input: GenerateRecommendationsInput): Promise<GenerateRecommendationsOutput> {
     
-    // Step 3: Consolidate results into a flat list of tracks
-    const foundTracks: YoutubeSearchOutput = searchResults
-      .map(res => res[0]) // Take the top result for each search
-      .filter((track): track is NonNullable<typeof track> => track !== null && track !== undefined);
-
-    return foundTracks;
+  // If a continuation token is provided, it means we are just fetching the next page of a previous search.
+  // The query for that search is embedded within the token by YouTube, so we don't need the other inputs.
+  if (input.continuationToken) {
+    try {
+      const moreResults = await searchYoutube({ query: '', continuationToken: input.continuationToken });
+      return moreResults;
+    } catch (error) {
+      console.error("Failed to fetch more recommendations:", error);
+      return { tracks: [], nextContinuationToken: null };
+    }
   }
-);
+
+  // --- If it's a new recommendation request (no token) ---
+
+  // 1. Generate a list of search queries based on user's habits
+  const topArtists = getTopArtists(input.recentlyPlayed, 2); // Get top 2 artists
+  const dnaQueries = getPlaylistDnaQueries(input.userPlaylists, input.communityPlaylists, 2); // Get top 2 playlist DNA queries
+
+  const searchQueries = [...topArtists, ...dnaQueries];
+
+  // If there's absolutely no history or playlists to go on, we can't generate recommendations.
+  if (searchQueries.length === 0) {
+    return { tracks: [], nextContinuationToken: null };
+  }
+
+  // 2. Combine queries into a single, powerful search string.
+  // This tells YouTube to find content related to all these items.
+  const combinedQuery = searchQueries.join(' | '); // The "|" acts like an "OR" in search
+
+  // 3. Perform the initial search
+  try {
+    const initialResults = await searchYoutube({ query: combinedQuery });
+
+    // Remove any tracks that the user has recently played to keep recommendations fresh.
+    const recentIds = new Set(input.recentlyPlayed.map(t => t.id));
+    const freshTracks = initialResults.tracks.filter(t => !recentIds.has(t.id));
+
+    return {
+        tracks: freshTracks,
+        nextContinuationToken: initialResults.nextContinuationToken,
+    };
+  } catch (error) {
+    console.error("Failed to fetch initial recommendations:", error);
+    return { tracks: [], nextContinuationToken: null };
+  }
+}

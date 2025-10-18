@@ -1,39 +1,88 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useUserData } from '@/context/user-data-context';
-import { useToast } from '@/hooks/use-toast';
-import { GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
+import { generateRecommendations, GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
 import { TrackList } from '@/components/track-list';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getCachedRecommendations, getSearchHistory } from '@/lib/recommendations';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
+import type { Track } from '@/lib/types';
 
 export default function RecommendedPage() {
-    const [recommendedTracks, setRecommendedTracks] = useState<GenerateRecommendationsOutput>([]);
+    const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [hasSearchHistory, setHasSearchHistory] = useState(false);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const [continuationToken, setContinuationToken] = useState<string | null>(null);
+    const [hasHistory, setHasHistory] = useState(false);
+    
+    const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache } = useUserData();
+    const observer = useRef<IntersectionObserver>();
+
+    const fetchRecommendations = useCallback(async (isInitialLoad: boolean) => {
+        if (!isInitialLoad && (!continuationToken || isFetchingMore)) return;
+        
+        if (isInitialLoad) {
+            setIsLoading(true);
+            setRecommendedTracks([]);
+            setContinuationToken(null);
+        } else {
+            setIsFetchingMore(true);
+        }
+
+        try {
+            const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+            setHasHistory(recentTracks.length > 0 || userPlaylists.length > 0);
+            
+            if (recentTracks.length === 0 && userPlaylists.length === 0 && isInitialLoad) {
+                setIsLoading(false);
+                return;
+            }
+
+            const results = await generateRecommendations({
+                recentlyPlayed: recentTracks,
+                userPlaylists,
+                communityPlaylists,
+                continuationToken: isInitialLoad ? undefined : continuationToken,
+            });
+            
+            addTracksToCache(results.tracks);
+            
+            if (isInitialLoad) {
+                setRecommendedTracks(results.tracks);
+            } else {
+                setRecommendedTracks(prev => [...prev, ...results.tracks]);
+            }
+            setContinuationToken(results.nextContinuationToken);
+
+        } catch (error) {
+            console.error("Failed to fetch recommendations:", error);
+        } finally {
+            setIsLoading(false);
+            setIsFetchingMore(false);
+        }
+    }, [continuationToken, isFetchingMore, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
 
     useEffect(() => {
-        const fetchRecommendations = async () => {
-            setIsLoading(true);
-            const history = getSearchHistory();
-            setHasSearchHistory(history.length > 0);
-            
-            if (history.length > 0) {
-                const { tracks } = await getCachedRecommendations();
-                setRecommendedTracks(tracks);
-            }
-            
-            setIsLoading(false);
-        };
-
-        fetchRecommendations();
+        fetchRecommendations(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const lastTrackElementRef = useCallback((node: HTMLDivElement) => {
+        if (isLoading) return;
+        if (observer.current) observer.current.disconnect();
+        
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && continuationToken && !isFetchingMore) {
+                fetchRecommendations(false);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [isLoading, continuationToken, isFetchingMore, fetchRecommendations]);
 
     return (
         <div className="space-y-8">
@@ -42,16 +91,16 @@ export default function RecommendedPage() {
                     Recommended For You
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Based on your recent searches, here are some tracks you might like.
+                    An endless feed of music based on your listening habits.
                 </p>
             </div>
 
             <section>
                 {isLoading ? (
                      <div className="space-y-2">
-                        {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                        {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
                     </div>
-                ) : !hasSearchHistory ? (
+                ) : !hasHistory ? (
                      <Card className="flex flex-col items-center justify-center p-12 text-center bg-muted/50 col-span-full">
                         <CardContent className="p-0 space-y-4">
                             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -59,7 +108,7 @@ export default function RecommendedPage() {
                             </div>
                             <h3 className="font-semibold text-xl">Nothing to recommend yet!</h3>
                             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                We need to know what you like first. Search for a few songs to get personalized recommendations.
+                                We need to know what you like first. Play some songs to get personalized recommendations.
                             </p>
                             <Button asChild className="mt-6">
                                 <Link href="/search">Go to Search</Link>
@@ -67,7 +116,14 @@ export default function RecommendedPage() {
                         </CardContent>
                     </Card>
                 ) : recommendedTracks.length > 0 ? (
-                    <TrackList tracks={recommendedTracks} />
+                    <>
+                        <TrackList tracks={recommendedTracks} onTrackRendered={lastTrackElementRef} />
+                        {isFetchingMore && (
+                            <div className="flex justify-center items-center py-6">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            </div>
+                        )}
+                    </>
                 ) : (
                      <Card className="flex flex-col items-center justify-center p-12 text-center bg-muted/50 col-span-full">
                         <CardContent className="p-0 space-y-4">
@@ -76,7 +132,7 @@ export default function RecommendedPage() {
                             </div>
                             <h3 className="font-semibold text-xl">Could not generate recommendations</h3>
                             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                The AI might be busy. Please try searching for a few more songs and check back later.
+                                Please try playing a few more songs and check back later.
                             </p>
                              <Button asChild className="mt-6">
                                 <Link href="/search">Go to Search</Link>

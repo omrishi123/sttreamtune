@@ -42,9 +42,10 @@ interface TrackListProps {
   tracks: Track[];
   playlist?: Playlist;
   onRemoveTrack?: (trackId: string) => void;
+  onTrackRendered?: (node: HTMLTableRowElement) => void;
 }
 
-export function TrackList({ tracks, playlist, onRemoveTrack }: TrackListProps) {
+export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: TrackListProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
   const { isLiked, toggleLike, addTrackToCache, removeTrackFromPlaylist } = useUserData();
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
@@ -81,7 +82,7 @@ export function TrackList({ tracks, playlist, onRemoveTrack }: TrackListProps) {
   };
 
   const formatDuration = (seconds: number) => {
-    if (isNaN(seconds)) return '0:00';
+    if (isNaN(seconds) || seconds === 0) return '-:--';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -111,10 +112,12 @@ export function TrackList({ tracks, playlist, onRemoveTrack }: TrackListProps) {
           if (!track) return null;
           const isActive = currentTrack?.id === track.id;
           const isTrackLiked = isLiked(track.id);
+          const isLastElement = index === tracks.length - 1;
 
           return (
             <TableRow
               key={`${track.id}-${index}`}
+              ref={isLastElement ? onTrackRendered : null}
               className="group"
               onDoubleClick={() => handlePlayTrack(track)}
               data-state={isActive ? "selected" : undefined}

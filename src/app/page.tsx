@@ -18,7 +18,7 @@ import {
 import { Filter, ChevronRight, Music } from "lucide-react";
 import { useUserData } from '@/context/user-data-context';
 import type { Playlist, Track } from '@/lib/types';
-import { getCachedRecommendations } from '@/lib/recommendations';
+import { generateRecommendations } from '@/ai/flows/generate-recommendations-flow';
 import { TrackCard } from '@/components/track-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,7 +27,7 @@ import { PlaylistSection } from '@/components/playlist-section';
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const { communityPlaylists } = useUserData();
+  const { communityPlaylists, recentlyPlayed, playlists: userPlaylists, getTrackById, addTracksToCache } = useUserData();
   const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [userGenres, setUserGenres] = useState<string[]>([]);
@@ -35,8 +35,16 @@ export default function HomePage() {
   useEffect(() => {
       const fetchRecommendations = async () => {
           setLoadingRecommendations(true);
-          const { tracks } = await getCachedRecommendations();
-          setRecommendedTracks(tracks);
+          const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+          if (recentTracks.length > 0 || userPlaylists.length > 0) {
+            const { tracks } = await generateRecommendations({
+                recentlyPlayed: recentTracks,
+                userPlaylists,
+                communityPlaylists,
+            });
+            addTracksToCache(tracks);
+            setRecommendedTracks(tracks);
+          }
           setLoadingRecommendations(false);
       };
       fetchRecommendations();
@@ -45,7 +53,8 @@ export default function HomePage() {
       if (preferences && preferences.genres) {
         setUserGenres(preferences.genres);
       }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recentlyPlayed, userPlaylists, communityPlaylists]); // Depend on user data to refetch
 
   const featuredPlaylists = useMemo(() => {
     if (!communityPlaylists) return [];
@@ -137,7 +146,7 @@ export default function HomePage() {
                 <CardContent className="p-0 space-y-3">
                   <h3 className="font-semibold">Nothing to recommend yet!</h3>
                   <p className="text-sm text-muted-foreground">
-                    Search for some songs to get personalized recommendations.
+                    Play some songs to get personalized recommendations.
                   </p>
                   <Button asChild size="sm" className="mt-4">
                     <Link href="/search">Go to Search</Link>
