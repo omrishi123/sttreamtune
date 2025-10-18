@@ -244,6 +244,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
             </SidebarFooter>
           </Sidebar>
           <SidebarInset className="overflow-y-auto bg-background pb-48 md:pb-24">
+             <div className="absolute inset-0 z-[-1] bg-gradient-to-tr from-background via-primary/10 to-accent/10 dark:via-primary/5 dark:to-accent/5 opacity-70 blur-3xl"></div>
             <header className="p-4 md:hidden flex items-center justify-between">
                  <Link
                     href="/"
