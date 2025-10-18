@@ -57,7 +57,7 @@ const generatePlaylistFlow = ai.defineFlow(
       name: 'playlistSuggestionPrompt',
       input: { schema: GeneratePlaylistInputSchema },
       output: { schema: PlaylistSuggestionSchema },
-      model: googleAI.model('gemini-1.5-flash'),
+      model: googleAI.model('gemini-2.5-flash'),
       prompt: `You are a music expert and DJ. A user wants a new playlist.
       Based on their prompt, generate a creative playlist name, a short description, a simple prompt for cover art, and a list of songs.
 
@@ -73,7 +73,7 @@ const generatePlaylistFlow = ai.defineFlow(
 
     // Step 2: Generate cover art in parallel
     const imagePromise = ai.generate({
-        model: googleAI.model('gemini-2.5-flash'),
+        model: googleAI.model('gemini-1.5-flash'),
         prompt: `Album cover for a playlist about ${suggestion.coverArtPrompt}. Clean, modern, vibrant, high-resolution.`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
