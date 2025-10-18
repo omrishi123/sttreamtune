@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import {
   Dialog,
@@ -20,7 +20,7 @@ import { useUserData } from '@/context/user-data-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Icons } from './icons';
 import { ScrollArea } from './ui/scroll-area';
-import { Check, Plus } from 'lucide-react';
+import { Check, Plus, Loader2 } from 'lucide-react';
 
 interface AddSongsDialogProps {
   playlist: Playlist;
@@ -33,20 +33,63 @@ export function AddSongsDialog({ playlist, children, onTrackAdded }: AddSongsDia
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [continuationToken, setContinuationToken] = useState<string | null>(null);
   const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(new Set());
 
   const { addTrackToCache } = useUserData();
   const { toast } = useToast();
+  const observer = useRef<IntersectionObserver>();
+
+  const loadMore = useCallback(async () => {
+    if (!query || !continuationToken || isFetchingMore) return;
+    
+    setIsFetchingMore(true);
+    try {
+      const searchResults = await searchYoutube({ 
+        query: query,
+        continuationToken: continuationToken,
+      });
+      addTrackToCache(searchResults.tracks);
+      setResults(prev => [...prev, ...searchResults.tracks]);
+      setContinuationToken(searchResults.nextContinuationToken);
+    } catch (error: any) {
+      console.error("Failed to fetch more results:", error);
+      toast({
+        variant: "destructive",
+        title: "Error loading more results",
+        description: "Could not fetch the next set of songs.",
+      });
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [query, continuationToken, isFetchingMore, addTrackToCache, toast]);
+
+  const lastTrackElementRef = useCallback((node: HTMLDivElement) => {
+    if (isLoading) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && continuationToken && !isFetchingMore) {
+        loadMore();
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [isLoading, continuationToken, isFetchingMore, loadMore]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query) return;
 
     setIsLoading(true);
+    setResults([]);
+    setContinuationToken(null);
     try {
       const searchResults = await searchYoutube({ query });
       addTrackToCache(searchResults.tracks);
       setResults(searchResults.tracks);
+      setContinuationToken(searchResults.nextContinuationToken);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -81,6 +124,7 @@ export function AddSongsDialog({ playlist, children, onTrackAdded }: AddSongsDia
           setQuery('');
           setResults([]);
           setAddedTrackIds(new Set());
+          setContinuationToken(null);
       }
   }
 
@@ -113,10 +157,15 @@ export function AddSongsDialog({ playlist, children, onTrackAdded }: AddSongsDia
             {isLoading && (
                 Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-md" />)
             )}
-            {!isLoading && results.map((track) => {
+            {!isLoading && results.map((track, index) => {
               const isAdded = playlist.trackIds.includes(track.id) || addedTrackIds.has(track.id);
+              const isLastElement = results.length === index + 1;
               return (
-                <div key={track.id} className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50">
+                <div 
+                    key={track.id} 
+                    ref={isLastElement ? lastTrackElementRef : null}
+                    className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50"
+                >
                   <Image
                     src={track.artwork}
                     alt={track.title}
@@ -141,6 +190,11 @@ export function AddSongsDialog({ playlist, children, onTrackAdded }: AddSongsDia
                 </div>
               )
             })}
+             {isFetchingMore && (
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </div>
         </ScrollArea>
 
