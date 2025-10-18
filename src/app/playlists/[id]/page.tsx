@@ -134,9 +134,18 @@ export default function PlaylistPage() {
     setPlaylist(updatedPlaylist);
     setTracks(newTracks);
 
-    const channelId = params.channelId as string; 
-    if (channelId) {
-        // updateChannel(channelId, updatedPlaylist);
+    // This logic is for channel playlists specifically
+    if (playlist.isChannelPlaylist) {
+      const channelId = playlist.id; // In this case, the playlist ID is the channel ID
+      const newChannelData = {
+          id: channelId,
+          name: playlist.name,
+          logo: playlist.coverArt,
+          uploads: newTracks, // Update the uploads list
+          playlists: [] // This view only deals with the 'uploads' part as a playlist
+      };
+      // Note: This is a simplified update. A more complex app might need to fetch the full channel data.
+      updateChannel(newChannelData);
     }
 
     toast({ title: "Track Removed", description: "The track has been removed from this playlist." });
@@ -211,6 +220,8 @@ export default function PlaylistPage() {
     (!playlist.public && !playlist.isChannelPlaylist) || 
     (playlist.public && playlist.ownerId === currentUser.id)
   );
+  
+  // A user can remove tracks from a channel playlist they've imported.
   const canEditChannelContent = playlist && playlist.isChannelPlaylist;
 
   return (

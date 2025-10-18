@@ -107,6 +107,7 @@ export const getCachedRecommendedPlaylists = (genre: string): Playlist[] | null 
         const cached = localStorage.getItem(`${RECOMMENDED_PLAYLISTS_CACHE_PREFIX}${genre}`);
         if (cached) {
             const data: RecommendedPlaylistCache = JSON.parse(cached);
+            // Optional: Add TTL logic here if needed, e.g., if (Date.now() - data.timestamp < some_ttl)
             return data.playlists;
         }
         return null;
