@@ -12,6 +12,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
 import type { Track } from '@/lib/types';
 
+// Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
+const serializeTimestamps = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(serializeTimestamps);
+  }
+  const newObj: { [key: string]: any } = {};
+  for (const key in obj) {
+    const value = obj[key];
+    if (value && typeof value.toDate === 'function') {
+      newObj[key] = value.toDate().toISOString();
+    } else {
+      newObj[key] = serializeTimestamps(value);
+    }
+  }
+  return newObj;
+};
+
 export default function RecommendedPage() {
     const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -42,10 +62,14 @@ export default function RecommendedPage() {
                 return;
             }
 
+            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+            const plainUserPlaylists = serializeTimestamps(userPlaylists);
+            const plainRecentTracks = serializeTimestamps(recentTracks);
+
             const results = await generateRecommendations({
-                recentlyPlayed: recentTracks,
-                userPlaylists,
-                communityPlaylists,
+                recentlyPlayed: plainRecentTracks,
+                userPlaylists: plainUserPlaylists,
+                communityPlaylists: plainCommunityPlaylists,
                 continuationToken: isInitialLoad ? undefined : continuationToken,
             });
             
