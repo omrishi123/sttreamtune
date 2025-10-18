@@ -111,8 +111,7 @@ export async function searchYoutube(input: YoutubeSearchInput): Promise<YoutubeS
           duration: parseDuration(durationText),
           'data-ai-hint': 'youtube video'
         };
-      })
-      .slice(0, 150); // Limit results to a reasonable number
+      });
 
     return tracks;
 
