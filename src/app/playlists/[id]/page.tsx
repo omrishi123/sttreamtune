@@ -7,7 +7,7 @@ import { getTracksForPlaylist as fetchTracksForPlaylist, getYoutubePlaylistDetai
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, BadgeCheck } from "lucide-react";
+import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, BadgeCheck, Plus } from "lucide-react";
 import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState, useCallback } from "react";
@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getCachedPlaylistTracks, cachePlaylistTracks, getCachedSinglePlaylist, cacheSinglePlaylist } from "@/lib/recommendations";
+import { AddSongsDialog } from "@/components/add-songs-dialog";
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 
@@ -40,7 +41,7 @@ export default function PlaylistPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { getPlaylistById, addTracksToCache, deletePlaylist, updateChannel, getTrackById } = useUserData();
+  const { getPlaylistById, addTracksToCache, deletePlaylist, updateChannel, getTrackById, addTrackToPlaylist } = useUserData();
   const { setQueueAndPlay } = usePlayer();
   const { toast } = useToast();
   
@@ -123,6 +124,18 @@ export default function PlaylistPage() {
   useEffect(() => {
     fetchPlaylistData();
   }, [id, fetchPlaylistData]);
+
+  const handleTrackAdded = (newTrack: Track) => {
+    // This function will be called from the AddSongsDialog
+    // It optimistically updates the UI
+    addTrackToPlaylist(playlist!.id, newTrack.id);
+    setTracks(currentTracks => {
+        if (currentTracks.some(t => t.id === newTrack.id)) {
+            return currentTracks;
+        }
+        return [...currentTracks, newTrack];
+    });
+  };
   
   const handleRemoveTrackFromLocalPlaylist = (trackId: string) => {
     if (!playlist) return;
@@ -216,13 +229,9 @@ export default function PlaylistPage() {
     }
   };
 
-  const canEdit = currentUser && playlist && (
-    (!playlist.public && !playlist.isChannelPlaylist) || 
-    (playlist.public && playlist.ownerId === currentUser.id)
+  const canEdit = currentUser && playlist && !playlist.isLikedSongs && !playlist.isChannelPlaylist && (
+    (!playlist.public) || (playlist.public && playlist.ownerId === currentUser.id)
   );
-  
-  // A user can remove tracks from a channel playlist they've imported.
-  const canEditChannelContent = playlist && playlist.isChannelPlaylist;
 
   return (
     <div className="space-y-8">
@@ -267,6 +276,14 @@ export default function PlaylistPage() {
                     <Play className="mr-2 h-5 w-5"/>
                     Play
                 </Button>
+                {canEdit && (
+                    <AddSongsDialog playlist={playlist} onTrackAdded={handleTrackAdded}>
+                        <Button size="lg" variant="outline">
+                            <Plus className="mr-2 h-5 w-5" />
+                            Add Songs
+                        </Button>
+                    </AddSongsDialog>
+                )}
                 <Button size="lg" variant="outline" onClick={handleShare}>
                     <Share2 className="mr-2 h-5 w-5"/>
                     Share
@@ -313,7 +330,7 @@ export default function PlaylistPage() {
         <TrackList 
           tracks={tracks} 
           playlist={playlist} 
-          onRemoveTrack={canEditChannelContent ? handleRemoveTrackFromLocalPlaylist : undefined}
+          onRemoveTrack={playlist.isChannelPlaylist ? handleRemoveTrackFromLocalPlaylist : undefined}
         />
       </section>
     </div>
