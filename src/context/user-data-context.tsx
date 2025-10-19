@@ -98,7 +98,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!isInitialized) return; // Prevent running on initial mount before user is set
+    if (!isInitialized) return; 
+
     const q = query(collection(db, "communityPlaylists"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const playlists: Playlist[] = [];
@@ -116,7 +117,8 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [isInitialized, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized]);
 
   useEffect(() => {
     if (!isInitialized || !currentUser) return;
@@ -238,6 +240,15 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'Cannot add tracks to a channel playlist.' });
         return;
     }
+
+    // Check for duplicates before any state updates
+    if (
+      (playlist.public && playlist.trackIds.includes(track.id)) ||
+      (!playlist.public && userData.playlists.find(p => p.id === playlistId)?.trackIds.includes(track.id))
+    ) {
+      toast({ title: 'Already in playlist', description: `"${track.title}" is already in the playlist.` });
+      return;
+    }
   
     if (playlist.public) {
         if (playlist.ownerId !== currentUser.id && !currentUser.isAdmin) {
@@ -257,13 +268,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
         }
     } else { // Private Playlist Logic
-        
-        const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
-        if (targetPlaylist && targetPlaylist.trackIds.includes(track.id)) {
-            toast({ title: 'Already in playlist', description: `"${track.title}" is already in the playlist.` });
-            return;
-        }
-
         setUserData(prev => ({
             ...prev,
             playlists: prev.playlists.map(p =>
@@ -272,7 +276,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
                     : p
             ),
         }));
-        
         toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
     }
   };
@@ -489,6 +492,8 @@ export const useUserData = (): UserDataContextType => {
   }
   return context;
 };
+
+    
 
     
 
