@@ -109,11 +109,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       setCommunityPlaylists(playlists);
     }, (error) => {
         console.error("Firestore snapshot error:", error);
-        toast({
-            variant: "destructive",
-            title: "Connection Error",
-            description: "Could not sync community playlists. Please check your connection."
-        })
     });
 
     return () => unsubscribe();
@@ -240,17 +235,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'Cannot add tracks to a channel playlist.' });
         return;
     }
-
-    // Check for duplicates before any state updates
-    if (
-      (playlist.public && playlist.trackIds.includes(track.id)) ||
-      (!playlist.public && userData.playlists.find(p => p.id === playlistId)?.trackIds.includes(track.id))
-    ) {
-      toast({ title: 'Already in playlist', description: `"${track.title}" is already in the playlist.` });
-      return;
-    }
   
     if (playlist.public) {
+        if (playlist.trackIds.includes(track.id)) {
+            toast({ title: 'Already in playlist', description: `"${track.title}" is already in this public playlist.` });
+            return;
+        }
         if (playlist.ownerId !== currentUser.id && !currentUser.isAdmin) {
             toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not own this public playlist.' });
             return;
@@ -268,6 +258,17 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
         }
     } else { // Private Playlist Logic
+        const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
+        if (targetPlaylist && targetPlaylist.trackIds.includes(track.id)) {
+            // Retrieve the full track object from cache to show the title
+            const existingTrack = getTrackById(track.id);
+            toast({
+                title: 'Already in playlist',
+                description: `"${existingTrack?.title || 'This song'}" is already in your playlist.`,
+            });
+            return;
+        }
+
         setUserData(prev => ({
             ...prev,
             playlists: prev.playlists.map(p =>
