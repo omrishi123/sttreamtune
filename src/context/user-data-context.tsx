@@ -232,12 +232,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   
   const addTrackToPlaylist = (playlistId: string, track: Track) => {
     if (!currentUser || !track || !track.id) return;
-  
+
     addTrackToCache(track);
-  
+
     const playlist = getPlaylistById(playlistId);
     if (!playlist) return;
-  
+
     if (playlist.public) {
       if (playlist.trackIds.includes(track.id)) {
         toast({ title: 'Already in playlist', description: `"${track.title}" is already in this public playlist.` });
@@ -260,15 +260,17 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       });
   
     } else { // Private Playlist Logic
+      // Check for duplicates before updating state
       const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
-      if (targetPlaylist?.trackIds.includes(track.id)) {
-          toast({
-              title: 'Already in playlist',
-              description: `"${track.title}" is already in your playlist.`,
-          });
-          return;
+      if (targetPlaylist && targetPlaylist.trackIds.includes(track.id)) {
+        toast({
+            title: 'Already in playlist',
+            description: `"${track.title}" is already in your playlist.`,
+        });
+        return;
       }
-  
+
+      // If not a duplicate, update state and then show success toast
       setUserData(prev => ({
           ...prev,
           playlists: prev.playlists.map(p =>
@@ -277,7 +279,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
                   : p
           ),
       }));
-  
       toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
     }
   };
@@ -494,3 +495,4 @@ export const useUserData = (): UserDataContextType => {
   }
   return context;
 };
+
