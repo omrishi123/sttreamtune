@@ -1,19 +1,41 @@
 
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { onAuthChange, updateUserProfile } from "@/lib/auth";
-import type { User, Track } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
-import { Icons } from "@/components/icons";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Music, Clock, User as UserIcon } from "lucide-react";
-import { useUserData } from "@/context/user-data-context";
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { onAuthChange, updateUserProfile } from '@/lib/auth';
+import type { User, Track } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { Icons } from '@/components/icons';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Camera,
+  Music,
+  Clock,
+  User as UserIcon,
+  Heart,
+  BarChart,
+} from 'lucide-react';
+import { useUserData } from '@/context/user-data-context';
+import { genres as allGenres } from '@/lib/genres';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from 'recharts';
 
 // Extend the window type to include our optional AndroidBridge and the new callback
 declare global {
@@ -68,15 +90,25 @@ const resizeImage = (file: File): Promise<string> => {
 };
 
 interface ListeningStats {
-    topArtists: { name: string, plays: number, artwork: string }[];
-    totalMinutes: number;
+  topArtists: { name: string; plays: number; artwork: string }[];
+  totalMinutes: number;
+  genreDistribution: { name: string; value: number }[];
 }
+
+const COLORS = [
+  '#0088FE',
+  '#00C49F',
+  '#FFBB28',
+  '#FF8042',
+  '#8884d8',
+  '#ff4d4d',
+];
 
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,20 +118,33 @@ export default function ProfilePage() {
 
   const listeningStats: ListeningStats = useMemo(() => {
     if (!recentlyPlayed || recentlyPlayed.length === 0) {
-      return { topArtists: [], totalMinutes: 0 };
+      return { topArtists: [], totalMinutes: 0, genreDistribution: [] };
     }
 
-    const artistCounts: { [artist: string]: { plays: number, artwork: string } } = {};
+    const artistCounts: { [artist: string]: { plays: number; artwork: string } } = {};
     let totalSeconds = 0;
+    const genreCounts: { [genre: string]: number } = {};
+    const lowerCaseGenres = allGenres.map((g) => g.toLowerCase());
 
-    recentlyPlayed.forEach(trackId => {
+    recentlyPlayed.forEach((trackId) => {
       const track = getTrackById(trackId);
-      if (track && track.artist !== 'Unknown Artist') {
-        if (!artistCounts[track.artist]) {
-          artistCounts[track.artist] = { plays: 0, artwork: track.artwork };
+      if (track) {
+        if (track.artist !== 'Unknown Artist') {
+            if (!artistCounts[track.artist]) {
+              artistCounts[track.artist] = { plays: 0, artwork: track.artwork };
+            }
+            artistCounts[track.artist].plays += 1;
         }
-        artistCounts[track.artist].plays += 1;
+
         totalSeconds += track.duration;
+
+        const combinedText = `${track.title} ${track.artist} ${track.album}`.toLowerCase();
+        lowerCaseGenres.forEach((genre, index) => {
+          if (combinedText.includes(genre)) {
+            const originalGenre = allGenres[index];
+            genreCounts[originalGenre] = (genreCounts[originalGenre] || 0) + 1;
+          }
+        });
       }
     });
 
@@ -107,13 +152,18 @@ export default function ProfilePage() {
       .sort(([, a], [, b]) => b.plays - a.plays)
       .slice(0, 5)
       .map(([name, data]) => ({ name, ...data }));
-    
+
+    const genreDistribution = Object.entries(genreCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 6)
+      .map(([name, value]) => ({ name, value }));
+
     return {
       topArtists: sortedArtists,
-      totalMinutes: Math.floor(totalSeconds / 60)
+      totalMinutes: Math.floor(totalSeconds / 60),
+      genreDistribution,
     };
   }, [recentlyPlayed, getTrackById]);
-
 
   useEffect(() => {
     const unsubscribe = onAuthChange((currentUser) => {
@@ -122,7 +172,7 @@ export default function ProfilePage() {
         setName(currentUser.name);
         setPhotoPreview(currentUser.photoURL || null);
       } else {
-        router.push("/login");
+        router.push('/login');
       }
     });
     return () => unsubscribe();
@@ -135,16 +185,16 @@ export default function ProfilePage() {
         // Since we get a data URL, we need to convert it to a Blob/File to resize it
         const response = await fetch(imageDataUrl);
         const blob = await response.blob();
-        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+        const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
         const compressedDataUrl = await resizeImage(file);
         setPhotoDataUrl(compressedDataUrl);
         setPhotoPreview(compressedDataUrl);
       } catch (error) {
-        console.error("Error processing native image:", error);
+        console.error('Error processing native image:', error);
         toast({
-          variant: "destructive",
-          title: "Image Processing Failed",
-          description: "Could not process the selected image.",
+          variant: 'destructive',
+          title: 'Image Processing Failed',
+          description: 'Could not process the selected image.',
         });
       }
     };
@@ -155,8 +205,7 @@ export default function ProfilePage() {
         delete window.updateProfileImage;
       }
     };
-  }, [toast]); 
-
+  }, [toast]);
 
   // This function is for the web file input fallback
   const handleWebPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,16 +216,16 @@ export default function ProfilePage() {
         setPhotoDataUrl(compressedDataUrl);
         setPhotoPreview(compressedDataUrl);
       } catch (error) {
-        console.error("Error resizing image:", error);
+        console.error('Error resizing image:', error);
         toast({
-          variant: "destructive",
-          title: "Image Processing Failed",
-          description: "Could not process the selected image.",
+          variant: 'destructive',
+          title: 'Image Processing Failed',
+          description: 'Could not process the selected image.',
         });
       }
     }
   };
-  
+
   const handleProfileImageClick = () => {
     if (window.Android?.chooseProfileImage) {
       // Use native image picker
@@ -196,15 +245,15 @@ export default function ProfilePage() {
       // Pass the name and the new photo data URL (if any) to the update function
       await updateUserProfile(name, photoDataUrl);
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
+        title: 'Profile Updated',
+        description: 'Your profile has been successfully updated.',
       });
       // Refresh the app's data to reflect changes everywhere
       router.refresh();
     } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Update Failed",
+        variant: 'destructive',
+        title: 'Update Failed',
         description: error.message,
       });
     } finally {
@@ -214,150 +263,228 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-        <div className="flex h-screen items-center justify-center bg-background">
-            <div className="flex flex-col items-center space-y-4">
-                <Icons.logo className="h-12 w-12 animate-pulse" />
-                <p className="text-muted-foreground">Loading profile...</p>
-            </div>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <Icons.logo className="h-12 w-12 animate-pulse" />
+          <p className="text-muted-foreground">Loading profile...</p>
         </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-8">
-        <div>
-            <h1 className="text-4xl font-bold font-headline tracking-tight">
-            Your Dashboard
-            </h1>
-            <p className="text-muted-foreground mt-2">
-            Your stats and profile settings.
-            </p>
-        </div>
+      <div>
+        <h1 className="text-4xl font-bold font-headline tracking-tight">
+          Your Dashboard
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Your stats and profile settings.
+        </p>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Listening Stats</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                         <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                            <Clock className="h-8 w-8 text-primary"/>
-                            <p className="text-2xl font-bold">{listeningStats.totalMinutes}</p>
-                            <p className="text-sm text-muted-foreground">Minutes Listened</p>
-                        </div>
-                        <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                            <Music className="h-8 w-8 text-primary"/>
-                            <p className="text-2xl font-bold">{recentlyPlayed.length}</p>
-                            <p className="text-sm text-muted-foreground">Songs Played</p>
-                        </div>
-                         <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                            <UserIcon className="h-8 w-8 text-primary"/>
-                            <p className="text-2xl font-bold">{listeningStats.topArtists.length}</p>
-                            <p className="text-sm text-muted-foreground">Artists Discovered</p>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Top Artists</CardTitle>
-                        <CardDescription>Your most played artists recently.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {listeningStats.topArtists.length > 0 ? (
-                             <div className="space-y-4">
-                                {listeningStats.topArtists.map((artist, index) => (
-                                    <div key={index} className="flex items-center gap-4">
-                                        <Avatar>
-                                            <AvatarImage src={artist.artwork} alt={artist.name} />
-                                            <AvatarFallback>{artist.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                            <p className="font-semibold">{artist.name}</p>
-                                            <p className="text-sm text-muted-foreground">{artist.plays} plays</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-muted-foreground text-sm text-center py-4">Play some songs to see your top artists here!</p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-            
-             <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle>Edit Profile</CardTitle>
-                    <CardDescription>Make changes to your profile here. Click save when you're done.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-2 flex flex-col items-center">
-                          <Label>Profile Picture</Label>
-                          <div className="relative group">
-                            <Avatar className="h-24 w-24">
-                                <AvatarImage src={photoPreview || undefined} alt={user.name} data-ai-hint="user avatar" />
-                                <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
-                            </Avatar>
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="icon" 
-                                className="absolute bottom-0 right-0 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-background"
-                                onClick={handleProfileImageClick}
-                                >
-                                <Camera className="h-4 w-4"/>
-                                <span className="sr-only">Change Photo</span>
-                            </Button>
-                          </div>
-                            <Input 
-                                id="picture" 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={handleWebPhotoChange} 
-                                disabled={isLoading}
-                                ref={fileInputRef}
-                                className="hidden"
-                            />
-                        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Listening Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                <Clock className="h-8 w-8 text-primary" />
+                <p className="text-2xl font-bold">
+                  {listeningStats.totalMinutes}
+                </p>
+                <p className="text-sm text-muted-foreground">Minutes Listened</p>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                <Music className="h-8 w-8 text-primary" />
+                <p className="text-2xl font-bold">{recentlyPlayed.length}</p>
+                <p className="text-sm text-muted-foreground">Songs Played</p>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                <Heart className="h-8 w-8 text-primary" />
+                <p className="text-2xl font-bold">{likedSongs.length}</p>
+                <p className="text-sm text-muted-foreground">Liked Songs</p>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                <UserIcon className="h-8 w-8 text-primary" />
+                <p className="text-2xl font-bold">
+                  {listeningStats.topArtists.length}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Artists Discovered
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Display Name</Label>
-                            <Input
-                            id="name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                            disabled={isLoading}
-                            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Artists</CardTitle>
+                <CardDescription>
+                  Your most played artists recently.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {listeningStats.topArtists.length > 0 ? (
+                  <div className="space-y-4">
+                    {listeningStats.topArtists.map((artist, index) => (
+                      <div key={index} className="flex items-center gap-4">
+                        <Avatar>
+                          <AvatarImage
+                            src={artist.artwork}
+                            alt={artist.name}
+                          />
+                          <AvatarFallback>
+                            {artist.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-semibold">{artist.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {artist.plays} plays
+                          </p>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                            id="email"
-                            type="email"
-                            value={user.email}
-                            disabled
-                            />
-                        </div>
-                        <Button type="submit" disabled={isLoading} className="w-full">
-                            {isLoading ? (
-                                <>
-                                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
-                                </>
-                            ) : (
-                                "Save Changes"
-                            )}
-                        </Button>
-                    </form>
-                </CardContent>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm text-center py-4">
+                    Play some songs to see your top artists here!
+                  </p>
+                )}
+              </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Vibe</CardTitle>
+                <CardDescription>
+                  A breakdown of your top genres.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {listeningStats.genreDistribution.length > 0 ? (
+                  <div className="h-[250px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={listeningStats.genreDistribution}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          nameKey="name"
+                          label={({ name, percent }) =>
+                            `${name} ${(percent * 100).toFixed(0)}%`
+                          }
+                        >
+                          {listeningStats.genreDistribution.map(
+                            (entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={COLORS[index % COLORS.length]}
+                              />
+                            )
+                          )}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--background))',
+                            borderColor: 'hsl(var(--border))',
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm text-center py-4">
+                    Listen to more songs to see your genre breakdown!
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Edit Profile</CardTitle>
+            <CardDescription>
+              Make changes to your profile here. Click save when you're done.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2 flex flex-col items-center">
+                <Label>Profile Picture</Label>
+                <div className="relative group">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage
+                      src={photoPreview || undefined}
+                      alt={user.name}
+                      data-ai-hint="user avatar"
+                    />
+                    <AvatarFallback>
+                      {user.name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="absolute bottom-0 right-0 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-background"
+                    onClick={handleProfileImageClick}
+                  >
+                    <Camera className="h-4 w-4" />
+                    <span className="sr-only">Change Photo</span>
+                  </Button>
+                </div>
+                <Input
+                  id="picture"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleWebPhotoChange}
+                  disabled={isLoading}
+                  ref={fileInputRef}
+                  className="hidden"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Display Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={user.email} disabled />
+              </div>
+              <Button type="submit" disabled={isLoading} className="w-full">
+                {isLoading ? (
+                  <>
+                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
-
-    
