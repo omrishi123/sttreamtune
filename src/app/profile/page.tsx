@@ -290,21 +290,23 @@ export default function ProfilePage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-bold font-headline tracking-tight">
-                {isEditMode ? 'Edit Profile' : 'Your Dashboard'}
-              </h1>
-              {user.isVerified && !isEditMode && <Icons.verified className="h-8 w-8 text-blue-500" />}
-            </div>
-            <p className="text-muted-foreground mt-2">
-              {isEditMode ? `Make changes for ${user.name}` : 'Your stats and profile settings.'}
-            </p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-bold font-headline tracking-tight">
+              {isEditMode ? `Edit Profile` : user.name}
+            </h1>
+            {user.isVerified && <Icons.verified className="h-8 w-8 text-blue-500" />}
+          </div>
+          <p className="text-muted-foreground mt-2">
+            {isEditMode
+              ? `Make changes for ${user.name}`
+              : 'Your stats and profile settings.'}
+          </p>
         </div>
         {!isEditMode && (
-             <Button variant="outline" onClick={() => setIsEditMode(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Profile
-            </Button>
+          <Button variant="outline" onClick={() => setIsEditMode(true)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Profile
+          </Button>
         )}
       </div>
 
