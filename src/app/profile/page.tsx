@@ -15,6 +15,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -25,6 +26,8 @@ import {
   User as UserIcon,
   Heart,
   BarChart,
+  Edit,
+  X,
 } from 'lucide-react';
 import { useUserData } from '@/context/user-data-context';
 import { genres as allGenres } from '@/lib/genres';
@@ -112,6 +115,7 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { recentlyPlayed, getTrackById, likedSongs } = useUserData();
@@ -248,7 +252,8 @@ export default function ProfilePage() {
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
-      // Refresh the app's data to reflect changes everywhere
+      // Exit edit mode and refresh the app's data to reflect changes everywhere
+      setIsEditMode(false);
       router.refresh();
     } catch (error: any) {
       toast({
@@ -260,6 +265,15 @@ export default function ProfilePage() {
       setIsLoading(false);
     }
   };
+  
+  const handleCancelEdit = () => {
+    if (user) {
+        setName(user.name);
+        setPhotoPreview(user.photoURL || null);
+        setPhotoDataUrl(null);
+    }
+    setIsEditMode(false);
+  }
 
   if (!user) {
     return (
@@ -274,217 +288,224 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold font-headline tracking-tight">
-          Your Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Your stats and profile settings.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Listening Stats</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                <Clock className="h-8 w-8 text-primary" />
-                <p className="text-2xl font-bold">
-                  {listeningStats.totalMinutes}
-                </p>
-                <p className="text-sm text-muted-foreground">Minutes Listened</p>
-              </div>
-              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                <Music className="h-8 w-8 text-primary" />
-                <p className="text-2xl font-bold">{recentlyPlayed.length}</p>
-                <p className="text-sm text-muted-foreground">Songs Played</p>
-              </div>
-              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                <Heart className="h-8 w-8 text-primary" />
-                <p className="text-2xl font-bold">{likedSongs.length}</p>
-                <p className="text-sm text-muted-foreground">Liked Songs</p>
-              </div>
-              <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
-                <UserIcon className="h-8 w-8 text-primary" />
-                <p className="text-2xl font-bold">
-                  {listeningStats.topArtists.length}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Artists Discovered
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Artists</CardTitle>
-                <CardDescription>
-                  Your most played artists recently.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {listeningStats.topArtists.length > 0 ? (
-                  <div className="space-y-4">
-                    {listeningStats.topArtists.map((artist, index) => (
-                      <div key={index} className="flex items-center gap-4">
-                        <Avatar>
-                          <AvatarImage
-                            src={artist.artwork}
-                            alt={artist.name}
-                          />
-                          <AvatarFallback>
-                            {artist.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="font-semibold">{artist.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {artist.plays} plays
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-4">
-                    Play some songs to see your top artists here!
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Vibe</CardTitle>
-                <CardDescription>
-                  A breakdown of your top genres.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {listeningStats.genreDistribution.length > 0 ? (
-                  <div className="h-[250px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={listeningStats.genreDistribution}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          nameKey="name"
-                          label={({ name, percent }) =>
-                            `${name} ${(percent * 100).toFixed(0)}%`
-                          }
-                        >
-                          {listeningStats.genreDistribution.map(
-                            (entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                              />
-                            )
-                          )}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--background))',
-                            borderColor: 'hsl(var(--border))',
-                          }}
-                        />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-4">
-                    Listen to more songs to see your genre breakdown!
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+      <div className="flex justify-between items-center">
+        <div>
+            <h1 className="text-4xl font-bold font-headline tracking-tight">
+            {isEditMode ? 'Edit Profile' : 'Your Dashboard'}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+            {isEditMode ? 'Make changes to your profile.' : 'Your stats and profile settings.'}
+            </p>
         </div>
-
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Edit Profile</CardTitle>
-            <CardDescription>
-              Make changes to your profile here. Click save when you're done.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2 flex flex-col items-center">
-                <Label>Profile Picture</Label>
-                <div className="relative group">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage
-                      src={photoPreview || undefined}
-                      alt={user.name}
-                      data-ai-hint="user avatar"
-                    />
-                    <AvatarFallback>
-                      {user.name?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="absolute bottom-0 right-0 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-background"
-                    onClick={handleProfileImageClick}
-                  >
-                    <Camera className="h-4 w-4" />
-                    <span className="sr-only">Change Photo</span>
-                  </Button>
-                </div>
-                <Input
-                  id="picture"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleWebPhotoChange}
-                  disabled={isLoading}
-                  ref={fileInputRef}
-                  className="hidden"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Display Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={user.email} disabled />
-              </div>
-              <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? (
-                  <>
-                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        {!isEditMode && (
+             <Button variant="outline" onClick={() => setIsEditMode(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Profile
+            </Button>
+        )}
       </div>
+
+      {isEditMode ? (
+           <Card>
+          <form onSubmit={handleSubmit}>
+              <CardContent className="pt-6 space-y-6">
+                <div className="space-y-2 flex flex-col items-center">
+                    <Label>Profile Picture</Label>
+                    <div className="relative group">
+                    <Avatar className="h-24 w-24">
+                        <AvatarImage
+                        src={photoPreview || undefined}
+                        alt={user.name}
+                        data-ai-hint="user avatar"
+                        />
+                        <AvatarFallback>
+                        {user.name?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                    </Avatar>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="absolute bottom-0 right-0 rounded-full bg-background/80 backdrop-blur-sm group-hover:bg-background"
+                        onClick={handleProfileImageClick}
+                    >
+                        <Camera className="h-4 w-4" />
+                        <span className="sr-only">Change Photo</span>
+                    </Button>
+                    </div>
+                    <Input
+                    id="picture"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleWebPhotoChange}
+                    disabled={isLoading}
+                    ref={fileInputRef}
+                    className="hidden"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="name">Display Name</Label>
+                    <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={user.email} disabled />
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={handleCancelEdit} disabled={isLoading}>Cancel</Button>
+                <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                    <>
+                        <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                    </>
+                    ) : (
+                    'Save Changes'
+                    )}
+                </Button>
+              </CardFooter>
+          </form>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-3 space-y-6">
+            <Card>
+                <CardHeader>
+                <CardTitle>Listening Stats</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                    <Clock className="h-8 w-8 text-primary" />
+                    <p className="text-2xl font-bold">
+                    {listeningStats.totalMinutes}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Minutes Listened</p>
+                </div>
+                <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                    <Music className="h-8 w-8 text-primary" />
+                    <p className="text-2xl font-bold">{recentlyPlayed.length}</p>
+                    <p className="text-sm text-muted-foreground">Songs Played</p>
+                </div>
+                <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                    <Heart className="h-8 w-8 text-primary" />
+                    <p className="text-2xl font-bold">{likedSongs.length}</p>
+                    <p className="text-sm text-muted-foreground">Liked Songs</p>
+                </div>
+                <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/50 rounded-lg">
+                    <UserIcon className="h-8 w-8 text-primary" />
+                    <p className="text-2xl font-bold">
+                    {listeningStats.topArtists.length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                    Artists Discovered
+                    </p>
+                </div>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                <CardHeader>
+                    <CardTitle>Top Artists</CardTitle>
+                    <CardDescription>
+                    Your most played artists recently.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {listeningStats.topArtists.length > 0 ? (
+                    <div className="space-y-4">
+                        {listeningStats.topArtists.map((artist, index) => (
+                        <div key={index} className="flex items-center gap-4">
+                            <Avatar>
+                            <AvatarImage
+                                src={artist.artwork}
+                                alt={artist.name}
+                            />
+                            <AvatarFallback>
+                                {artist.name.charAt(0)}
+                            </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                            <p className="font-semibold">{artist.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {artist.plays} plays
+                            </p>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+                    ) : (
+                    <p className="text-muted-foreground text-sm text-center py-4">
+                        Play some songs to see your top artists here!
+                    </p>
+                    )}
+                </CardContent>
+                </Card>
+
+                <Card>
+                <CardHeader>
+                    <CardTitle>Your Vibe</CardTitle>
+                    <CardDescription>
+                    A breakdown of your top genres.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {listeningStats.genreDistribution.length > 0 ? (
+                    <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                            data={listeningStats.genreDistribution}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            nameKey="name"
+                            label={({ name, percent }) =>
+                                `${name} ${(percent * 100).toFixed(0)}%`
+                            }
+                            >
+                            {listeningStats.genreDistribution.map(
+                                (entry, index) => (
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={COLORS[index % COLORS.length]}
+                                />
+                                )
+                            )}
+                            </Pie>
+                            <Tooltip
+                            contentStyle={{
+                                backgroundColor: 'hsl(var(--background))',
+                                borderColor: 'hsl(var(--border))',
+                            }}
+                            />
+                            <Legend />
+                        </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                    ) : (
+                    <p className="text-muted-foreground text-sm text-center py-4">
+                        Listen to more songs to see your genre breakdown!
+                    </p>
+                    )}
+                </CardContent>
+                </Card>
+            </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 }
