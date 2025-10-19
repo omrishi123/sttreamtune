@@ -137,9 +137,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   }, [trackCache, currentUser, isInitialized]);
 
   const addTrackToCache = (track: Track) => {
-    if (!trackCache[track.id]) {
-      setTrackCache(prev => ({ ...prev, [track.id]: track }));
-    }
+    setTrackCache(prev => {
+        if (prev[track.id]) {
+            return prev;
+        }
+        return { ...prev, [track.id]: track }
+    });
   };
 
   const addTracksToCache = (tracks: Track[]) => {
@@ -228,6 +231,10 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   
   const addTrackToPlaylist = (playlistId: string, track: Track) => {
     if (!currentUser) return;
+    
+    // Ensure the track is in the global cache first
+    addTrackToCache(track);
+    
     const playlist = getPlaylistById(playlistId);
     if (!playlist) return;
 
@@ -254,34 +261,31 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       });
 
     } else { // Private Playlist Logic
-      // Perform check before updating state to prevent re-renders causing issues
-      const currentPlaylists = userData.playlists;
-      const targetPlaylist = currentPlaylists.find(p => p.id === playlistId);
-      
-      if (targetPlaylist?.trackIds.includes(track.id)) {
-        toast({
-            title: 'Already in playlist',
-            description: `"${track.title}" is already in your playlist.`,
-        });
-        return;
-      }
-
-      // Use a functional update to ensure we have the latest state
+      // Use a functional update to prevent race conditions.
       setUserData(prev => {
+        const targetPlaylist = prev.playlists.find(p => p.id === playlistId);
+        
+        // Check if track is already there inside the atomic update
+        if (targetPlaylist?.trackIds.includes(track.id)) {
+          toast({
+              title: 'Already in playlist',
+              description: `"${track.title}" is already in your playlist.`,
+          });
+          return prev; // Return previous state without changes
+        }
+
+        // If not a duplicate, proceed with the update
+        toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
+        
         const updatedPlaylists = prev.playlists.map(p => {
           if (p.id === playlistId) {
-            // Check again inside the updater to be absolutely sure we don't add duplicates
-            if (p.trackIds.includes(track.id)) {
-              return p;
-            }
             return { ...p, trackIds: [...p.trackIds, track.id] };
           }
           return p;
         });
+
         return { ...prev, playlists: updatedPlaylists };
       });
-
-      toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
     }
   };
 
