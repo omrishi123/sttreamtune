@@ -84,7 +84,7 @@ const generatePlaylistFlow = ai.defineFlow(
 
     const searchResults = await Promise.all(searchPromises);
     
-    // Step 3: Consolidate results
+    // Step 3: Consolidate and de-duplicate results
     const foundTracks: YoutubeSearchOutput['tracks'] = searchResults
       .flatMap(res => res.tracks) // Use flatMap to handle multiple results per search if any
       .filter((track): track is NonNullable<typeof track> => track !== null && track !== undefined);
