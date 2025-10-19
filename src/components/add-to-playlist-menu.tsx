@@ -19,6 +19,7 @@ import { useMemo } from 'react';
 import { onAuthChange } from '@/lib/auth';
 import type { User } from '@/lib/types';
 import React from 'react';
+import { ScrollArea } from './ui/scroll-area';
 
 export function AddToPlaylistMenu({
   track,
@@ -71,6 +72,7 @@ export function AddToPlaylistMenu({
           </DropdownMenuItem>
         </AddPlaylistDialog>
         <DropdownMenuSeparator />
+        <ScrollArea className="max-h-60">
         {editablePlaylists.length > 0 ? (
           editablePlaylists.map((playlist) => (
             <DropdownMenuItem
@@ -83,6 +85,7 @@ export function AddToPlaylistMenu({
         ) : (
            <DropdownMenuItem disabled>No editable playlists</DropdownMenuItem>
         )}
+        </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
   );
