@@ -232,12 +232,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   
   const addTrackToPlaylist = (playlistId: string, track: Track) => {
     if (!currentUser || !track || !track.id) return;
-
+  
     addTrackToCache(track);
-
+  
     const playlist = getPlaylistById(playlistId);
     if (!playlist) return;
-
+  
     if (playlist.public) {
       if (playlist.trackIds.includes(track.id)) {
         toast({ title: 'Already in playlist', description: `"${track.title}" is already in this public playlist.` });
@@ -258,29 +258,27 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error updating public playlist:", error);
         toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
       });
-
+  
     } else { // Private Playlist Logic
-      setUserData(prev => {
-        const targetPlaylist = prev.playlists.find(p => p.id === playlistId);
-        
-        if (targetPlaylist?.trackIds.includes(track.id)) {
+      const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
+      if (targetPlaylist?.trackIds.includes(track.id)) {
           toast({
               title: 'Already in playlist',
               description: `"${track.title}" is already in your playlist.`,
           });
-          return prev;
-        }
-        
-        const updatedPlaylists = prev.playlists.map(p => {
-          if (p.id === playlistId) {
-            return { ...p, trackIds: [...p.trackIds, track.id] };
-          }
-          return p;
-        });
-
-        toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
-        return { ...prev, playlists: updatedPlaylists };
-      });
+          return;
+      }
+  
+      setUserData(prev => ({
+          ...prev,
+          playlists: prev.playlists.map(p =>
+              p.id === playlistId
+                  ? { ...p, trackIds: [...p.trackIds, track.id] }
+                  : p
+          ),
+      }));
+  
+      toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
     }
   };
 
