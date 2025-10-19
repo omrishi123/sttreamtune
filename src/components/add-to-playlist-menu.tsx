@@ -72,19 +72,19 @@ export function AddToPlaylistMenu({
           </DropdownMenuItem>
         </AddPlaylistDialog>
         <DropdownMenuSeparator />
-        <ScrollArea className="max-h-60">
-        {editablePlaylists.length > 0 ? (
-          editablePlaylists.map((playlist) => (
-            <DropdownMenuItem
-              key={playlist.id}
-              onClick={() => handleAdd(playlist.id)}
-            >
-              {playlist.name}
-            </DropdownMenuItem>
-          ))
-        ) : (
-           <DropdownMenuItem disabled>No editable playlists</DropdownMenuItem>
-        )}
+        <ScrollArea className="h-[200px]">
+          {editablePlaylists.length > 0 ? (
+            editablePlaylists.map((playlist) => (
+              <DropdownMenuItem
+                key={playlist.id}
+                onClick={() => handleAdd(playlist.id)}
+              >
+                {playlist.name}
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <DropdownMenuItem disabled>No editable playlists</DropdownMenuItem>
+          )}
         </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
