@@ -6,9 +6,11 @@ import { db } from './firebase';
 import type { User } from './types';
 import { nanoid } from 'nanoid';
 
+// The user activity tracking feature has been disabled as per user request.
+// The functions below are now empty and do nothing.
+
 const DEVICE_ID_KEY = 'streamtune_device_id';
 
-// Gets or creates a unique ID for the device
 const getDeviceId = (): string => {
   if (typeof window === 'undefined') return '';
   let deviceId = localStorage.getItem(DEVICE_ID_KEY);
@@ -19,28 +21,7 @@ const getDeviceId = (): string => {
   return deviceId;
 };
 
-// The main function to call on app load. It now pings every time.
 export const pingUserActivity = async (user: User) => {
-  const deviceId = getDeviceId();
-  if (!deviceId) return;
-
-  const isGuest = user.id === 'guest';
-  // Create a more readable guest name
-  const guestName = `Guest-${deviceId.substring(7, 13)}`;
-
-  const activityData = {
-    deviceId: deviceId,
-    userId: user.id,
-    userName: isGuest ? guestName : user.name,
-    lastSeen: serverTimestamp(),
-    isGuest,
-  };
-
-  try {
-    const activityRef = doc(db, 'user_activity', deviceId);
-    // Use setDoc with merge:true, which will create the document or update it if it exists.
-    await setDoc(activityRef, activityData, { merge: true });
-  } catch (error) {
-    console.error('Failed to ping user activity:', error);
-  }
+  // This function has been disabled.
+  return;
 };

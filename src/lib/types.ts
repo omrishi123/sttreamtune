@@ -55,15 +55,6 @@ export interface UserData {
   channels: Channel[];
 }
 
-// New type for user activity tracking
-export interface UserActivity {
-  deviceId: string;
-  userId: string;
-  userName: string;
-  lastSeen: string; // ISO string
-  isGuest: boolean;
-}
-
 // This schema still defines the full possible response from the flow
 export const GeneratePlaylistResponseSchema = z.object({
   playlist: z.object({

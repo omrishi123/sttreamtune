@@ -148,7 +148,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthChange((fbUser) => {
         if(fbUser) {
-            pingUserActivity(fbUser); // Ping user activity on auth change
             if(user && user.id !== fbUser.id) {
                 clearUserPreferences();
             }
