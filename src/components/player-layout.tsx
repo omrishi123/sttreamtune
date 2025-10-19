@@ -19,7 +19,6 @@ import {
   Moon,
   Sun,
   MicVocal,
-  BadgeCheck,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -204,7 +203,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                 <DropdownMenuContent className="w-56 mb-2 ml-2" side="top" align="start">
                   <DropdownMenuLabel className="flex items-center gap-2">
                     <span>{user.name}</span>
-                    {user.isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                    {user.isVerified && <Icons.verified className="h-4 w-4 text-blue-500" />}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>
@@ -269,7 +268,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     <DropdownMenuContent className="w-56 mr-4" side="bottom" align="end">
                       <DropdownMenuLabel className="flex items-center gap-2">
                         <span>{user.name}</span>
-                        {user.isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                        {user.isVerified && <Icons.verified className="h-4 w-4 text-blue-500" />}
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>

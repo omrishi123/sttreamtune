@@ -28,7 +28,6 @@ import {
   BarChart,
   Edit,
   X,
-  BadgeCheck,
 } from 'lucide-react';
 import { useUserData } from '@/context/user-data-context';
 import { genres as allGenres } from '@/lib/genres';
@@ -293,12 +292,12 @@ export default function ProfilePage() {
         <div>
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-bold font-headline tracking-tight">
-                {isEditMode ? 'Edit Profile' : user.name}
+                {isEditMode ? 'Edit Profile' : 'Your Dashboard'}
               </h1>
-              {user.isVerified && !isEditMode && <BadgeCheck className="h-8 w-8 text-primary" />}
+              {user.isVerified && !isEditMode && <Icons.verified className="h-8 w-8 text-blue-500" />}
             </div>
             <p className="text-muted-foreground mt-2">
-              {isEditMode ? 'Make changes to your profile.' : 'Your stats and profile settings.'}
+              {isEditMode ? `Make changes for ${user.name}` : 'Your stats and profile settings.'}
             </p>
         </div>
         {!isEditMode && (

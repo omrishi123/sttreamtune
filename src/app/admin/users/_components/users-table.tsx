@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, UserCog, BadgeCheck } from 'lucide-react';
+import { MoreHorizontal, UserCog, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Icons } from '@/components/icons';
 
 interface UsersTableProps {
   initialUsers: User[];
@@ -65,7 +66,7 @@ export function UsersTable({ initialUsers, onRoleChangeClick, onVerifyClick }: U
                     <div className="grid gap-1">
                       <div className="flex items-center gap-1.5">
                         <p className="font-medium truncate">{user.name}</p>
-                        {user.isVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                        {user.isVerified && <Icons.verified className="h-4 w-4 text-blue-500" />}
                       </div>
                       <p className="text-xs text-muted-foreground sm:hidden truncate">{user.email}</p>
                     </div>
@@ -90,7 +91,7 @@ export function UsersTable({ initialUsers, onRoleChangeClick, onVerifyClick }: U
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => onVerifyClick(user)}>
-                        <BadgeCheck className="mr-2 h-4 w-4" />
+                        <Check className="mr-2 h-4 w-4" />
                         {user.isVerified ? 'Remove Verification' : 'Verify User'}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

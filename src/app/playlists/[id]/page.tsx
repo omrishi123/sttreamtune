@@ -6,7 +6,7 @@ import { getTracksForPlaylist as fetchTracksForPlaylist, getYoutubePlaylistDetai
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, BadgeCheck, Plus } from "lucide-react";
+import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, Plus } from "lucide-react";
 import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState, useCallback } from "react";
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getCachedPlaylistTracks, cachePlaylistTracks, getCachedSinglePlaylist, cacheSinglePlaylist } from "@/lib/recommendations";
 import { AddSongsDialog } from "@/components/add-songs-dialog";
+import { Icons } from "@/components/icons";
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 
@@ -268,7 +269,7 @@ export default function PlaylistPage() {
             <div className="text-sm text-muted-foreground flex items-center justify-center md:justify-start gap-1.5">
                 <span>Created by</span>
                 <span className="text-foreground font-medium">{playlist.owner}</span>
-                {playlist.ownerIsVerified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                {playlist.ownerIsVerified && <Icons.verified className="h-4 w-4 text-blue-500" />}
                 <span>{" \u2022 "}</span>
                 <span>{tracks.length} songs, about {totalMinutes} min</span>
             </div>

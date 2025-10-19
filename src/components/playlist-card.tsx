@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { BadgeCheck } from "lucide-react";
+import { Icons } from "./icons";
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 const PLACEHOLDER_IMAGE_URL = "https://i.postimg.cc/SswWC87w/streamtune.png";
@@ -66,7 +66,7 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
             {playlist.owner && (
               <CardDescription className="text-xs truncate mt-1 flex items-center gap-1">
                 By {playlist.owner}
-                {playlist.ownerIsVerified && <BadgeCheck className="h-3 w-3 text-primary" />}
+                {playlist.ownerIsVerified && <Icons.verified className="h-3 w-3 text-blue-500" />}
               </CardDescription>
             )}
           </CardHeader>
