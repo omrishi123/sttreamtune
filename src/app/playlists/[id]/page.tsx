@@ -127,12 +127,12 @@ export default function PlaylistPage() {
   const handleTrackAdded = (newTrack: Track) => {
     if (!playlist) return;
 
-    // Call the context function to handle the logic
+    // The context function now handles the duplicate check and toast
     addTrackToPlaylist(playlist.id, newTrack); 
     
-    // Immediately update the UI state
+    // Immediately update the UI state to reflect the addition
     setTracks(currentTracks => {
-        // Prevent adding duplicates to the view
+        // Prevent adding duplicates to the view, though context should also prevent this
         if (currentTracks.some(t => t.id === newTrack.id)) {
             return currentTracks;
         }
@@ -337,5 +337,3 @@ export default function PlaylistPage() {
     </div>
   );
 }
-
-    

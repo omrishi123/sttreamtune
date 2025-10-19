@@ -98,7 +98,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!isInitialized) return; 
+    if (!isInitialized) return;
 
     const q = query(collection(db, "communityPlaylists"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -254,25 +254,31 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       });
 
     } else { // Private Playlist Logic
+      // Perform check before updating state to prevent re-renders causing issues
       const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
-      const isAlreadyInPlaylist = targetPlaylist?.trackIds.includes(track.id);
-      if (isAlreadyInPlaylist) {
-          const existingTrack = getTrackById(track.id);
-          toast({
-              title: 'Already in playlist',
-              description: `"${existingTrack?.title || 'This song'}" is already in your playlist.`,
-          });
-          return;
+      if (targetPlaylist?.trackIds.includes(track.id)) {
+        toast({
+            title: 'Already in playlist',
+            description: `"${track.title}" is already in your playlist.`,
+        });
+        return;
       }
-      
+
+      // Use a functional update to ensure we have the latest state
       setUserData(prev => {
-        const updatedPlaylists = prev.playlists.map(p =>
-          p.id === playlistId
-            ? { ...p, trackIds: [...p.trackIds, track.id] }
-            : p
-        );
+        const updatedPlaylists = prev.playlists.map(p => {
+          if (p.id === playlistId) {
+            // Check again inside the updater to be absolutely sure
+            if (p.trackIds.includes(track.id)) {
+              return p;
+            }
+            return { ...p, trackIds: [...p.trackIds, track.id] };
+          }
+          return p;
+        });
         return { ...prev, playlists: updatedPlaylists };
       });
+
       toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
     }
   };
