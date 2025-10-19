@@ -191,11 +191,16 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                    <SidebarMenuButton asChild tooltip="Profile" className="w-full justify-start">
-                      <div>
-                        <Avatar className="h-7 w-7">
-                          <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
-                          <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
-                        </Avatar>
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
+                            <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
+                          </Avatar>
+                          {user.isVerified && (
+                             <Icons.verified className="absolute -bottom-1 -right-1 h-4 w-4" />
+                          )}
+                        </div>
                         <span className="font-medium">{user.name}</span>
                       </div>
                     </SidebarMenuButton>
@@ -203,7 +208,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                 <DropdownMenuContent className="w-56 mb-2 ml-2" side="top" align="start">
                   <DropdownMenuLabel className="flex items-center gap-2">
                     <span>{user.name}</span>
-                    {user.isVerified && <Icons.verified className="h-4 w-4 text-blue-500" />}
+                    {user.isVerified && <Icons.verified className="h-4 w-4" />}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>
@@ -260,15 +265,20 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Avatar className="h-8 w-8 cursor-pointer">
-                        <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
-                        <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="h-8 w-8 cursor-pointer">
+                          <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
+                          <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
+                        </Avatar>
+                         {user.isVerified && (
+                             <Icons.verified className="absolute -bottom-1 -right-1 h-4 w-4" />
+                          )}
+                      </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56 mr-4" side="bottom" align="end">
                       <DropdownMenuLabel className="flex items-center gap-2">
                         <span>{user.name}</span>
-                        {user.isVerified && <Icons.verified className="h-4 w-4 text-blue-500" />}
+                        {user.isVerified && <Icons.verified className="h-4 w-4" />}
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>
