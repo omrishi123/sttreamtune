@@ -16,6 +16,7 @@ import {
   Timer,
   Youtube,
   ChevronDown,
+  PlusCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { usePlayer } from "@/context/player-context";
@@ -216,6 +217,11 @@ export function Player() {
               <SkipForward className="h-5 w-5" />
             </Button>
              <div className="flex items-center">
+                <AddToPlaylistMenu track={currentTrack}>
+                     <Button variant="ghost" size="icon" className="w-8 h-8">
+                        <PlusCircle className="h-5 w-5" />
+                    </Button>
+                </AddToPlaylistMenu>
                 <QueueSheet />
                 <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => setIsNowPlayingOpen(true)}>
                     <Youtube className="h-5 w-5" />
@@ -259,7 +265,6 @@ export function Player() {
            <Button variant="ghost" size="icon" className="ml-2" onClick={handleToggleLike}>
               <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
             </Button>
-            <AddToPlaylistMenu track={currentTrack} />
         </div>
 
         {/* Center Section: Player Controls */}
@@ -341,6 +346,7 @@ export function Player() {
           <Button variant="ghost" size="icon" onClick={() => setIsNowPlayingOpen(true)}>
               <Youtube className="h-5 w-5" />
           </Button>
+           <AddToPlaylistMenu track={currentTrack} />
            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
               <ChevronDown className="h-5 w-5" />
            </Button>
@@ -355,3 +361,6 @@ export function Player() {
     
 
 
+
+
+    
