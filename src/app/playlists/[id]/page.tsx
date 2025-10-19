@@ -126,9 +126,6 @@ export default function PlaylistPage() {
 
   const handleTrackAdded = (newTrack: Track) => {
     if (!playlist) return;
-
-    // The context function now handles the duplicate check and toast
-    addTrackToPlaylist(playlist.id, newTrack); 
     
     // Immediately update the UI state to reflect the addition
     setTracks(currentTracks => {
@@ -138,6 +135,9 @@ export default function PlaylistPage() {
         }
         return [...currentTracks, newTrack];
     });
+
+    // Let the context handle the actual data persistence and logic
+    addTrackToPlaylist(playlist.id, newTrack); 
   };
   
   const handleRemoveTrackFromLocalPlaylist = (trackId: string) => {

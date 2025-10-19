@@ -255,7 +255,9 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
     } else { // Private Playlist Logic
       // Perform check before updating state to prevent re-renders causing issues
-      const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
+      const currentPlaylists = userData.playlists;
+      const targetPlaylist = currentPlaylists.find(p => p.id === playlistId);
+      
       if (targetPlaylist?.trackIds.includes(track.id)) {
         toast({
             title: 'Already in playlist',
@@ -268,7 +270,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       setUserData(prev => {
         const updatedPlaylists = prev.playlists.map(p => {
           if (p.id === playlistId) {
-            // Check again inside the updater to be absolutely sure
+            // Check again inside the updater to be absolutely sure we don't add duplicates
             if (p.trackIds.includes(track.id)) {
               return p;
             }
