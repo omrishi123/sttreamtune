@@ -1,4 +1,5 @@
 
+
 'use client';
 import {
   DropdownMenu,
@@ -26,8 +27,7 @@ export function AddToPlaylistMenu({
   track: Track;
   children?: React.ReactNode;
 }) {
-  const { playlists, communityPlaylists, addTrackToPlaylist, addTrackToCache } = useUserData();
-  const { toast } = useToast();
+  const { playlists, communityPlaylists, addTrackToPlaylist } = useUserData();
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
@@ -48,9 +48,7 @@ export function AddToPlaylistMenu({
   }, [playlists, communityPlaylists, currentUser]);
 
   const handleAdd = (playlistId: string) => {
-    addTrackToCache(track);
-    addTrackToPlaylist(playlistId, track.id);
-    // The toast is now handled inside addTrackToPlaylist for better feedback
+    addTrackToPlaylist(playlistId, track);
   };
 
   return (

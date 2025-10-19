@@ -1,4 +1,5 @@
 
+
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import type { User, UserData, Playlist, Track, Channel } from '@/lib/types';
@@ -230,17 +231,15 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addTrackToPlaylist = (playlistId: string, track: Track) => {
-    if (!currentUser) return;
-    
-    // Ensure the track is in the global cache first
+    if (!currentUser || !track || !track.id) return;
+
     addTrackToCache(track);
-    
+
     const playlist = getPlaylistById(playlistId);
     if (!playlist) return;
 
     if (playlist.public) {
-      const isAlreadyInPlaylist = playlist.trackIds.includes(track.id);
-      if (isAlreadyInPlaylist) {
+      if (playlist.trackIds.includes(track.id)) {
         toast({ title: 'Already in playlist', description: `"${track.title}" is already in this public playlist.` });
         return;
       }
@@ -261,21 +260,16 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       });
 
     } else { // Private Playlist Logic
-      // Use a functional update to prevent race conditions.
       setUserData(prev => {
         const targetPlaylist = prev.playlists.find(p => p.id === playlistId);
         
-        // Check if track is already there inside the atomic update
         if (targetPlaylist?.trackIds.includes(track.id)) {
           toast({
               title: 'Already in playlist',
               description: `"${track.title}" is already in your playlist.`,
           });
-          return prev; // Return previous state without changes
+          return prev;
         }
-
-        // If not a duplicate, proceed with the update
-        toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
         
         const updatedPlaylists = prev.playlists.map(p => {
           if (p.id === playlistId) {
@@ -284,6 +278,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
           return p;
         });
 
+        toast({ title: 'Added to playlist', description: `"${track.title}" has been added.` });
         return { ...prev, playlists: updatedPlaylists };
       });
     }
