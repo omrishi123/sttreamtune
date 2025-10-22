@@ -123,7 +123,7 @@ function AnimatedLoadingScreen({ isVisible, isFirstLoad }: { isVisible: boolean,
                     <div className="text-base opacity-85 text-white">{subtitle}</div>
                     <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
                     
-                    <div className="mt-4 text-xs opacity-65 text-white">App Made By i.g om_ki_tech_18</div>
+                    <div className="mt-4 text-xs opacity-65 text-white">App Made By Om Rishi i.g om_ki_tech_18</div>
                 </div>
             </div>
         </div>
