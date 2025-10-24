@@ -24,7 +24,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUserPreferences } from '@/lib/preferences';
 import { PlaylistSection } from '@/components/playlist-section';
-import { AdBanner } from '@/components/ad-banner';
 
 // Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
 const serializeTimestamps = (obj: any): any => {
@@ -144,12 +143,6 @@ export default function HomePage() {
             </DropdownMenuContent>
           </DropdownMenu>
       </div>
-
-      {/* Example Ad Placement */}
-      <AdBanner
-        slot="5134424139"
-        className="mx-auto"
-      />
 
       <section>
           <div className="flex justify-between items-center mb-4">
