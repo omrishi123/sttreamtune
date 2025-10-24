@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import {
   Play,
@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { AddToPlaylistMenu } from "./add-to-playlist-menu";
 import { useToast } from "@/hooks/use-toast";
 import { NowPlayingSheet } from "./now-playing-sheet";
+import { CustomSleepTimerDialog } from "./custom-sleep-timer-dialog";
 
 const EqualizerBars = ({ isPlaying }: { isPlaying: boolean }) => (
     <div className="flex items-end gap-1 h-4 w-4">
@@ -107,6 +108,7 @@ export function Player() {
   const [volume, setVolume] = React.useState(50);
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const [isCustomTimerOpen, setIsCustomTimerOpen] = useState(false);
 
   if (!currentTrack) {
     return null; 
@@ -148,6 +150,7 @@ export function Player() {
 
   if (isMobile) {
     return (
+      <>
        <footer className="fixed bottom-16 left-0 right-0 bg-card/70 border-t border-border/50 px-4 py-3 flex flex-col gap-2 text-card-foreground shadow-lg z-40 backdrop-blur-lg">
         
         {/* Top Row: Song Info & Like/Queue */}
@@ -198,6 +201,10 @@ export function Player() {
                   End of song
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsCustomTimerOpen(true); }}>
+                  Custom...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(0, "Off")} className="text-destructive">
                   Turn off timer
                 </DropdownMenuItem>
@@ -241,10 +248,13 @@ export function Player() {
         </div>
         <NowPlayingSheet isOpen={isNowPlayingOpen} onOpenChange={setIsNowPlayingOpen} />
       </footer>
+       <CustomSleepTimerDialog isOpen={isCustomTimerOpen} onOpenChange={setIsCustomTimerOpen} onSetTimer={handleSetSleepTimer} />
+      </>
     )
   }
 
   return (
+    <>
     <footer className="fixed bottom-0 left-0 right-0 bg-card/70 border-t border-border/50 px-4 py-2 text-card-foreground shadow-lg z-50 backdrop-blur-lg">
       <div className="grid grid-cols-[minmax(0,1fr)_2fr_minmax(0,1fr)] items-center w-full">
         {/* Left Section: Song Info */}
@@ -319,6 +329,10 @@ export function Player() {
                 }}>
                   End of song
                 </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsCustomTimerOpen(true); }}>
+                  Custom...
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(0, "Off")} className="text-destructive">
                   Turn off timer
@@ -355,6 +369,8 @@ export function Player() {
       </div>
       <NowPlayingSheet isOpen={isNowPlayingOpen} onOpenChange={setIsNowPlayingOpen} />
     </footer>
+    <CustomSleepTimerDialog isOpen={isCustomTimerOpen} onOpenChange={setIsCustomTimerOpen} onSetTimer={handleSetSleepTimer} />
+    </>
   );
 }
 
@@ -362,5 +378,7 @@ export function Player() {
 
 
 
+
+    
 
     
