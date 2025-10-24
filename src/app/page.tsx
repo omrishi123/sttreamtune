@@ -147,7 +147,7 @@ export default function HomePage() {
 
       {/* Example Ad Placement */}
       <AdBanner
-        slot="YOUR_AD_SLOT_ID" // <-- REPLACE THIS WITH YOUR AD SLOT ID
+        slot="5134424139"
         className="mx-auto"
       />
 
