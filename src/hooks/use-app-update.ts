@@ -39,6 +39,12 @@ export function useAppUpdate() {
   useEffect(() => {
     // This function will handle all the logic
     const checkForUpdates = async () => {
+      // @ts-ignore - This is a custom interface we expect the Android app to provide
+      if (!window.Android || typeof window.Android.getAppVersion !== 'function') {
+        // If the native bridge doesn't exist, we're on the web, so do nothing.
+        return;
+      }
+      
       try {
         const configRef = doc(db, 'app-config', 'version');
         const docSnap = await getDoc(configRef);
@@ -58,24 +64,11 @@ export function useAppUpdate() {
             return;
         }
 
-        // Check if the native bridge exists
-        // @ts-ignore - This is a custom interface we expect the Android app to provide
-        if (window.Android && typeof window.Android.getAppVersion === 'function') {
-            // New App Logic: Native bridge exists, get the real APK version
-            // @ts-ignore
-            const currentApkVersion = window.Android.getAppVersion();
-            
-            if (isNewerVersion(currentApkVersion, remoteVersion)) {
-                setLatestVersion(remoteVersion);
-                setUpdateUrl(url);
-                setUpdateNotes(notes);
-                setShowUpdateDialog(true);
-            }
-        } else {
-            // Old App Logic: Native bridge does NOT exist.
-            // This means it's an old version of the app that needs to be updated.
-            // We immediately show the pop-up to force an update.
-            console.log("Native bridge 'getAppVersion' not found. Forcing update for old client.");
+        // Since we already confirmed the bridge exists, we can safely call it.
+        // @ts-ignore
+        const currentApkVersion = window.Android.getAppVersion();
+        
+        if (isNewerVersion(currentApkVersion, remoteVersion)) {
             setLatestVersion(remoteVersion);
             setUpdateUrl(url);
             setUpdateNotes(notes);
