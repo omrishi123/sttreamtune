@@ -159,7 +159,7 @@ export default function HomePage() {
       <section>
           <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
-              {recommendedTracks.length > 0 && (
+              {recommendedTracks.length > 5 && (
                 <Button asChild variant="ghost" size="sm">
                     <Link href="/recommended">
                         View all
