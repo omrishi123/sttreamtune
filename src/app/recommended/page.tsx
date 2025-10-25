@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, Loader2 } from 'lucide-react';
-import type { Track } from '@/lib/types';
+import type { Playlist, Track } from '@/lib/types';
+import { usePlayer } from '@/context/player-context';
 
 // Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
 const serializeTimestamps = (obj: any): any => {
@@ -32,18 +33,29 @@ const serializeTimestamps = (obj: any): any => {
   return newObj;
 };
 
+const recommendedPlaylist: Playlist = {
+    id: 'recommended-for-you',
+    name: 'Recommended For You',
+    description: "An endless feed of music based on your listening habits.",
+    owner: "StreamTune AI",
+    public: false,
+    trackIds: [],
+    coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
+    'data-ai-hint': 'infinite galaxy',
+};
+
 export default function RecommendedPage() {
     const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
-    const [continuationToken, setContinuationToken] = useState<string | null>(null);
     const [hasHistory, setHasHistory] = useState(false);
     
     const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache } = useUserData();
+    const { setContinuationToken } = usePlayer();
     const observer = useRef<IntersectionObserver>();
 
-    const fetchRecommendations = useCallback(async (isInitialLoad: boolean) => {
-        if (!isInitialLoad && (!continuationToken || isFetchingMore)) return;
+    const fetchRecommendations = useCallback(async (isInitialLoad: boolean, currentContinuationToken: string | null = null) => {
+        if (!isInitialLoad && (!currentContinuationToken || isFetchingMore)) return;
         
         if (isInitialLoad) {
             setIsLoading(true);
@@ -70,7 +82,7 @@ export default function RecommendedPage() {
                 recentlyPlayed: plainRecentTracks,
                 userPlaylists: plainUserPlaylists,
                 communityPlaylists: plainCommunityPlaylists,
-                continuationToken: isInitialLoad ? undefined : continuationToken,
+                continuationToken: isInitialLoad ? undefined : currentContinuationToken,
             });
             
             addTracksToCache(results.tracks);
@@ -88,9 +100,13 @@ export default function RecommendedPage() {
             setIsLoading(false);
             setIsFetchingMore(false);
         }
-    }, [continuationToken, isFetchingMore, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
+    }, [isFetchingMore, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache, setContinuationToken]);
+    
+    const tokenForNextFetch = usePlayer().continuationToken;
 
     useEffect(() => {
+        // We only want this to run once on initial load.
+        // The context will handle subsequent fetches.
         fetchRecommendations(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -100,13 +116,13 @@ export default function RecommendedPage() {
         if (observer.current) observer.current.disconnect();
         
         observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && continuationToken && !isFetchingMore) {
-                fetchRecommendations(false);
+            if (entries[0].isIntersecting && tokenForNextFetch && !isFetchingMore) {
+                fetchRecommendations(false, tokenForNextFetch);
             }
         });
 
         if (node) observer.current.observe(node);
-    }, [isLoading, continuationToken, isFetchingMore, fetchRecommendations]);
+    }, [isLoading, isFetchingMore, fetchRecommendations, tokenForNextFetch]);
 
     return (
         <div className="space-y-8">
@@ -141,7 +157,7 @@ export default function RecommendedPage() {
                     </Card>
                 ) : recommendedTracks.length > 0 ? (
                     <>
-                        <TrackList tracks={recommendedTracks} onTrackRendered={lastTrackElementRef} />
+                        <TrackList tracks={recommendedTracks} playlist={{...recommendedPlaylist, trackIds: recommendedTracks.map(t => t.id)}} onTrackRendered={lastTrackElementRef} />
                         {isFetchingMore && (
                             <div className="flex justify-center items-center py-6">
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

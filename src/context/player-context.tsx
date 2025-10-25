@@ -2,8 +2,11 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect, useCallback } from 'react';
-import type { Track, Playlist } from '@/lib/types';
+import type { Track, Playlist, User } from '@/lib/types';
 import YouTube from 'react-youtube';
+import { useUserData } from './user-data-context';
+import { generateRecommendations } from '@/ai/flows/generate-recommendations-flow';
+import { onAuthChange } from '@/lib/auth';
 
 // Extend the window type to include our optional AndroidBridge and callbacks
 declare global {
@@ -43,9 +46,32 @@ interface PlayerContextType {
   setIsMinimized: (isMinimized: boolean) => void;
   videoPlayerRef: React.RefObject<YouTube | null>;
   reorderQueue: (sourceIndex: number, destinationIndex: number) => void;
+  continuationToken: string | null;
+  setContinuationToken: (token: string | null) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
+
+// Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
+const serializeTimestamps = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(serializeTimestamps);
+  }
+  const newObj: { [key: string]: any } = {};
+  for (const key in obj) {
+    const value = obj[key];
+    if (value && typeof value.toDate === 'function') {
+      newObj[key] = value.toDate().toISOString();
+    } else {
+      newObj[key] = serializeTimestamps(value);
+    }
+  }
+  return newObj;
+};
+
 
 export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
@@ -65,11 +91,70 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playerRef = useRef<YouTube | null>(null);
   const videoPlayerRef = useRef<YouTube | null>(null);
   const queueRef = useRef(queue);
+
+  // New state for infinite queue
+  const [continuationToken, setContinuationToken] = useState<string | null>(null);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache } = useUserData();
+   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthChange(setCurrentUser);
+    return () => unsubscribe();
+  }, []);
+
   
   useEffect(() => {
     queueRef.current = queue;
   }, [queue]);
   
+  const fetchMoreRecommendations = useCallback(async () => {
+    if (isFetchingMore || !continuationToken) return;
+
+    setIsFetchingMore(true);
+    try {
+        const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+        const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+        const plainUserPlaylists = serializeTimestamps(userPlaylists);
+        const plainRecentTracks = serializeTimestamps(recentTracks);
+
+        const results = await generateRecommendations({
+            recentlyPlayed: plainRecentTracks,
+            userPlaylists: plainUserPlaylists,
+            communityPlaylists: plainCommunityPlaylists,
+            continuationToken: continuationToken,
+        });
+
+        if (results.tracks.length > 0) {
+            addTracksToCache(results.tracks);
+            setQueueState(prev => [...prev, ...results.tracks]);
+            setContinuationToken(results.nextContinuationToken);
+        } else {
+            // No more tracks to fetch
+            setContinuationToken(null);
+        }
+    } catch (error) {
+        console.error("Failed to fetch more recommendations for queue:", error);
+    } finally {
+        setIsFetchingMore(false);
+    }
+  }, [isFetchingMore, continuationToken, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
+
+
+  useEffect(() => {
+    // Check if we need to fetch more songs when the current track changes
+    if (!currentTrack || !currentPlaylist || currentPlaylist.id !== 'recommended-for-you') {
+        return;
+    }
+
+    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+    // Trigger fetch when the user is 2 songs away from the end of the queue
+    if (currentIndex !== -1 && currentIndex >= queue.length - 3) {
+        fetchMoreRecommendations();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTrack, queue, currentPlaylist, fetchMoreRecommendations]);
+
 
   const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => {
       if (typeof state.isPlaying === 'boolean') {
@@ -276,6 +361,24 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     
+    if (playlist?.id === 'recommended-for-you') {
+        const fetchInitialToken = async () => {
+            const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+            const plainUserPlaylists = serializeTimestamps(userPlaylists);
+            const plainRecentTracks = serializeTimestamps(recentTracks);
+            const results = await generateRecommendations({
+                 recentlyPlayed: plainRecentTracks,
+                userPlaylists: plainUserPlaylists,
+                communityPlaylists: plainCommunityPlaylists,
+            });
+            setContinuationToken(results.nextContinuationToken);
+        };
+        fetchInitialToken();
+    } else {
+        setContinuationToken(null);
+    }
+
     if (window.Android?.startPlayback) {
       playYoutubeSongInApp(trackToPlay, newQueue);
     } else {
@@ -381,6 +484,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsMinimized,
     videoPlayerRef,
     reorderQueue,
+    continuationToken,
+    setContinuationToken,
   };
 
   if (!isMounted) {
@@ -419,5 +524,3 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
-
-    
