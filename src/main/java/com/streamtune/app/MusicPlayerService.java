@@ -84,6 +84,11 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
             if (currentIndex < playlist.size() - 1) {
                 currentIndex++;
                 playSongAtIndex();
+            } else {
+                // If it's the last song, stop playback.
+                // The web UI will handle fetching more songs if it's an endless playlist.
+                if (youTubePlayer != null) youTubePlayer.pause();
+                stopSelf();
             }
         }
 
