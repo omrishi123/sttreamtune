@@ -334,11 +334,26 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playNextPrev = (direction: 'next' | 'prev') => {
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    const nextIndex = direction === 'next' 
-        ? (currentIndex + 1) % queue.length
-        : (currentIndex - 1 + queue.length) % queue.length;
+    if (currentIndex === -1) return;
+
+    let nextIndex;
+    if (direction === 'next') {
+        if (currentIndex < queue.length - 1) {
+            nextIndex = currentIndex + 1;
+        } else {
+            // End of queue, maybe do nothing or handle repeat logic here
+            return;
+        }
+    } else { // prev
+        if (currentIndex > 0) {
+            nextIndex = currentIndex - 1;
+        } else {
+            return;
+        }
+    }
     
     const nextTrack = queue[nextIndex];
+    if (!nextTrack) return;
 
     if (isNativePlayback) {
         playYoutubeSongInApp(nextTrack, queue);
