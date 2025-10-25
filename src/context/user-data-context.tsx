@@ -173,7 +173,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
 
   const addRecentlyPlayed = (trackId: string) => {
     setUserData(prev => {
-      const newRecentlyPlayed = [trackId, ...prev.recentlyPlayed.filter(id => id !== trackId)].slice(0, 50);
+      const newRecentlyPlayed = [trackId, ...prev.recentlyPlayed.filter(id => id !== trackId)].slice(0, 500);
       return { ...prev, recentlyPlayed: newRecentlyPlayed };
     });
   };
@@ -496,3 +496,5 @@ export const useUserData = (): UserDataContextType => {
   return context;
 };
 
+
+    
