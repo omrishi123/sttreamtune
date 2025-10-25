@@ -377,7 +377,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playNext = () => playNextPrev('next');
   const playPrev = () => playNextPrev('prev');
   
-  const setQueueAndPlay = (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
+  const setQueueAndPlay = async (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
     const newQueue = [...tracks];
     const trackToPlay = startTrackId 
         ? newQueue.find(t => t.id === startTrackId) 
@@ -389,19 +389,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setCurrentPlaylist(playlist || null);
     
     if (playlist?.id === 'recommended-for-you') {
-        const fetchInitialToken = async () => {
-            const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-            const plainUserPlaylists = serializeTimestamps(userPlaylists);
-            const plainRecentTracks = serializeTimestamps(recentTracks);
-            const results = await generateRecommendations({
-                 recentlyPlayed: plainRecentTracks,
-                userPlaylists: plainUserPlaylists,
-                communityPlaylists: plainCommunityPlaylists,
-            });
-            setContinuationToken(results.nextContinuationToken);
-        };
-        fetchInitialToken();
+        const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+        const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+        const plainUserPlaylists = serializeTimestamps(userPlaylists);
+        const plainRecentTracks = serializeTimestamps(recentTracks);
+        const results = await generateRecommendations({
+             recentlyPlayed: plainRecentTracks,
+            userPlaylists: plainUserPlaylists,
+            communityPlaylists: plainCommunityPlaylists,
+        });
+        setContinuationToken(results.nextContinuationToken);
     } else {
         setContinuationToken(null);
     }
