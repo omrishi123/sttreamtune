@@ -127,15 +127,19 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
         if (results.tracks.length > 0) {
             addTracksToCache(results.tracks);
-            const newQueue = [...queueRef.current, ...results.tracks];
-            setQueueState(newQueue);
+            // Use a function for `setQueueState` to ensure we have the latest state
+            setQueueState(currentQueue => {
+              const newQueue = [...currentQueue, ...results.tracks];
+              // If using native playback, send the updated (longer) playlist back to the service
+              if (window.Android?.startPlayback) {
+                  const currentTrackInNewQueue = newQueue.find(t => t.id === currentTrack?.id);
+                  if (currentTrackInNewQueue) {
+                      playYoutubeSongInApp(currentTrackInNewQueue, newQueue);
+                  }
+              }
+              return newQueue;
+            });
             setContinuationToken(results.nextContinuationToken);
-
-            // ✅ If using native playback, send the updated (longer) playlist back to the service
-            if (window.Android?.startPlayback) {
-                const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
-                playYoutubeSongInApp(newQueue[currentIndex], newQueue);
-            }
         } else {
             // No more tracks to fetch
             setContinuationToken(null);
@@ -182,7 +186,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           }
       }
 
-      // ✅ Handle the signal from the native service to fetch more songs
+      // Handle the signal from the native service to fetch more songs
       if (state.fetchMore && continuationToken) {
           fetchMoreRecommendations();
       }

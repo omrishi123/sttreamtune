@@ -95,8 +95,8 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
             if (currentIndex < playlist.size() - 1) {
                 currentIndex++;
                 playSongAtIndex();
-                // ✅ If we're playing the last song, tell the web app to fetch more
-                if (currentIndex == playlist.size() - 1) {
+                // If we're playing the second-to-last song, tell the web app to fetch more
+                if (currentIndex >= playlist.size() - 2) {
                     try {
                         broadcastUiUpdate(new JSONObject().put("fetchMore", true));
                     } catch (Exception e) {
