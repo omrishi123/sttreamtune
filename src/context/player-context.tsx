@@ -18,7 +18,7 @@ declare global {
       seekTo: (positionInSeconds: number) => void;
       setSleepTimer: (durationInMillis: number) => void;
     };
-    updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => void;
+    updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; fetchMore?: boolean; }) => void;
   }
 }
 
@@ -127,8 +127,15 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
         if (results.tracks.length > 0) {
             addTracksToCache(results.tracks);
-            setQueueState(prev => [...prev, ...results.tracks]);
+            const newQueue = [...queueRef.current, ...results.tracks];
+            setQueueState(newQueue);
             setContinuationToken(results.nextContinuationToken);
+
+            // ✅ If using native playback, send the updated (longer) playlist back to the service
+            if (window.Android?.startPlayback) {
+                const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
+                playYoutubeSongInApp(newQueue[currentIndex], newQueue);
+            }
         } else {
             // No more tracks to fetch
             setContinuationToken(null);
@@ -138,25 +145,21 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     } finally {
         setIsFetchingMore(false);
     }
-  }, [isFetchingMore, continuationToken, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
+  }, [isFetchingMore, continuationToken, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache, currentTrack]);
 
 
   useEffect(() => {
-    // Check if we need to fetch more songs when the current track changes
-    if (!currentTrack || !currentPlaylist || currentPlaylist.id !== 'recommended-for-you') {
-        return;
+    if (!currentTrack || isNativePlayback) {
+      return;
     }
-
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    // Trigger fetch when the user is 2 songs away from the end of the queue
-    if (currentIndex !== -1 && currentIndex >= queue.length - 3) {
+    if (currentIndex !== -1 && currentIndex >= queue.length - 3 && continuationToken) {
         fetchMoreRecommendations();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTrack, queue, currentPlaylist, fetchMoreRecommendations]);
+  }, [currentTrack, queue, continuationToken, isNativePlayback, fetchMoreRecommendations]);
 
 
-  const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; }) => {
+  const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; fetchMore?: boolean; }) => {
       if (typeof state.isPlaying === 'boolean') {
           setIsPlaying(state.isPlaying);
       }
@@ -178,7 +181,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
               setDuration(newTrack.duration);
           }
       }
-  }, []);
+
+      // ✅ Handle the signal from the native service to fetch more songs
+      if (state.fetchMore && continuationToken) {
+          fetchMoreRecommendations();
+      }
+  }, [fetchMoreRecommendations, continuationToken]);
 
   useEffect(() => {
     setIsMounted(true);

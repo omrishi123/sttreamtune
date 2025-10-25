@@ -3,11 +3,13 @@ package com.streamtune.app;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
@@ -20,12 +22,12 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.media.MediaBrowserServiceCompat;
+import androidx.media.session.MediaButtonReceiver;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LifecycleRegistry;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.media.MediaBrowserServiceCompat;
-import androidx.media.session.MediaButtonReceiver;
 
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants;
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
@@ -43,7 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.Objects;
 
 public class MusicPlayerService extends MediaBrowserServiceCompat implements LifecycleOwner {
 
@@ -52,8 +53,9 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     private final LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    private final List<Song> playlist = new ArrayList<>();
+    private List<Song> playlist = new ArrayList<>();
     private int currentIndex = -1;
+    private MediaMetadataCompat currentMetadata;
     private CountDownTimer sleepTimer;
 
     private static final String TAG = "StreamTuneDebug";
@@ -61,22 +63,31 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     private static final int NOTIFICATION_ID = 1;
     private String pendingVideoId = null;
 
+    // Optional custom toggle (used on some old devices / custom ROMs)
+    private static final String ACTION_TOGGLE = "ACTION_TOGGLE";
+
     private final MediaSessionCompat.Callback mediaSessionCallback = new MediaSessionCompat.Callback() {
         @Override
         public void onPlay() {
+            mediaSession.setActive(true); // ✅ make session active on play
+            long pos = getCurrentPositionSafe();
+            updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING, pos); // optimistic for old devices
             if (youTubePlayer != null) youTubePlayer.play();
+            startForeground(NOTIFICATION_ID, buildNotification());
         }
 
         @Override
         public void onPause() {
             if (youTubePlayer != null) youTubePlayer.pause();
+            long pos = getCurrentPositionSafe();
+            updatePlaybackState(PlaybackStateCompat.STATE_PAUSED, pos);
+            stopForeground(false);
+            updateNotification();
         }
 
         @Override
         public void onSeekTo(long pos) {
-            if (youTubePlayer != null) {
-                youTubePlayer.seekTo(pos / 1000f);
-            }
+            if (youTubePlayer != null) youTubePlayer.seekTo(pos / 1000f);
         }
 
         @Override
@@ -84,12 +95,16 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
             if (currentIndex < playlist.size() - 1) {
                 currentIndex++;
                 playSongAtIndex();
+                // ✅ If we're playing the last song, tell the web app to fetch more
+                if (currentIndex == playlist.size() - 1) {
+                    try {
+                        broadcastUiUpdate(new JSONObject().put("fetchMore", true));
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error broadcasting fetchMore", e);
+                    }
+                }
             } else {
-                // If it's the last song, stop playback cleanly.
-                // The web UI is responsible for fetching more songs and starting a new playback session.
-                if (youTubePlayer != null) youTubePlayer.pause();
-                updatePlaybackState(PlaybackStateCompat.STATE_STOPPED, 0);
-                stopForeground(true); // Remove notification
+                // If there are truly no more songs and web hasn't sent a new playlist, stop.
                 stopSelf();
             }
         }
@@ -121,6 +136,13 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     private void initMediaSession() {
         ComponentName mediaButtonReceiver = new ComponentName(getApplicationContext(), MediaButtonReceiver.class);
         mediaSession = new MediaSessionCompat(this, TAG, mediaButtonReceiver, null);
+
+        // ✅ Critical for old Android: tell system we handle buttons & transport controls
+        mediaSession.setFlags(
+                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                        MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+        );
+
         mediaSession.setCallback(mediaSessionCallback);
         setSessionToken(mediaSession.getSessionToken());
         updatePlaybackState(PlaybackStateCompat.STATE_NONE, 0);
@@ -131,7 +153,7 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
         getLifecycle().addObserver(youTubePlayerView);
         youTubePlayerView.setEnableAutomaticInitialization(false);
 
-        IFramePlayerOptions options = new IFramePlayerOptions.Builder().controls(0).build();
+        IFramePlayerOptions options = new IFramePlayerOptions.Builder(this).controls(0).build();
 
         youTubePlayerView.initialize(new AbstractYouTubePlayerListener() {
             @Override
@@ -146,9 +168,7 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
             @Override
             public void onStateChange(@NonNull YouTubePlayer player, @NonNull PlayerConstants.PlayerState state) {
                 try {
-                    long currentPosition = (mediaSession.getController() != null && mediaSession.getController().getPlaybackState() != null)
-                            ? mediaSession.getController().getPlaybackState().getPosition()
-                            : 0;
+                    long currentPosition = getCurrentPositionSafe();
 
                     switch (state) {
                         case PLAYING:
@@ -159,12 +179,18 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
                             break;
                         case PAUSED:
                             updatePlaybackState(PlaybackStateCompat.STATE_PAUSED, currentPosition);
-                            updateNotification();
                             stopForeground(false);
+                            updateNotification();
                             broadcastUiUpdate(new JSONObject().put("isPlaying", false));
                             break;
                         case ENDED:
                             mediaSessionCallback.onSkipToNext();
+                            break;
+                        case BUFFERING:
+                            updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING, currentPosition);
+                            updateNotification();
+                            break;
+                        default:
                             break;
                     }
                 } catch (Exception e) {
@@ -179,7 +205,8 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
 
             @Override
             public void onCurrentSecond(@NonNull YouTubePlayer youTubePlayer, float second) {
-                if (mediaSession.getController() != null && mediaSession.getController().getPlaybackState() != null &&
+                if (mediaSession.getController() != null &&
+                        mediaSession.getController().getPlaybackState() != null &&
                         mediaSession.getController().getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING) {
                     updatePlaybackState(PlaybackStateCompat.STATE_PLAYING, (long) (second * 1000));
                 }
@@ -192,55 +219,77 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
 
             @Override
             public void onVideoDuration(@NonNull YouTubePlayer youTubePlayer, float duration) {
-                if (mediaSession.getController().getMetadata() == null) return;
-                MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder(mediaSession.getController().getMetadata());
-                builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, (long) (duration * 1000));
-                mediaSession.setMetadata(builder.build());
+                if (currentMetadata == null) return;
+                MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder(currentMetadata);
+                builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, (long) duration * 1000);
+                currentMetadata = builder.build();
+                mediaSession.setMetadata(currentMetadata);
             }
         }, true, options);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null) {
-            // This is the most important line. It handles all media button events
-            // from the notification, Bluetooth, etc., and sends them to the MediaSession.Callback.
-            MediaButtonReceiver.handleIntent(mediaSession, intent);
-
+        // ✅ Handle explicit intents first (important for old Android & custom ROMs)
+        if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
-            if (action != null) {
-                // We only need to handle our custom actions here. The standard media
-                // actions are handled automatically by the line above.
-                if (action.equals("PLAY_PLAYLIST")) {
+            switch (action) {
+                case "PLAY_PLAYLIST": {
                     String playlistJson = intent.getStringExtra("PLAYLIST_JSON");
                     currentIndex = intent.getIntExtra("CURRENT_INDEX", -1);
                     parsePlaylist(playlistJson);
                     playSongAtIndex();
-                } else if (action.equals("SET_SLEEP_TIMER")) {
+                    break;
+                }
+                case "SET_SLEEP_TIMER": {
                     long duration = intent.getLongExtra("SLEEP_TIMER_DURATION", 0);
                     handleSleepTimer(duration);
+                    break;
                 }
+                case "ACTION_PLAY":
+                    mediaSessionCallback.onPlay();
+                    break;
+                case "ACTION_PAUSE":
+                    mediaSessionCallback.onPause();
+                    break;
+                case ACTION_TOGGLE: {
+                    PlaybackStateCompat ps = mediaSession.getController().getPlaybackState();
+                    int st = (ps != null) ? ps.getState() : PlaybackStateCompat.STATE_NONE;
+                    if (st == PlaybackStateCompat.STATE_PLAYING || st == PlaybackStateCompat.STATE_BUFFERING) {
+                        mediaSessionCallback.onPause();
+                    } else {
+                        mediaSessionCallback.onPlay();
+                    }
+                    break;
+                }
+                case "ACTION_SEEK_TO": {
+                    long pos = intent.getLongExtra("SEEK_TO_POSITION", 0);
+                    mediaSessionCallback.onSeekTo(pos);
+                    break;
+                }
+                case "ACTION_SKIP_TO_NEXT":
+                    mediaSessionCallback.onSkipToNext();
+                    break;
+                case "ACTION_SKIP_TO_PREVIOUS":
+                    mediaSessionCallback.onSkipToPrevious();
+                    break;
+                default:
+                    break;
             }
         }
+
+        // ✅ Also let MediaButtonReceiver translate hardware/media-notification events
+        MediaButtonReceiver.handleIntent(mediaSession, intent);
         return START_NOT_STICKY;
     }
 
-
     private void handleSleepTimer(long durationInMillis) {
-        if (sleepTimer != null) {
-            sleepTimer.cancel();
-        }
-        if (durationInMillis <= 0) {
-            return;
-        }
-        sleepTimer = new CountDownTimer(durationInMillis, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {}
+        if (sleepTimer != null) sleepTimer.cancel();
+        if (durationInMillis <= 0) return;
 
-            @Override
-            public void onFinish() {
-                mediaSessionCallback.onPause();
-            }
+        sleepTimer = new CountDownTimer(durationInMillis, 1000) {
+            @Override public void onTick(long millisUntilFinished) {}
+            @Override public void onFinish() { mediaSessionCallback.onPause(); }
         }.start();
     }
 
@@ -249,12 +298,12 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
         try {
             JSONArray jsonArray = new JSONArray(json);
             for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                JSONObject o = jsonArray.getJSONObject(i);
                 Song song = new Song();
-                song.videoId = jsonObject.optString("videoId");
-                song.title = jsonObject.optString("title");
-                song.artist = jsonObject.optString("artist");
-                song.thumbnailUrl = jsonObject.optString("thumbnailUrl");
+                song.videoId = o.optString("videoId");
+                song.title = o.optString("title");
+                song.artist = o.optString("artist");
+                song.thumbnailUrl = o.optString("thumbnailUrl");
                 playlist.add(song);
             }
         } catch (Exception e) {
@@ -291,30 +340,31 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist);
 
+        currentMetadata = metadataBuilder.build();
+        mediaSession.setMetadata(currentMetadata);
+        updateNotification();
+
         if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
             executorService.submit(() -> {
-                Bitmap bitmap = null;
                 try {
                     URL url = new URL(thumbnailUrl);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setDoInput(true);
                     connection.connect();
                     InputStream input = connection.getInputStream();
-                    bitmap = BitmapFactory.decodeStream(input);
+                    Bitmap bitmap = BitmapFactory.decodeStream(input);
+                    if (bitmap != null) {
+                        metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap);
+                        currentMetadata = metadataBuilder.build();
+                        mediaSession.setMetadata(currentMetadata);
+                        updateNotification();
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "Error downloading artwork", e);
-                } finally {
-                    metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap);
-                    mediaSession.setMetadata(metadataBuilder.build());
-                    updateNotification();
                 }
             });
-        } else {
-            mediaSession.setMetadata(metadataBuilder.build());
-            updateNotification();
         }
     }
-
 
     private void updateNotification() {
         if (mediaSession.getController() == null || mediaSession.getController().getPlaybackState() == null) return;
@@ -339,36 +389,80 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
             artwork = metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
         }
 
-        NotificationCompat.Action playPauseAction = (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_BUFFERING)
-                ? new NotificationCompat.Action(R.drawable.ic_pause, "Pause", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PAUSE))
-                : new NotificationCompat.Action(R.drawable.ic_play, "Play", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY));
+        // Open app when tapping notification
+        PendingIntent contentIntent = PendingIntent.getActivity(
+                this, 0,
+                new Intent(this, MainActivity.class),
+                (Build.VERSION.SDK_INT >= 26)
+                        ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                        : PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
-        NotificationCompat.Action prevAction = new NotificationCompat.Action(R.drawable.ic_previous, "Previous", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
-        NotificationCompat.Action nextAction = new NotificationCompat.Action(R.drawable.ic_next, "Next", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
+        NotificationCompat.Action prevAction = new NotificationCompat.Action(
+                R.drawable.ic_previous, "Previous",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
 
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
+        NotificationCompat.Action playPauseAction =
+                (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_BUFFERING)
+                        ? new NotificationCompat.Action(
+                        R.drawable.ic_pause, "Pause",
+                        MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PAUSE))
+                        : new NotificationCompat.Action(
+                        R.drawable.ic_play, "Play",
+                        MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY));
+
+        NotificationCompat.Action nextAction = new NotificationCompat.Action(
+                R.drawable.ic_next, "Next",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(artist)
                 .setLargeIcon(artwork)
                 .setSmallIcon(R.drawable.ic_music_note)
+                .setContentIntent(contentIntent)
                 .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+                .setOngoing(state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_BUFFERING)
+                // ✅ High priority helps old Android show media-style actions reliably
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .addAction(prevAction)
                 .addAction(playPauseAction)
                 .addAction(nextAction)
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(mediaSession.getSessionToken())
-                        .setShowActionsInCompactView(0, 1, 2))
-                .build();
+                        .setShowActionsInCompactView(0, 1, 2));
+
+        return builder.build();
     }
 
     private void updatePlaybackState(int state, long position) {
-        long actions = PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_STOP |
-                PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                PlaybackStateCompat.ACTION_SEEK_TO;
-        PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder().setActions(actions);
-        stateBuilder.setState(state, position, 1.0f);
+        long actions =
+                PlaybackStateCompat.ACTION_PLAY |
+                        PlaybackStateCompat.ACTION_PAUSE |
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE |   // ✅ toggles on old Android
+                        PlaybackStateCompat.ACTION_STOP |
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                        PlaybackStateCompat.ACTION_SEEK_TO;
+
+        float playbackSpeed = (state == PlaybackStateCompat.STATE_PLAYING) ? 1.0f : 0f;
+
+        PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
+                .setActions(actions)
+                .setState(state, position, playbackSpeed);
+
         mediaSession.setPlaybackState(stateBuilder.build());
+    }
+
+    private long getCurrentPositionSafe() {
+        try {
+            PlaybackStateCompat ps = mediaSession.getController().getPlaybackState();
+            return (ps != null) ? ps.getPosition() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private void broadcastUiUpdate(JSONObject state) {
@@ -378,18 +472,20 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
     }
 
     private void createNotificationChannel() {
-        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null && nm.getNotificationChannel(CHANNEL_ID) == null) {
-            nm.createNotificationChannel(new NotificationChannel(CHANNEL_ID, "Music Player", NotificationManager.IMPORTANCE_LOW));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null && nm.getNotificationChannel(CHANNEL_ID) == null) {
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_ID, "Music Player", NotificationManager.IMPORTANCE_LOW);
+                nm.createNotificationChannel(channel);
+            }
         }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (sleepTimer != null) {
-            sleepTimer.cancel();
-        }
+        if (sleepTimer != null) sleepTimer.cancel();
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP);
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
         if (mediaSession != null) {
@@ -405,7 +501,16 @@ public class MusicPlayerService extends MediaBrowserServiceCompat implements Lif
         return lifecycleRegistry;
     }
 
-    @Nullable @Override public IBinder onBind(Intent intent) { return super.onBind(intent); }
-    @Nullable @Override public BrowserRoot onGetRoot(@NonNull String c, int i, @Nullable Bundle b) { return new BrowserRoot("media_root", null); }
-    @Override public void onLoadChildren(@NonNull String p, @NonNull Result<List<MediaBrowserCompat.MediaItem>> r) { r.sendResult(null); }
+    @Nullable @Override
+    public IBinder onBind(Intent intent) { return super.onBind(intent); }
+
+    @Nullable @Override
+    public BrowserRoot onGetRoot(@NonNull String c, int i, @Nullable Bundle b) {
+        return new BrowserRoot("media_root", null);
+    }
+
+    @Override
+    public void onLoadChildren(@NonNull String p, @NonNull Result<List<MediaBrowserCompat.MediaItem>> r) {
+        r.sendResult(null);
+    }
 }
