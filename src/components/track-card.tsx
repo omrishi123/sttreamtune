@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import { Play, Pause } from 'lucide-react';
-import type { Track } from '@/lib/types';
+import type { Playlist, Track } from '@/lib/types';
 import { usePlayer } from '@/context/player-context';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 interface TrackCardProps {
   track: Track;
   tracklist: Track[];
+  playlist?: Playlist; // Make playlist optional
 }
 
 const cardVariants = {
@@ -27,7 +28,7 @@ const cardVariants = {
 };
 
 
-export function TrackCard({ track, tracklist }: TrackCardProps) {
+export function TrackCard({ track, tracklist, playlist }: TrackCardProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, pause } = usePlayer();
 
   const handlePlay = () => {
@@ -35,7 +36,7 @@ export function TrackCard({ track, tracklist }: TrackCardProps) {
     if (currentTrack?.id === track.id && isPlaying) {
       pause();
     } else {
-      setQueueAndPlay(tracklist, track.id);
+      setQueueAndPlay(tracklist, track.id, playlist);
     }
   };
 

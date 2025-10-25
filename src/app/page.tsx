@@ -45,6 +45,18 @@ const serializeTimestamps = (obj: any): any => {
   return newObj;
 };
 
+// Define the virtual playlist for the home page recommendations
+const homeRecommendedPlaylist: Playlist = {
+    id: 'recommended-for-you',
+    name: 'Recommended For You',
+    description: "An endless feed of music based on your listening habits.",
+    owner: "StreamTune AI",
+    public: false,
+    trackIds: [], // This will be populated dynamically
+    coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
+    'data-ai-hint': 'infinite galaxy',
+};
+
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -165,7 +177,12 @@ export default function HomePage() {
           ) : recommendedTracks.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
                 {recommendedTracks.slice(0, 5).map(track => (
-                    <TrackCard key={track.id} track={track} tracklist={recommendedTracks} />
+                    <TrackCard 
+                      key={track.id} 
+                      track={track} 
+                      tracklist={recommendedTracks}
+                      playlist={homeRecommendedPlaylist}
+                    />
                 ))}
               </div>
           ) : (
