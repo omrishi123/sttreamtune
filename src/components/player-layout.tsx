@@ -229,6 +229,12 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                         <DropdownMenuItem onClick={() => setTheme("dark")}>
                           Dark
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("sunset")}>
+                          Sunset Groove
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("zenith")}>
+                          Zenith
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTheme("system")}>
                           System
                         </DropdownMenuItem>
@@ -298,6 +304,12 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setTheme("dark")}>
                               Dark
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => setTheme("sunset")}>
+                              Sunset Groove
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTheme("zenith")}>
+                              Zenith
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setTheme("system")}>
                               System
