@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect, useCallback } from 'react';
@@ -114,63 +115,69 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [queue]);
   
   const fetchMoreTracks = useCallback(async () => {
-    if (isFetchingMore || !continuationToken) return;
-  
+    if (isFetchingMore) return;
+
+    const tokenToUse = continuationToken;
+    if (!tokenToUse) return;
+
     setIsFetchingMore(true);
     try {
-      let results;
-      if (searchQuery) {
-        results = await searchYoutube({ 
-          query: searchQuery,
-          continuationToken: continuationToken,
-        });
-      } else {
-        const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-        const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-        const plainUserPlaylists = serializeTimestamps(userPlaylists);
-        const plainRecentTracks = serializeTimestamps(recentTracks);
-  
-        results = await generateRecommendations({
-          recentlyPlayed: plainRecentTracks,
-          userPlaylists: plainUserPlaylists,
-          communityPlaylists: plainCommunityPlaylists,
-          continuationToken: continuationToken,
-        });
-      }
-  
-      if (results && results.tracks.length > 0) {
-        addTracksToCache(results.tracks);
-        const newQueue = [...queueRef.current, ...results.tracks];
-        setQueueState(newQueue);
-        setContinuationToken(results.nextContinuationToken);
-  
-        if (isNativePlayback && window.Android?.updatePlaybackQueue) {
-          const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
-          const playlistForNative = newQueue.map(t => ({
-            videoId: t.youtubeVideoId,
-            title: t.title,
-            artist: t.artist,
-            thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
-          }));
-          const playlistJson = JSON.stringify(playlistForNative);
-          window.Android.updatePlaybackQueue(playlistJson, currentIndex);
+        let results;
+        if (searchQuery) {
+            results = await searchYoutube({
+                query: searchQuery,
+                continuationToken: tokenToUse,
+            });
+        } else {
+            const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+            const plainUserPlaylists = serializeTimestamps(userPlaylists);
+            const plainRecentTracks = serializeTimestamps(recentTracks);
+
+            results = await generateRecommendations({
+                recentlyPlayed: plainRecentTracks,
+                userPlaylists: plainUserPlaylists,
+                communityPlaylists: plainCommunityPlaylists,
+                continuationToken: tokenToUse,
+            });
         }
-      } else {
-        setContinuationToken(null);
-      }
+
+        if (results && results.tracks.length > 0) {
+            addTracksToCache(results.tracks);
+            const newTracks = results.tracks.filter(t => !queueRef.current.some(qt => qt.id === t.id));
+            const newQueue = [...queueRef.current, ...newTracks];
+            setQueueState(newQueue);
+            setContinuationToken(results.nextContinuationToken);
+
+            // ***** THE CRITICAL FIX IS HERE *****
+            // Always update the native player's queue after fetching more tracks.
+            if (isNativePlayback && window.Android?.startPlayback) {
+                const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
+                if (currentIndex !== -1) {
+                    const playlistForNative = newQueue.map(t => ({
+                        videoId: t.youtubeVideoId,
+                        title: t.title,
+                        artist: t.artist,
+                        thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
+                    }));
+                    const playlistJson = JSON.stringify(playlistForNative);
+                    // We call startPlayback here because it effectively acts as a queue update.
+                    window.Android.startPlayback(playlistJson, currentIndex);
+                }
+            }
+        } else {
+            setContinuationToken(null);
+        }
     } catch (error) {
-      console.error("Failed to fetch more tracks for queue:", error);
+        console.error("Failed to fetch more tracks for queue:", error);
     } finally {
-      setIsFetchingMore(false);
+        setIsFetchingMore(false);
     }
-  }, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, communityPlaylists, userPlaylists, addTracksToCache, isNativePlayback, currentTrack?.id]);
+}, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, communityPlaylists, userPlaylists, addTracksToCache, isNativePlayback, currentTrack?.id]);
 
 
   useEffect(() => {
-    if (!currentTrack) {
-      return;
-    }
-    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+    const currentIndex = currentTrack ? queue.findIndex(t => t.id === currentTrack.id) : -1;
     if (currentIndex !== -1 && currentIndex >= queue.length - 3 && continuationToken) {
         fetchMoreTracks();
     }
@@ -560,3 +567,4 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
+
