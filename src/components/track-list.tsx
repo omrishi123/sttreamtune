@@ -47,7 +47,7 @@ interface TrackListProps {
 
 export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: TrackListProps) {
   const { setQueueAndPlay, currentTrack, isPlaying, play, pause } = usePlayer();
-  const { isLiked, toggleLike, addTrackToCache, removeTrackFromPlaylist } = useUserData();
+  const { isLiked, toggleLike, removeTrackFromPlaylist } = useUserData();
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
@@ -65,11 +65,6 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
       setQueueAndPlay(tracks, track.id, playlist);
     }
   };
-
-  const handleToggleLike = (track: Track) => {
-    addTrackToCache(track);
-    toggleLike(track.id);
-  }
 
   const handleRemoveTrack = (trackId: string) => {
     // If a custom remove handler is provided (for local channel playlists), use it.
@@ -147,7 +142,7 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100", isTrackLiked && "opacity-100")} onClick={() => handleToggleLike(track)}>
+                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100", isTrackLiked && "opacity-100")} onClick={() => toggleLike(track)}>
                       <Heart className={cn("h-4 w-4", isTrackLiked && "fill-primary text-primary")} />
                    </Button>
                    <span className="text-muted-foreground w-8 mx-1 sm:hidden">{formatDuration(track.duration)}</span>

@@ -59,6 +59,7 @@ import { useUserData } from "@/context/user-data-context";
 import { AddPlaylistDialog } from "./add-playlist-dialog";
 import { AppInitializer } from "./app-initializer";
 import { AnimatePresence, motion } from 'framer-motion';
+import { LikeAnimation } from "./LikeAnimation";
 
 interface PlayerLayoutProps {
   children: React.ReactNode;
@@ -69,7 +70,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isMobile = useIsMobile();
-  const { playlists: userPlaylists } = useUserData();
+  const { playlists: userPlaylists, likeAnimationTrigger } = useUserData();
   const { setTheme } = useTheme();
 
   const handleLogout = async () => {
@@ -119,6 +120,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   return (
     <SidebarProvider defaultOpen>
       <AppInitializer />
+      <LikeAnimation trigger={likeAnimationTrigger} />
       <div className="relative flex h-screen flex-col">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar

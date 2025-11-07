@@ -103,7 +103,7 @@ export function Player() {
     isMinimized,
     setIsMinimized,
   } = usePlayer();
-  const { isLiked, toggleLike, addTrackToCache } = useUserData();
+  const { isLiked, toggleLike } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
   const [volume, setVolume] = React.useState(50);
   const isMobile = useIsMobile();
@@ -112,11 +112,6 @@ export function Player() {
 
   if (!currentTrack) {
     return null; 
-  }
-
-  const handleToggleLike = () => {
-    addTrackToCache(currentTrack);
-    toggleLike(currentTrack.id);
   }
 
   const handlePlayPause = () => {
@@ -174,7 +169,7 @@ export function Player() {
               <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
                   <ChevronDown className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleToggleLike}>
+              <Button variant="ghost" size="icon" onClick={() => toggleLike(currentTrack)}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
           </div>
@@ -272,7 +267,7 @@ export function Player() {
             <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
-           <Button variant="ghost" size="icon" className="ml-2" onClick={handleToggleLike}>
+           <Button variant="ghost" size="icon" className="ml-2" onClick={() => toggleLike(currentTrack)}>
               <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
             </Button>
         </div>

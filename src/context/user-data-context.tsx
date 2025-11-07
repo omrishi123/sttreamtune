@@ -20,8 +20,9 @@ interface CachedTracks {
 
 interface UserDataContextType extends UserData {
   communityPlaylists: Playlist[];
+  likeAnimationTrigger: number;
   isLiked: (trackId: string) => boolean;
-  toggleLike: (trackId: string) => void;
+  toggleLike: (track: Track) => void;
   addRecentlyPlayed: (trackId: string) => void;
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description: string, isPublic: boolean, isVerified?: boolean) => Promise<void>;
@@ -82,6 +83,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const [trackCache, setTrackCache] = useState<CachedTracks>({});
   const [communityPlaylists, setCommunityPlaylists] = useState<Playlist[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [likeAnimationTrigger, setLikeAnimationTrigger] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -162,9 +164,15 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     return userData.likedSongs.includes(trackId);
   };
 
-  const toggleLike = (trackId: string) => {
+  const toggleLike = (track: Track) => {
+    addTrackToCache(track);
+    const trackId = track.id;
+    const currentlyLiked = isLiked(trackId);
+    if (!currentlyLiked) {
+        setLikeAnimationTrigger(Date.now());
+    }
     setUserData(prev => {
-      const newLikedSongs = prev.likedSongs.includes(trackId)
+      const newLikedSongs = currentlyLiked
         ? prev.likedSongs.filter(id => id !== trackId)
         : [...prev.likedSongs, trackId];
       return { ...prev, likedSongs: newLikedSongs };
@@ -459,6 +467,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
   const value: UserDataContextType = {
     ...userData,
     communityPlaylists,
+    likeAnimationTrigger,
     isLiked,
     toggleLike,
     addRecentlyPlayed,

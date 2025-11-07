@@ -38,7 +38,7 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
     duration,
     videoPlayerRef
   } = usePlayer();
-  const { isLiked, toggleLike, addTrackToCache } = useUserData();
+  const { isLiked, toggleLike } = useUserData();
 
   const [isSheetReady, setIsSheetReady] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -70,10 +70,6 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
     }
   };
 
-  const handleToggleLike = () => {
-    addTrackToCache(currentTrack);
-    toggleLike(currentTrack.id);
-  };
   const isCurrentTrackLiked = isLiked(currentTrack.id);
   
   const formatTime = (seconds: number) => {
@@ -174,7 +170,7 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
 
              {/* Secondary Controls */}
              <div className="flex items-center justify-between">
-                 <Button variant="ghost" size="icon" onClick={handleToggleLike}>
+                 <Button variant="ghost" size="icon" onClick={() => toggleLike(currentTrack)}>
                     <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
                 </Button>
                 <AddToPlaylistMenu track={currentTrack}>
