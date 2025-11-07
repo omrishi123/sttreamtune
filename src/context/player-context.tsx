@@ -6,6 +6,7 @@ import type { Track, Playlist, User } from '@/lib/types';
 import YouTube from 'react-youtube';
 import { useUserData } from './user-data-context';
 import { generateRecommendations } from '@/ai/flows/generate-recommendations-flow';
+import { searchYoutube } from '@/ai/flows/search-youtube-flow';
 import { onAuthChange } from '@/lib/auth';
 
 // Extend the window type to include our optional AndroidBridge and callbacks
@@ -50,6 +51,8 @@ interface PlayerContextType {
   setContinuationToken: (token: string | null) => void;
   showVideoInSheet: boolean;
   setShowVideoInSheet: (show: boolean) => void;
+  searchQuery: string | null;
+  setSearchQuery: (query: string | null) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -98,6 +101,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   // New state for infinite queue
   const [continuationToken, setContinuationToken] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache } = useUserData();
    const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -112,48 +116,44 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     queueRef.current = queue;
   }, [queue]);
   
-  const fetchMoreRecommendations = useCallback(async () => {
+  const fetchMoreTracks = useCallback(async () => {
     if (isFetchingMore || !continuationToken) return;
 
     setIsFetchingMore(true);
     try {
-        const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-        const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-        const plainUserPlaylists = serializeTimestamps(userPlaylists);
-        const plainRecentTracks = serializeTimestamps(recentTracks);
+        let results;
+        if (searchQuery) { // Search mode
+            results = await searchYoutube({ 
+              query: searchQuery, 
+              continuationToken: continuationToken 
+            });
+        } else { // Recommendation mode
+            const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+            const plainUserPlaylists = serializeTimestamps(userPlaylists);
+            const plainRecentTracks = serializeTimestamps(recentTracks);
 
-        const results = await generateRecommendations({
-            recentlyPlayed: plainRecentTracks,
-            userPlaylists: plainUserPlaylists,
-            communityPlaylists: plainCommunityPlaylists,
-            continuationToken: continuationToken,
-        });
-
+            results = await generateRecommendations({
+                recentlyPlayed: plainRecentTracks,
+                userPlaylists: plainUserPlaylists,
+                communityPlaylists: plainCommunityPlaylists,
+                continuationToken: continuationToken,
+            });
+        }
+        
         if (results.tracks.length > 0) {
             addTracksToCache(results.tracks);
-            // Use a function for `setQueueState` to ensure we have the latest state
-            setQueueState(currentQueue => {
-              const newQueue = [...currentQueue, ...results.tracks];
-              // If using native playback, send the updated (longer) playlist back to the service
-              if (window.Android?.startPlayback) {
-                  const currentTrackInNewQueue = newQueue.find(t => t.id === currentTrack?.id);
-                  if (currentTrackInNewQueue) {
-                      playYoutubeSongInApp(currentTrackInNewQueue, newQueue);
-                  }
-              }
-              return newQueue;
-            });
+            setQueueState(currentQueue => [...currentQueue, ...results.tracks]);
             setContinuationToken(results.nextContinuationToken);
         } else {
-            // No more tracks to fetch
             setContinuationToken(null);
         }
     } catch (error) {
-        console.error("Failed to fetch more recommendations for queue:", error);
+        console.error("Failed to fetch more tracks for queue:", error);
     } finally {
         setIsFetchingMore(false);
     }
-  }, [isFetchingMore, continuationToken, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache, currentTrack]);
+  }, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
 
 
   useEffect(() => {
@@ -162,9 +162,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     if (currentIndex !== -1 && currentIndex >= queue.length - 3 && continuationToken) {
-        fetchMoreRecommendations();
+        fetchMoreTracks();
     }
-  }, [currentTrack, queue, continuationToken, isNativePlayback, fetchMoreRecommendations]);
+  }, [currentTrack, queue, continuationToken, isNativePlayback, fetchMoreTracks]);
 
 
   const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; fetchMore?: boolean; }) => {
@@ -192,9 +192,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
       // Handle the signal from the native service to fetch more songs
       if (state.fetchMore && continuationToken) {
-          fetchMoreRecommendations();
+          fetchMoreTracks();
       }
-  }, [fetchMoreRecommendations, continuationToken]);
+  }, [fetchMoreTracks, continuationToken]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -392,6 +392,15 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     
+    // Reset infinite scroll state if this is not an infinite playlist
+    if (playlist?.id !== 'recommended-for-you' && !searchQuery) {
+        setContinuationToken(null);
+    }
+    if (!searchQuery) {
+        setSearchQuery(null);
+    }
+
+
     if (playlist?.id === 'recommended-for-you') {
         const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
         const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
@@ -403,8 +412,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
             communityPlaylists: plainCommunityPlaylists,
         });
         setContinuationToken(results.nextContinuationToken);
-    } else {
-        setContinuationToken(null);
     }
 
     if (window.Android?.startPlayback) {
@@ -516,6 +523,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setContinuationToken,
     showVideoInSheet,
     setShowVideoInSheet,
+    searchQuery,
+    setSearchQuery,
   };
 
   if (!isMounted) {

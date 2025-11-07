@@ -24,7 +24,7 @@ export default function SearchPage() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [continuationToken, setContinuationToken] = useState<string | null>(null);
 
-  const { setQueueAndPlay } = usePlayer();
+  const { setQueueAndPlay, setContinuationToken: setPlayerContinuationToken, setSearchQuery: setPlayerSearchQuery } = usePlayer();
   const { addTracksToCache } = useUserData();
   const { toast } = useToast();
 
@@ -74,6 +74,8 @@ export default function SearchPage() {
     setIsLoading(true);
     setResults([]);
     setContinuationToken(null);
+    setPlayerContinuationToken(null);
+    setPlayerSearchQuery(null);
 
     try {
       const searchResults = await searchYoutube({ query: searchQuery });
@@ -118,6 +120,9 @@ export default function SearchPage() {
   };
 
   const handlePlayTrack = (trackId: string) => {
+    // When playing from search, set the context for the infinite queue
+    setPlayerSearchQuery(query); 
+    setPlayerContinuationToken(continuationToken);
     setQueueAndPlay(results, trackId);
   };
 
@@ -153,7 +158,7 @@ export default function SearchPage() {
               const isLastElement = results.length === index + 1;
               return (
                 <div
-                  key={track.id}
+                  key={`${track.id}-${index}`}
                   ref={isLastElement ? lastTrackElementRef : null}
                   className="flex items-center gap-4 p-2 rounded-md hover:bg-muted/50 transition-colors group cursor-pointer"
                   onClick={() => handlePlayTrack(track.id)}
