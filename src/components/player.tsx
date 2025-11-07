@@ -239,7 +239,7 @@ export function Player() {
                     </Button>
                 </AddToPlaylistMenu>
                 <QueueSheet />
-                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={openSheetWithVideo}>
+                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={(e) => { e.stopPropagation(); openSheetWithVideo(); }}>
                     <Youtube className="h-5 w-5" />
                 </Button>
              </div>

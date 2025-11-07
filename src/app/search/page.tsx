@@ -24,7 +24,7 @@ export default function SearchPage() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [continuationToken, setContinuationToken] = useState<string | null>(null);
 
-  const { setQueueAndPlay, setContinuationToken: setPlayerContinuationToken, setSearchQuery: setPlayerSearchQuery } = usePlayer();
+  const { setQueueAndPlay } = usePlayer();
   const { addTracksToCache } = useUserData();
   const { toast } = useToast();
 
@@ -74,8 +74,6 @@ export default function SearchPage() {
     setIsLoading(true);
     setResults([]);
     setContinuationToken(null);
-    setPlayerContinuationToken(null);
-    setPlayerSearchQuery(null);
 
     try {
       const searchResults = await searchYoutube({ query: searchQuery });
@@ -121,9 +119,7 @@ export default function SearchPage() {
 
   const handlePlayTrack = (trackId: string) => {
     // When playing from search, set the context for the infinite queue
-    setPlayerSearchQuery(query); 
-    setPlayerContinuationToken(continuationToken);
-    setQueueAndPlay(results, trackId);
+    setQueueAndPlay(results, trackId, undefined, query, continuationToken);
   };
 
   return (
@@ -193,5 +189,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-    

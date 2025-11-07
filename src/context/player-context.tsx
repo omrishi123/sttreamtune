@@ -33,7 +33,7 @@ interface PlayerContextType {
   pause: () => void;
   playNext: () => void;
   playPrev: () => void;
-  setQueueAndPlay: (tracks: Track[], startTrackId?: string, playlist?: Playlist) => void;
+  setQueueAndPlay: (tracks: Track[], startTrackId?: string, playlist?: Playlist, searchQuery?: string | null, continuationToken?: string | null) => void;
   playerRef: React.RefObject<YouTube | null>;
   progress: number;
   handleSeek: (value: number[]) => void;
@@ -48,12 +48,8 @@ interface PlayerContextType {
   setIsMinimized: (isMinimized: boolean) => void;
   videoPlayerRef: React.RefObject<YouTube | null>;
   reorderQueue: (sourceIndex: number, destinationIndex: number) => void;
-  continuationToken: string | null;
-  setContinuationToken: (token: string | null) => void;
   showVideoInSheet: boolean;
   setShowVideoInSheet: (show: boolean) => void;
-  searchQuery: string | null;
-  setSearchQuery: (query: string | null) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -118,19 +114,17 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [queue]);
   
   const fetchMoreTracks = useCallback(async () => {
-    // Ensure we don't fetch if already fetching, or if there's no way to get more tracks
     if (isFetchingMore || !continuationToken) return;
   
     setIsFetchingMore(true);
     try {
       let results;
-      // This is the critical fix: check if a search query exists to decide which flow to use.
       if (searchQuery) {
         results = await searchYoutube({ 
           query: searchQuery,
           continuationToken: continuationToken,
         });
-      } else { // Otherwise, fall back to recommendations
+      } else {
         const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
         const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
         const plainUserPlaylists = serializeTimestamps(userPlaylists);
@@ -150,7 +144,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         setQueueState(newQueue);
         setContinuationToken(results.nextContinuationToken);
   
-        // If native playback is active, send the updated queue to the native service.
         if (isNativePlayback && window.Android?.updatePlaybackQueue) {
           const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
           const playlistForNative = newQueue.map(t => ({
@@ -178,7 +171,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    // Trigger fetch when 2 songs are left in the queue
     if (currentIndex !== -1 && currentIndex >= queue.length - 3 && continuationToken) {
         fetchMoreTracks();
     }
@@ -202,13 +194,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
           const newTrack = currentQueue[state.newSongIndex];
           if (newTrack) {
               setCurrentTrack(newTrack);
-              // Reset time for new track, unless native provides it
               setCurrentTime(state.currentTime !== undefined ? state.currentTime : 0);
               setDuration(newTrack.duration);
           }
       }
 
-      // Handle the signal from the native service to fetch more songs
       if (state.fetchMore && continuationToken) {
           fetchMoreTracks();
       }
@@ -223,7 +213,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [handleNativeUpdate, sleepTimerId]);
 
-  // This effect handles the automatic timeline progress
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
     if (isPlaying && duration > 0 && !isNativePlayback) {
@@ -231,8 +220,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         setCurrentTime((prevTime) => {
           if (prevTime + 1 >= duration) {
             clearInterval(timer);
-            // Don't auto-set to duration, let the onEnd event handle it
-            // to avoid race conditions with playing next song
             return prevTime;
           }
           return prevTime + 1;
@@ -375,7 +362,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         if (currentIndex < queue.length - 1) {
             nextIndex = currentIndex + 1;
         } else {
-            // End of queue, maybe do nothing or handle repeat logic here
             return;
         }
     } else { // prev
@@ -399,7 +385,13 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playNext = () => playNextPrev('next');
   const playPrev = () => playNextPrev('prev');
   
-  const setQueueAndPlay = async (tracks: Track[], startTrackId?: string, playlist?: Playlist) => {
+  const setQueueAndPlay = async (
+    tracks: Track[], 
+    startTrackId?: string, 
+    playlist?: Playlist,
+    searchQueryValue: string | null = null,
+    continuationTokenValue: string | null = null
+  ) => {
     const newQueue = [...tracks];
     const trackToPlay = startTrackId 
         ? newQueue.find(t => t.id === startTrackId) 
@@ -410,16 +402,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     
-    // Reset infinite scroll state if this is not an infinite playlist
-    if (playlist?.id !== 'recommended-for-you' && !searchQuery) {
-        setContinuationToken(null);
-    }
-    if (!searchQuery) {
-        setSearchQuery(null);
-    }
-
-
-    if (playlist?.id === 'recommended-for-you') {
+    setSearchQuery(searchQueryValue);
+    setContinuationToken(continuationTokenValue);
+    
+    if (playlist?.id === 'recommended-for-you' && !searchQueryValue) {
         const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
         const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
         const plainUserPlaylists = serializeTimestamps(userPlaylists);
@@ -490,19 +476,16 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const setSleepTimer = (durationInMillis: number) => {
-    // Always clear any existing web-based timer
     if (sleepTimerId) {
       clearTimeout(sleepTimerId);
       setSleepTimerId(null);
     }
 
-    // Use native timer if available
     if (window.Android?.setSleepTimer) {
       window.Android.setSleepTimer(durationInMillis);
       return;
     }
 
-    // Fallback to web-based timer
     if (durationInMillis > 0) {
       const newTimerId = setTimeout(() => {
         pause();
@@ -537,12 +520,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsMinimized,
     videoPlayerRef,
     reorderQueue,
-    continuationToken,
-    setContinuationToken,
     showVideoInSheet,
     setShowVideoInSheet,
-    searchQuery,
-    setSearchQuery,
   };
 
   if (!isMounted) {
@@ -581,5 +560,3 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
-
-    
