@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import YouTube from 'react-youtube';
 import {
   Sheet,
   SheetContent,
@@ -36,27 +35,8 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
     handleSeek,
     currentTime,
     duration,
-    videoPlayerRef
   } = usePlayer();
   const { isLiked, toggleLike } = useUserData();
-
-  const [isSheetReady, setIsSheetReady] = useState(false);
-  const [isSeeking, setIsSeeking] = useState(false);
-
-  useEffect(() => {
-    const videoPlayer = videoPlayerRef.current?.getInternalPlayer();
-    if (!videoPlayer) return;
-
-    if (isOpen) {
-        if(isPlaying) videoPlayer.playVideo();
-        else videoPlayer.pauseVideo();
-        // Sync time when opening
-        videoPlayer.seekTo(currentTime, true);
-    } else {
-        videoPlayer.pauseVideo();
-    }
-  }, [isOpen, isPlaying, currentTime, videoPlayerRef]);
-
 
   if (!currentTrack) {
     return null;
@@ -79,31 +59,11 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleReady = (event: any) => {
-    setIsSheetReady(true);
-    // Don't autoplay here, let the useEffect handle it based on global state
-    event.target.seekTo(currentTime, true);
-    if(isPlaying) {
-        event.target.playVideo();
-    }
-  }
-
-  const handleSliderChange = (value: number[]) => {
-      // We only update the visual state while dragging
-      // The actual seek happens on commit
-      setIsSeeking(true);
-  }
-  
-  const handleSliderCommit = (value: number[]) => {
-      handleSeek(value);
-      setIsSeeking(false);
-  }
-
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-full max-h-[100svh] w-full bg-gradient-to-b from-slate-900 to-black p-4 flex flex-col"
+        className="h-full max-h-[100svh] w-full bg-gradient-to-b from-slate-900 to-black p-4 flex flex-col text-white"
       >
         <SheetHeader className="text-left">
            {/* This title is visually hidden but available for screen readers */}
@@ -113,21 +73,14 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
-            <div className="w-full max-w-4xl aspect-video rounded-lg overflow-hidden shadow-2xl bg-black">
-                 <YouTube
-                    ref={videoPlayerRef}
-                    videoId={currentTrack.youtubeVideoId}
-                    opts={{
-                        height: '100%',
-                        width: '100%',
-                        playerVars: {
-                            autoplay: isPlaying ? 1 : 0,
-                            controls: 0,
-                        },
-                    }}
-                    onReady={handleReady}
-                    className="h-full w-full"
-                />
+            <div className="relative w-full max-w-md aspect-square rounded-lg overflow-hidden shadow-2xl">
+                 <Image
+                    src={currentTrack.artwork}
+                    alt={currentTrack.title}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                 />
             </div>
 
             <div className="w-full max-w-md text-center">
@@ -141,8 +94,7 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
              <div className="space-y-1">
                 <Slider
                     value={[progress]}
-                    onValueChange={handleSliderChange}
-                    onValueCommit={handleSliderCommit}
+                    onValueChange={handleSeek}
                     className="w-full"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -153,28 +105,28 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
 
             {/* Main Controls */}
              <div className="flex items-center justify-center gap-4">
-                <Button variant="ghost" size="icon" onClick={playPrev} className="w-12 h-12">
+                <Button variant="ghost" size="icon" onClick={playPrev} className="w-12 h-12 text-white hover:text-white/80">
                     <SkipBack className="h-8 w-8" />
                 </Button>
                 <Button
                     size="icon"
-                    className="bg-primary hover:bg-primary/90 rounded-full h-16 w-16"
+                    className="bg-white hover:bg-white/90 rounded-full h-16 w-16"
                     onClick={handlePlayPause}
                     >
-                    {isPlaying ? <Pause className="h-8 w-8 text-primary-foreground" /> : <Play className="h-8 w-8 text-primary-foreground" />}
+                    {isPlaying ? <Pause className="h-8 w-8 text-black" /> : <Play className="h-8 w-8 text-black" />}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={playNext} className="w-12 h-12">
+                <Button variant="ghost" size="icon" onClick={playNext} className="w-12 h-12 text-white hover:text-white/80">
                     <SkipForward className="h-8 w-8" />
                 </Button>
             </div>
 
              {/* Secondary Controls */}
              <div className="flex items-center justify-between">
-                 <Button variant="ghost" size="icon" onClick={() => toggleLike(currentTrack)}>
+                 <Button variant="ghost" size="icon" onClick={() => toggleLike(currentTrack)} className="text-white hover:text-white/80">
                     <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
                 </Button>
                 <AddToPlaylistMenu track={currentTrack}>
-                     <Button variant="ghost" size="icon">
+                     <Button variant="ghost" size="icon" className="text-white hover:text-white/80">
                         <PlusCircle className="h-5 w-5" />
                     </Button>
                 </AddToPlaylistMenu>
