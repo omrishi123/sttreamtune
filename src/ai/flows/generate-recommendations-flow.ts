@@ -82,7 +82,7 @@ export async function generateRecommendations(input: GenerateRecommendationsInpu
 
   // 1. Generate a list of search queries based on user's habits
   const topArtists = getTopArtists(input.recentlyPlayed, 2); // Get top 2 artists
-  const dnaQueries = getPlaylistDnaQueries(input.userPlaylists, input.communityPlaylists, 2); // Get top 2 playlist DNA queries
+  const dnaQueries = getPlaylistDnaQueries(input.userPlaylists, input.communityPlaylists, 3); // Get top 3 playlist DNA queries
 
   const searchQueries = [...topArtists, ...dnaQueries];
 
@@ -93,7 +93,7 @@ export async function generateRecommendations(input: GenerateRecommendationsInpu
 
   // 2. Combine queries into a single, powerful search string.
   // This tells YouTube to find content related to all these items.
-  const combinedQuery = searchQueries.join(' | '); // The "|" acts like an "OR" in search
+  const combinedQuery = [...new Set(searchQueries)].join(' | '); // The "|" acts like an "OR" in search
 
   // 3. Perform the initial search
   try {
@@ -102,6 +102,31 @@ export async function generateRecommendations(input: GenerateRecommendationsInpu
     // Remove any tracks that the user has recently played to keep recommendations fresh.
     const recentIds = new Set(input.recentlyPlayed.map(t => t.id));
     const freshTracks = initialResults.tracks.filter(t => !recentIds.has(t.id));
+
+    // If we get too few results, try again with just the top artist to be safe
+    if (freshTracks.length < 5 && topArtists.length > 0) {
+        const fallbackResults = await searchYoutube({ query: topArtists[0] });
+        const moreFreshTracks = fallbackResults.tracks.filter(t => !recentIds.has(t.id) && !freshTracks.some(ft => ft.id === t.id));
+        
+        // Combine and ensure no duplicates
+        const finalTracks = [...freshTracks, ...moreFreshTracks];
+        const uniqueTrackIds = new Set();
+        const uniqueFinalTracks = finalTracks.filter(track => {
+            if (uniqueTrackIds.has(track.id)) {
+                return false;
+            }
+            uniqueTrackIds.add(track.id);
+            return true;
+        });
+
+        return {
+            tracks: uniqueFinalTracks,
+            // Use the continuation token from the *first* search to ensure the next "load more" is relevant
+            // to the original broad query, not the fallback.
+            nextContinuationToken: initialResults.nextContinuationToken,
+        };
+    }
+
 
     return {
         tracks: freshTracks,
