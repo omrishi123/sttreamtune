@@ -143,8 +143,22 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         
         if (results.tracks.length > 0) {
             addTracksToCache(results.tracks);
-            setQueueState(currentQueue => [...currentQueue, ...results.tracks]);
+            const newQueue = [...queueRef.current, ...results.tracks];
+            setQueueState(newQueue);
             setContinuationToken(results.nextContinuationToken);
+
+            if (isNativePlayback && window.Android?.startPlayback) {
+                const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
+                const playlistForNative = newQueue.map(t => ({
+                    videoId: t.youtubeVideoId,
+                    title: t.title,
+                    artist: t.artist,
+                    thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
+                }));
+                const playlistJson = JSON.stringify(playlistForNative);
+                // We use startPlayback again to "update" the playlist on the native side.
+                window.Android.startPlayback(playlistJson, currentIndex);
+            }
         } else {
             setContinuationToken(null);
         }
@@ -153,7 +167,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     } finally {
         setIsFetchingMore(false);
     }
-  }, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
+  }, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache, isNativePlayback, currentTrack?.id]);
 
 
   useEffect(() => {
@@ -372,9 +386,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     if (!nextTrack) return;
 
     if (isNativePlayback) {
-        playYoutubeSongInApp(nextTrack, queue);
+      playYoutubeSongInApp(nextTrack, queue);
     } else {
-        play(nextTrack);
+      play(nextTrack);
     }
   }
 

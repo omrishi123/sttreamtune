@@ -113,7 +113,7 @@ export function QueueSheet() {
                     <div {...provided.droppableProps} ref={provided.innerRef}>
                       {getDraggableTracks.length > 0 ? (
                         getDraggableTracks.map((track: Track, index: number) => (
-                          <Draggable key={track.id} draggableId={track.id} index={index}>
+                          <Draggable key={`${track.id}-${index}`} draggableId={track.id} index={index}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
