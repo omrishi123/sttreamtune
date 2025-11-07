@@ -149,7 +149,10 @@ export function Player() {
        <footer className="fixed bottom-16 left-0 right-0 bg-card/70 border-t border-border/50 px-4 py-3 flex flex-col gap-2 text-card-foreground shadow-lg z-40 backdrop-blur-lg">
         
         {/* Top Row: Song Info & Like/Queue */}
-        <div className="flex items-center w-full">
+        <div 
+          className="flex items-center w-full"
+          onClick={() => setIsNowPlayingOpen(true)}
+        >
           <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
             <Image
               src={currentTrack.artwork}
@@ -166,10 +169,10 @@ export function Player() {
             </div>
           </div>
           <div className="flex items-center">
-              <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
+              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}>
                   <ChevronDown className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => toggleLike(currentTrack)}>
+              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack); }}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
           </div>
@@ -253,7 +256,10 @@ export function Player() {
     <footer className="fixed bottom-0 left-0 right-0 bg-card/70 border-t border-border/50 px-4 py-2 text-card-foreground shadow-lg z-50 backdrop-blur-lg">
       <div className="grid grid-cols-[minmax(0,1fr)_2fr_minmax(0,1fr)] items-center w-full">
         {/* Left Section: Song Info */}
-        <div className="flex items-center gap-3 overflow-hidden min-w-0">
+        <div 
+            className="flex items-center gap-3 overflow-hidden min-w-0 cursor-pointer"
+            onClick={() => setIsNowPlayingOpen(true)}
+        >
           <Image
             src={currentTrack.artwork}
             alt={currentTrack.title}
@@ -267,7 +273,7 @@ export function Player() {
             <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
-           <Button variant="ghost" size="icon" className="ml-2" onClick={() => toggleLike(currentTrack)}>
+           <Button variant="ghost" size="icon" className="ml-2" onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack); }}>
               <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
             </Button>
         </div>
@@ -373,6 +379,8 @@ export function Player() {
 
 
 
+
+    
 
     
 
