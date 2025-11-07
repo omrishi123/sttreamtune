@@ -24,6 +24,7 @@ import {
 } from "react-beautiful-dnd";
 import React, { useState, useEffect } from 'react';
 import type { Track } from "@/lib/types";
+import { Badge } from "./ui/badge";
 
 export function QueueSheet() {
   const { queue, currentTrack, removeTrackFromQueue, clearQueue, reorderQueue } = usePlayer();
@@ -73,7 +74,12 @@ export function QueueSheet() {
       </SheetTrigger>
       <SheetContent className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>Up Next</SheetTitle>
+          <div className="flex items-center justify-between pr-6">
+            <SheetTitle>Up Next</SheetTitle>
+            {getDraggableTracks.length > 0 && (
+              <Badge variant="secondary">{getDraggableTracks.length}</Badge>
+            )}
+          </div>
         </SheetHeader>
         <div className="flex-1 min-h-0">
           <ScrollArea className="h-full pr-4">
