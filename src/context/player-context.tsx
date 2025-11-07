@@ -18,6 +18,7 @@ declare global {
       pause: () => void;
       seekTo: (positionInSeconds: number) => void;
       setSleepTimer: (durationInMillis: number) => void;
+      updatePlaybackQueue: (playlistJson: string, currentIndex: number) => void;
     };
     updateFromNative: (state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; fetchMore?: boolean; }) => void;
   }
@@ -117,68 +118,71 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [queue]);
   
   const fetchMoreTracks = useCallback(async () => {
+    // Ensure we don't fetch if already fetching, or if there's no way to get more tracks
     if (isFetchingMore || !continuationToken) return;
-
+  
     setIsFetchingMore(true);
     try {
-        let results;
-        if (searchQuery) { // Search mode
-            results = await searchYoutube({ 
-              query: searchQuery, 
-              continuationToken: continuationToken 
-            });
-        } else { // Recommendation mode
-            const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-            const plainUserPlaylists = serializeTimestamps(userPlaylists);
-            const plainRecentTracks = serializeTimestamps(recentTracks);
-
-            results = await generateRecommendations({
-                recentlyPlayed: plainRecentTracks,
-                userPlaylists: plainUserPlaylists,
-                communityPlaylists: plainCommunityPlaylists,
-                continuationToken: continuationToken,
-            });
+      let results;
+      // This is the critical fix: check if a search query exists to decide which flow to use.
+      if (searchQuery) {
+        results = await searchYoutube({ 
+          query: searchQuery,
+          continuationToken: continuationToken,
+        });
+      } else { // Otherwise, fall back to recommendations
+        const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+        const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
+        const plainUserPlaylists = serializeTimestamps(userPlaylists);
+        const plainRecentTracks = serializeTimestamps(recentTracks);
+  
+        results = await generateRecommendations({
+          recentlyPlayed: plainRecentTracks,
+          userPlaylists: plainUserPlaylists,
+          communityPlaylists: plainCommunityPlaylists,
+          continuationToken: continuationToken,
+        });
+      }
+  
+      if (results && results.tracks.length > 0) {
+        addTracksToCache(results.tracks);
+        const newQueue = [...queueRef.current, ...results.tracks];
+        setQueueState(newQueue);
+        setContinuationToken(results.nextContinuationToken);
+  
+        // If native playback is active, send the updated queue to the native service.
+        if (isNativePlayback && window.Android?.updatePlaybackQueue) {
+          const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
+          const playlistForNative = newQueue.map(t => ({
+            videoId: t.youtubeVideoId,
+            title: t.title,
+            artist: t.artist,
+            thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
+          }));
+          const playlistJson = JSON.stringify(playlistForNative);
+          window.Android.updatePlaybackQueue(playlistJson, currentIndex);
         }
-        
-        if (results.tracks.length > 0) {
-            addTracksToCache(results.tracks);
-            const newQueue = [...queueRef.current, ...results.tracks];
-            setQueueState(newQueue);
-            setContinuationToken(results.nextContinuationToken);
-
-            if (isNativePlayback && window.Android?.startPlayback) {
-                const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
-                const playlistForNative = newQueue.map(t => ({
-                    videoId: t.youtubeVideoId,
-                    title: t.title,
-                    artist: t.artist,
-                    thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
-                }));
-                const playlistJson = JSON.stringify(playlistForNative);
-                // We use startPlayback again to "update" the playlist on the native side.
-                window.Android.startPlayback(playlistJson, currentIndex);
-            }
-        } else {
-            setContinuationToken(null);
-        }
+      } else {
+        setContinuationToken(null);
+      }
     } catch (error) {
-        console.error("Failed to fetch more tracks for queue:", error);
+      console.error("Failed to fetch more tracks for queue:", error);
     } finally {
-        setIsFetchingMore(false);
+      setIsFetchingMore(false);
     }
-  }, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache, isNativePlayback, currentTrack?.id]);
+  }, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, communityPlaylists, userPlaylists, addTracksToCache, isNativePlayback, currentTrack?.id]);
 
 
   useEffect(() => {
-    if (!currentTrack || isNativePlayback) {
+    if (!currentTrack) {
       return;
     }
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+    // Trigger fetch when 2 songs are left in the queue
     if (currentIndex !== -1 && currentIndex >= queue.length - 3 && continuationToken) {
         fetchMoreTracks();
     }
-  }, [currentTrack, queue, continuationToken, isNativePlayback, fetchMoreTracks]);
+  }, [currentTrack, queue, continuationToken, fetchMoreTracks]);
 
 
   const handleNativeUpdate = useCallback((state: { isPlaying?: boolean; currentTime?: number; duration?: number; newSongIndex?: number; fetchMore?: boolean; }) => {
@@ -577,3 +581,5 @@ export const usePlayer = (): PlayerContextType => {
   }
   return context;
 };
+
+    
