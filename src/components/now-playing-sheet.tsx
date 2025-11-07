@@ -36,7 +36,8 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
     handleSeek,
     currentTime,
     duration,
-    videoPlayerRef
+    videoPlayerRef,
+    showVideoInSheet,
   } = usePlayer();
   const { isLiked, toggleLike } = useUserData();
 
@@ -76,21 +77,31 @@ export function NowPlayingSheet({ isOpen, onOpenChange }: NowPlayingSheetProps) 
         </SheetHeader>
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
             <div className="relative w-full max-w-md aspect-square rounded-lg overflow-hidden shadow-2xl">
-                 <YouTube
-                    ref={videoPlayerRef}
-                    videoId={currentTrack.youtubeVideoId}
-                    opts={{
-                      height: '100%',
-                      width: '100%',
-                      playerVars: {
-                        autoplay: 1,
-                        controls: 0,
-                        rel: 0,
-                        showinfo: 0,
-                      },
-                    }}
-                    className="absolute inset-0 w-full h-full"
-                />
+                 {showVideoInSheet ? (
+                    <YouTube
+                        ref={videoPlayerRef}
+                        videoId={currentTrack.youtubeVideoId}
+                        opts={{
+                        height: '100%',
+                        width: '100%',
+                        playerVars: {
+                            autoplay: 1,
+                            controls: 0,
+                            rel: 0,
+                            showinfo: 0,
+                        },
+                        }}
+                        className="absolute inset-0 w-full h-full"
+                    />
+                 ) : (
+                    <Image
+                        src={currentTrack.artwork}
+                        alt={currentTrack.title}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                    />
+                 )}
             </div>
 
             <div className="w-full max-w-md text-center">

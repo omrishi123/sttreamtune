@@ -48,6 +48,8 @@ interface PlayerContextType {
   reorderQueue: (sourceIndex: number, destinationIndex: number) => void;
   continuationToken: string | null;
   setContinuationToken: (token: string | null) => void;
+  showVideoInSheet: boolean;
+  setShowVideoInSheet: (show: boolean) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -91,6 +93,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const playerRef = useRef<YouTube | null>(null);
   const videoPlayerRef = useRef<YouTube | null>(null);
   const queueRef = useRef(queue);
+  const [showVideoInSheet, setShowVideoInSheet] = useState(false);
+
 
   // New state for infinite queue
   const [continuationToken, setContinuationToken] = useState<string | null>(null);
@@ -510,6 +514,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     reorderQueue,
     continuationToken,
     setContinuationToken,
+    showVideoInSheet,
+    setShowVideoInSheet,
   };
 
   if (!isMounted) {

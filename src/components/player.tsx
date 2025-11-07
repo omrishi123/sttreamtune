@@ -102,6 +102,7 @@ export function Player() {
     setIsNowPlayingOpen,
     isMinimized,
     setIsMinimized,
+    setShowVideoInSheet,
   } = usePlayer();
   const { isLiked, toggleLike } = useUserData();
   const [isMuted, setIsMuted] = React.useState(false);
@@ -139,6 +140,16 @@ export function Player() {
   
   const isCurrentTrackLiked = isLiked(currentTrack.id);
 
+  const openSheetWithImage = () => {
+    setShowVideoInSheet(false);
+    setIsNowPlayingOpen(true);
+  };
+
+  const openSheetWithVideo = () => {
+    setShowVideoInSheet(true);
+    setIsNowPlayingOpen(true);
+  };
+
   if (isMinimized) {
       return <FloatingPlayer />;
   }
@@ -151,7 +162,7 @@ export function Player() {
         {/* Top Row: Song Info & Like/Queue */}
         <div 
           className="flex items-center w-full"
-          onClick={() => setIsNowPlayingOpen(true)}
+          onClick={openSheetWithImage}
         >
           <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
             <Image
@@ -228,7 +239,7 @@ export function Player() {
                     </Button>
                 </AddToPlaylistMenu>
                 <QueueSheet />
-                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => setIsNowPlayingOpen(true)}>
+                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={openSheetWithVideo}>
                     <Youtube className="h-5 w-5" />
                 </Button>
              </div>
@@ -258,7 +269,7 @@ export function Player() {
         {/* Left Section: Song Info */}
         <div 
             className="flex items-center gap-3 overflow-hidden min-w-0 cursor-pointer"
-            onClick={() => setIsNowPlayingOpen(true)}
+            onClick={openSheetWithImage}
         >
           <Image
             src={currentTrack.artwork}
@@ -358,7 +369,7 @@ export function Player() {
           <div className="w-10">
               <google-cast-launcher />
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setIsNowPlayingOpen(true)}>
+          <Button variant="ghost" size="icon" onClick={openSheetWithVideo}>
               <Youtube className="h-5 w-5" />
           </Button>
            <AddToPlaylistMenu track={currentTrack} />
