@@ -351,7 +351,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
         </div>
         <Player />
         {isMobile && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden">
+          <nav className="fixed bottom-0 left-0 right-0 bg-card/70 border-t border-border z-50 md:hidden backdrop-blur-xl">
             <div className="flex justify-around items-center h-16">
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href} className="flex-1">
