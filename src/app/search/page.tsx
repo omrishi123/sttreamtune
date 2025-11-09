@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Play, Loader2 } from "lucide-react";
+import { Play, Loader2, ListPlus } from "lucide-react";
 import { searchYoutube, YoutubeSearchOutput } from "@/ai/flows/search-youtube-flow";
 import { usePlayer } from "@/context/player-context";
 import { useUserData } from "@/context/user-data-context";
@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { clearAllRecommendationCaches, updateSearchHistory } from "@/lib/recommendations";
 import { Track } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SaveSearchDialog } from "@/components/save-search-dialog";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -143,7 +144,17 @@ export default function SearchPage() {
       </div>
 
       <section>
-        <h2 className="text-xl font-semibold font-headline mb-4">Results</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold font-headline">Results</h2>
+          {results.length > 0 && !isLoading && (
+            <SaveSearchDialog searchResults={results}>
+               <Button variant="outline">
+                <ListPlus className="mr-2 h-4 w-4" />
+                Save as Playlist
+              </Button>
+            </SaveSearchDialog>
+          )}
+        </div>
         {isLoading && results.length === 0 ? (
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-md" />)}
