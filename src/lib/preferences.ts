@@ -1,4 +1,5 @@
 
+
 'use client';
 
 // A single, user-agnostic key for storing preferences on the device.
@@ -7,12 +8,13 @@ const PREFERENCES_KEY = 'streamtune-device-preferences';
 interface DevicePreferences {
   genres: string[];
   lastRefreshPrompt?: number;
+  playbackQuality?: string;
 }
 
 export const saveUserPreferences = (genres: string[]): void => {
   if (typeof window === 'undefined') return;
   try {
-    const currentPrefs = getUserPreferences();
+    const currentPrefs = getUserPreferences() || { genres: [] };
     const newPrefs: DevicePreferences = {
       ...currentPrefs,
       genres,
@@ -67,3 +69,19 @@ export const updateUserRefreshPromptTimestamp = (): void => {
         console.error("Error updating refresh prompt timestamp:", error);
     }
 }
+
+export const savePlaybackQuality = (quality: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+        const currentPrefs = getUserPreferences() || { genres: [] };
+        const newPrefs = { ...currentPrefs, playbackQuality: quality };
+        localStorage.setItem(PREFERENCES_KEY, JSON.stringify(newPrefs));
+    } catch (error) {
+        console.error("Error saving playback quality:", error);
+    }
+};
+
+export const getPlaybackQuality = (): string => {
+    const prefs = getUserPreferences();
+    return prefs?.playbackQuality || 'default'; // default, highres, hd1080, hd720, large, medium, small
+};

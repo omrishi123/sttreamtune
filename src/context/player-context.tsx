@@ -9,6 +9,7 @@ import { useUserData } from './user-data-context';
 import { generateRecommendations } from '@/ai/flows/generate-recommendations-flow';
 import { searchYoutube } from '@/ai/flows/search-youtube-flow';
 import { onAuthChange } from '@/lib/auth';
+import { getPlaybackQuality, savePlaybackQuality } from '@/lib/preferences';
 
 // Extend the window type to include our optional AndroidBridge and callbacks
 declare global {
@@ -51,6 +52,8 @@ interface PlayerContextType {
   reorderQueue: (sourceIndex: number, destinationIndex: number) => void;
   showVideoInSheet: boolean;
   setShowVideoInSheet: (show: boolean) => void;
+  playbackQuality: string;
+  setPlaybackQuality: (quality: string) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -86,6 +89,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [isNativePlayback, setIsNativePlayback] = useState(false);
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [playbackQuality, setPlaybackQualityState] = useState('default');
   
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -108,7 +112,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthChange(setCurrentUser);
     return () => unsubscribe();
   }, []);
-
   
   useEffect(() => {
     queueRef.current = queue;
@@ -149,8 +152,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
             setQueueState(newQueue);
             setContinuationToken(results.nextContinuationToken);
 
-            // ***** THE CRITICAL FIX IS HERE *****
-            // Always update the native player's queue after fetching more tracks.
             if (isNativePlayback && window.Android?.startPlayback) {
                 const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
                 if (currentIndex !== -1) {
@@ -161,7 +162,6 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                         thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
                     }));
                     const playlistJson = JSON.stringify(playlistForNative);
-                    // We call startPlayback here because it effectively acts as a queue update.
                     window.Android.startPlayback(playlistJson, currentIndex);
                 }
             }
@@ -213,6 +213,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsMounted(true);
+    const initialQuality = getPlaybackQuality();
+    setPlaybackQualityState(initialQuality);
     window.updateFromNative = handleNativeUpdate;
     return () => {
       delete (window as any).updateFromNative;
@@ -479,6 +481,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   
   const handleReady = (event: any) => {
     if (isNativePlayback) return;
+    event.target.setPlaybackQuality(playbackQuality);
     setIsReady(true);
   }
 
@@ -500,6 +503,19 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
       setSleepTimerId(newTimerId);
     }
   };
+
+  const setPlaybackQuality = (quality: string) => {
+    setPlaybackQualityState(quality);
+    savePlaybackQuality(quality);
+    if(playerRef.current) {
+        const internalPlayer = playerRef.current.getInternalPlayer();
+        internalPlayer?.setPlaybackQuality(quality);
+    }
+    if(videoPlayerRef.current) {
+        const internalPlayer = videoPlayerRef.current.getInternalPlayer();
+        internalPlayer?.setPlaybackQuality(quality);
+    }
+  }
   
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -529,6 +545,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     reorderQueue,
     showVideoInSheet,
     setShowVideoInSheet,
+    playbackQuality,
+    setPlaybackQuality,
   };
 
   if (!isMounted) {
@@ -549,6 +567,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                     playerVars: {
                         autoplay: 1,
                         controls: 0,
+                        // @ts-ignore
+                        quality: playbackQuality,
                     },
                 }}
                 onStateChange={handleStateChange}
