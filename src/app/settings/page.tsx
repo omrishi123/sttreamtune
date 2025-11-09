@@ -35,7 +35,8 @@ import { Label } from '@/components/ui/label';
 import { usePlayer } from '@/context/player-context';
 import { useToast } from '@/hooks/use-toast';
 import { clearAllRecommendationCaches, clearSearchHistoryCache } from '@/lib/recommendations';
-import { User, Palette, Film, HardDrive, Trash2 } from 'lucide-react';
+import { clearUserPreferences } from '@/lib/preferences';
+import { User, Palette, Film, HardDrive, Trash2, RefreshCcw, ListMusic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { onAuthChange } from '@/lib/auth';
 import type { User as AppUser } from '@/lib/types';
@@ -68,6 +69,13 @@ export default function SettingsPage() {
   const handleResetRecommendations = () => {
     clearAllRecommendationCaches();
     toast({ title: 'Recommendations Reset', description: 'Your home page will now show fresh playlists.' });
+  };
+
+    const handleChangeCategories = () => {
+    clearUserPreferences(); 
+    clearAllRecommendationCaches();
+    clearSearchHistoryCache();
+    router.push('/welcome');
   };
   
   const handleClearAllData = () => {
@@ -218,6 +226,29 @@ export default function SettingsPage() {
                             <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={handleResetRecommendations}>Reset</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                        <h4 className="font-semibold">Change Music Taste</h4>
+                        <p className="text-sm text-muted-foreground">Go back to the welcome screen to re-select your genres.</p>
+                    </div>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                             <Button variant="outline" size="sm">Change</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Change your genres?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will take you to the welcome screen to pick new genres. Your recommendations will be updated.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleChangeCategories}>Continue</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>

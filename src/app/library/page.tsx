@@ -21,7 +21,7 @@ import { GeneratePlaylistDialog } from "@/components/generate-playlist-dialog";
 import { ImportChannelDialog } from "@/components/import-channel-dialog";
 import { onAuthChange } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
-import { SettingsDialog } from '@/components/settings-dialog';
+import { useRouter } from 'next/navigation';
 
 const PlaylistGrid = ({ playlists, title, isGuestPrivateSection = false }: { playlists: Playlist[], title?: string, isGuestPrivateSection?: boolean }) => {
     if (playlists.length === 0) {
@@ -161,6 +161,7 @@ const ChannelGrid = ({ channels }: { channels: Channel[] }) => {
 export default function LibraryPage() {
   const { playlists: userPrivatePlaylists, likedSongs, getTrackById, communityPlaylists, channels } = useUserData();
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const router = useRouter();
   
   useEffect(() => {
     const unsubscribe = onAuthChange(setCurrentUser);
@@ -240,11 +241,9 @@ export default function LibraryPage() {
                 <span className="hidden sm:inline">New</span>
               </Button>
           </AddPlaylistDialog>
-           <SettingsDialog>
-                <Button variant="outline" size="sm" className="p-2">
-                    <Settings className="h-4 w-4" />
-                </Button>
-            </SettingsDialog>
+           <Button variant="outline" size="sm" className="p-2" onClick={() => router.push('/settings')}>
+                <Settings className="h-4 w-4" />
+            </Button>
         </div>
       </div>
       
