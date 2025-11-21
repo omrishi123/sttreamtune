@@ -351,14 +351,14 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
         <Player />
         {isMobile && (
           <nav className="fixed bottom-0 left-0 right-0 bg-neutral-900/80 border-t border-white/10 z-50 md:hidden backdrop-blur-2xl">
-            <div className="flex justify-around items-center h-20 px-2">
+            <div className="flex justify-around items-center h-16 px-2">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link key={item.href} href={item.href} className="flex-1 group">
                     <div className="flex flex-col items-center justify-center gap-1 h-full">
                       <div className={cn(
-                        "relative flex items-center justify-center w-12 h-8 rounded-full transition-all duration-300",
+                        "relative flex items-center justify-center w-12 h-7 rounded-full transition-all duration-300",
                         isActive 
                           ? "bg-white/20"
                           : "group-hover:bg-white/10"
