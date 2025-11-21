@@ -120,6 +120,18 @@ const PlaylistGrid = ({ playlists, title, isGuestPrivateSection = false }: { pla
     );
 };
 
+const DefaultPlaylistGrid = ({ playlists }: { playlists: Playlist[] }) => {
+  return (
+    <div className="mt-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {playlists.map((playlist) => (
+          <PlaylistCard key={playlist.id} playlist={playlist} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ChannelGrid = ({ channels }: { channels: Channel[] }) => {
   if (channels.length === 0) {
     return (
@@ -256,7 +268,7 @@ export default function LibraryPage() {
         </TabsList>
 
         <TabsContent value="playlists" className="mt-6 space-y-8">
-          <PlaylistGrid playlists={defaultPlaylists} />
+          <DefaultPlaylistGrid playlists={defaultPlaylists} />
           
           {isGuest ? (
               <PlaylistGrid 
