@@ -49,9 +49,9 @@ export default function RecommendedPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [hasHistory, setHasHistory] = useState(false);
+    const [continuationToken, setContinuationToken] = useState<string | null>(null);
     
     const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache } = useUserData();
-    const { setContinuationToken } = usePlayer();
     const observer = useRef<IntersectionObserver>();
 
     const fetchRecommendations = useCallback(async (isInitialLoad: boolean, currentContinuationToken: string | null = null) => {
@@ -100,13 +100,9 @@ export default function RecommendedPage() {
             setIsLoading(false);
             setIsFetchingMore(false);
         }
-    }, [isFetchingMore, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache, setContinuationToken]);
+    }, [isFetchingMore, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
     
-    const tokenForNextFetch = usePlayer().continuationToken;
-
     useEffect(() => {
-        // We only want this to run once on initial load.
-        // The context will handle subsequent fetches.
         fetchRecommendations(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -116,13 +112,13 @@ export default function RecommendedPage() {
         if (observer.current) observer.current.disconnect();
         
         observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && tokenForNextFetch && !isFetchingMore) {
-                fetchRecommendations(false, tokenForNextFetch);
+            if (entries[0].isIntersecting && continuationToken && !isFetchingMore) {
+                fetchRecommendations(false, continuationToken);
             }
         });
 
         if (node) observer.current.observe(node);
-    }, [isLoading, isFetchingMore, fetchRecommendations, tokenForNextFetch]);
+    }, [isLoading, isFetchingMore, fetchRecommendations, continuationToken]);
 
     return (
         <div className="space-y-8">
