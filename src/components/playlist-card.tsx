@@ -59,12 +59,12 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
               unoptimized
             />
           </CardContent>
-          <CardHeader className="p-3 flex-1">
-            <CardTitle className="text-sm font-semibold truncate group-hover:text-primary leading-tight">
+          <CardHeader className="p-2 sm:p-3 flex-1">
+            <CardTitle className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary leading-tight">
               {playlist.name}
             </CardTitle>
             {playlist.owner && (
-              <CardDescription className="text-xs truncate mt-1 flex items-center gap-1">
+              <CardDescription className="text-[10px] sm:text-xs truncate mt-1 flex items-center gap-1">
                 By {playlist.owner}
                 {playlist.ownerIsVerified && <Icons.verified className="h-3 w-3 text-blue-500" />}
               </CardDescription>
