@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -351,19 +350,38 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
         </div>
         <Player />
         {isMobile && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-card/70 border-t border-border z-50 md:hidden backdrop-blur-xl">
-            <div className="flex justify-around items-center h-16">
-              {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className="flex-1">
-                  <div className={cn(
-                    "flex flex-col items-center justify-center gap-1 h-full transition-colors",
-                    pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  )}>
-                    <item.icon className="h-6 w-6" />
-                    <span className="text-xs font-medium">{item.label}</span>
-                  </div>
-                </Link>
-              ))}
+          <nav className="fixed bottom-0 left-0 right-0 bg-neutral-900/80 border-t border-white/10 z-50 md:hidden backdrop-blur-2xl">
+            <div className="flex justify-around items-center h-20 px-2">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link key={item.href} href={item.href} className="flex-1 group">
+                    <div className="flex flex-col items-center justify-center gap-1 h-full">
+                      <div className={cn(
+                        "relative flex items-center justify-center w-12 h-8 rounded-full transition-all duration-300",
+                        isActive 
+                          ? "bg-white/20"
+                          : "group-hover:bg-white/10"
+                      )}>
+                         <div className={cn(
+                           "absolute inset-0 rounded-full bg-primary opacity-0 blur-md transition-opacity duration-300",
+                           isActive && "opacity-40"
+                         )}></div>
+                         <item.icon className={cn(
+                           "h-5 w-5 z-10 transition-colors duration-300",
+                           isActive ? "text-white" : "text-neutral-400 group-hover:text-white"
+                         )} />
+                      </div>
+                      <span className={cn(
+                        "text-[10px] font-medium transition-colors duration-300",
+                        isActive ? "text-white" : "text-neutral-400 group-hover:text-white"
+                      )}>
+                        {item.label}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </nav>
         )}
