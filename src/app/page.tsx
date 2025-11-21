@@ -112,14 +112,17 @@ export default function HomePage() {
 
 
   const categories = useMemo(() => {
-    const allCategories = ['All'];
-    homePagePlaylists.forEach(section => {
-      if (!allCategories.includes(section.title)) {
-        allCategories.push(section.title);
-      }
-    });
-    return allCategories;
-  }, []);
+    const dynamicCategories = [];
+    if (recommendedTracks.length > 0) dynamicCategories.push('Recommended For You');
+    if (featuredPlaylists.length > 0) dynamicCategories.push('Featured Playlists');
+    if (recentCommunityPlaylists.length > 0) dynamicCategories.push('Community Playlists');
+    dynamicCategories.push(...userGenres);
+    dynamicCategories.push('Top Artists');
+
+    const staticCategories = homePagePlaylists.map(section => section.title);
+    
+    return ['All', ...[...new Set([...dynamicCategories, ...staticCategories])]];
+  }, [recommendedTracks, featuredPlaylists, recentCommunityPlaylists, userGenres]);
 
   const filteredPlaylists = useMemo(() => {
     if (selectedCategory === 'All') {
@@ -133,6 +136,10 @@ export default function HomePage() {
   const handleArtistClick = (artistName: string) => {
     router.push(`/search?q=${encodeURIComponent(artistName)}`);
   };
+
+  const shouldShow = (category: string) => {
+    return selectedCategory === 'All' || selectedCategory === category;
+  }
 
   return (
     <div className="space-y-8">
@@ -166,51 +173,54 @@ export default function HomePage() {
           </DropdownMenu>
       </div>
 
-      <section>
-          <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
-              {recommendedTracks.length > 5 && (
-                <Button asChild variant="ghost" size="sm">
-                    <Link href="/recommended">
-                        View all
-                        <ChevronRight className="h-4 w-4" />
-                    </Link>
-                </Button>
-              )}
-          </div>
-          {loadingRecommendations ? (
-             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-             </div>
-          ) : recommendedTracks.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                {recommendedTracks.slice(0, 5).map(track => (
-                    <TrackCard 
-                      key={track.id} 
-                      track={track} 
-                      tracklist={recommendedTracks}
-                      playlist={homeRecommendedPlaylist}
-                    />
-                ))}
-              </div>
-          ) : (
-             <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50">
-                <CardContent className="p-0 space-y-3">
-                  <h3 className="font-semibold">Nothing to recommend yet!</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Play some songs to get personalized recommendations.
-                  </p>
-                  <Button asChild size="sm" className="mt-4">
-                    <Link href="/search">Go to Search</Link>
+      {shouldShow('Recommended For You') && (
+        <section>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
+                {recommendedTracks.length > 5 && (
+                  <Button asChild variant="ghost" size="sm">
+                      <Link href="/recommended">
+                          View all
+                          <ChevronRight className="h-4 w-4" />
+                      </Link>
                   </Button>
-                </CardContent>
-            </Card>
-          )}
-      </section>
+                )}
+            </div>
+            {loadingRecommendations ? (
+               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+               </div>
+            ) : recommendedTracks.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                  {recommendedTracks.slice(0, 5).map(track => (
+                      <TrackCard 
+                        key={track.id} 
+                        track={track} 
+                        tracklist={recommendedTracks}
+                        playlist={homeRecommendedPlaylist}
+                      />
+                  ))}
+                </div>
+            ) : (
+               <Card className="flex flex-col items-center justify-center p-6 text-center bg-muted/50">
+                  <CardContent className="p-0 space-y-3">
+                    <h3 className="font-semibold">Nothing to recommend yet!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Play some songs to get personalized recommendations.
+                    </p>
+                    <Button asChild size="sm" className="mt-4">
+                      <Link href="/search">Go to Search</Link>
+                    </Button>
+                  </CardContent>
+              </Card>
+            )}
+        </section>
+      )}
 
-      {featuredPlaylists.length > 0 && (
+
+      {shouldShow('Featured Playlists') && featuredPlaylists.length > 0 && (
          <PlaylistSection 
             title="Featured Playlists" 
             playlists={featuredPlaylists}
@@ -218,7 +228,7 @@ export default function HomePage() {
           />
       )}
       
-      {recentCommunityPlaylists.length > 0 && (
+      {shouldShow('Community Playlists') && recentCommunityPlaylists.length > 0 && (
          <PlaylistSection 
             title="Community Playlists" 
             playlists={recentCommunityPlaylists}
@@ -226,7 +236,7 @@ export default function HomePage() {
           />
       )}
       
-      {userGenres.map(genre => (
+      {userGenres.map(genre => shouldShow(genre) && (
         <PlaylistSection
             key={genre}
             title={genre}
@@ -234,40 +244,42 @@ export default function HomePage() {
         />
       ))}
 
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold font-headline">Top Artists</h2>
-           <Button asChild variant="ghost" size="sm">
-              <Link href="/artists">
-                View all
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </Button>
-        </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-            {topArtists.map((artist) => (
-              <div
-                key={artist.name}
-                className="group text-center cursor-pointer"
-                onClick={() => handleArtistClick(artist.name)}
-              >
-                <div className="relative aspect-square overflow-hidden rounded-full shadow-lg transition-transform duration-300 group-hover:scale-105">
-                  <Image
-                    src={artist.imageUrl}
-                    alt={artist.name}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                    data-ai-hint={`${artist.name} portrait`}
-                  />
+      {shouldShow('Top Artists') && (
+        <section>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold font-headline">Top Artists</h2>
+             <Button asChild variant="ghost" size="sm">
+                <Link href="/artists">
+                  View all
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+              {topArtists.map((artist) => (
+                <div
+                  key={artist.name}
+                  className="group text-center cursor-pointer"
+                  onClick={() => handleArtistClick(artist.name)}
+                >
+                  <div className="relative aspect-square overflow-hidden rounded-full shadow-lg transition-transform duration-300 group-hover:scale-105">
+                    <Image
+                      src={artist.imageUrl}
+                      alt={artist.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                      data-ai-hint={`${artist.name} portrait`}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm font-semibold truncate transition-colors group-hover:text-primary">
+                    {artist.name}
+                  </p>
                 </div>
-                <p className="mt-2 text-sm font-semibold truncate transition-colors group-hover:text-primary">
-                  {artist.name}
-                </p>
-              </div>
-            ))}
-        </div>
-      </section>
+              ))}
+          </div>
+        </section>
+      )}
 
       {filteredPlaylists.map(section => (
          <PlaylistSection 
@@ -282,5 +294,7 @@ export default function HomePage() {
 }
 
 
+
+    
 
     
