@@ -217,6 +217,14 @@ export default function HomePage() {
             viewAllLink="/community"
           />
       )}
+      
+      {recentCommunityPlaylists.length > 0 && (
+         <PlaylistSection 
+            title="Community Playlists" 
+            playlists={recentCommunityPlaylists}
+            viewAllLink="/community"
+          />
+      )}
 
       <section>
         <div className="flex justify-between items-center mb-4">
@@ -253,14 +261,6 @@ export default function HomePage() {
         </div>
       </section>
       
-      {recentCommunityPlaylists.length > 0 && (
-         <PlaylistSection 
-            title="Community Playlists" 
-            playlists={recentCommunityPlaylists}
-            viewAllLink="/community"
-          />
-      )}
-      
       {userGenres.map(genre => (
         <PlaylistSection
             key={genre}
@@ -280,3 +280,4 @@ export default function HomePage() {
     </div>
   );
 }
+
