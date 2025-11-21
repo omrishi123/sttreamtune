@@ -225,6 +225,14 @@ export default function HomePage() {
             viewAllLink="/community"
           />
       )}
+      
+      {userGenres.map(genre => (
+        <PlaylistSection
+            key={genre}
+            title={genre}
+            isPersonalized={true}
+        />
+      ))}
 
       <section>
         <div className="flex justify-between items-center mb-4">
@@ -260,14 +268,6 @@ export default function HomePage() {
             ))}
         </div>
       </section>
-      
-      {userGenres.map(genre => (
-        <PlaylistSection
-            key={genre}
-            title={genre}
-            isPersonalized={true}
-        />
-      ))}
 
       {filteredPlaylists.map(section => (
          <PlaylistSection 
@@ -281,3 +281,6 @@ export default function HomePage() {
   );
 }
 
+
+
+    
