@@ -3,6 +3,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUserPreferences } from '@/lib/preferences';
 import { PlaylistSection } from '@/components/playlist-section';
+import { artists as allArtists } from '@/lib/artists';
+import { useRouter } from 'next/navigation';
 
 // Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
 const serializeTimestamps = (obj: any): any => {
@@ -60,6 +63,7 @@ const homeRecommendedPlaylist: Playlist = {
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const router = useRouter();
   const { communityPlaylists, recentlyPlayed, playlists: userPlaylists, getTrackById, addTracksToCache } = useUserData();
   const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
@@ -123,6 +127,12 @@ export default function HomePage() {
     }
     return homePagePlaylists.filter(section => section.title === selectedCategory);
   }, [selectedCategory]);
+  
+  const topArtists = useMemo(() => allArtists.slice(0, 6), []);
+  
+  const handleArtistClick = (artistName: string) => {
+    router.push(`/search?q=${encodeURIComponent(artistName)}`);
+  };
 
   return (
     <div className="space-y-8">
@@ -169,13 +179,13 @@ export default function HomePage() {
               )}
           </div>
           {loadingRecommendations ? (
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                 <Skeleton className="h-20 w-full" />
                 <Skeleton className="h-20 w-full" />
                 <Skeleton className="h-20 w-full" />
              </div>
           ) : recommendedTracks.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                 {recommendedTracks.slice(0, 5).map(track => (
                     <TrackCard 
                       key={track.id} 
@@ -198,6 +208,41 @@ export default function HomePage() {
                 </CardContent>
             </Card>
           )}
+      </section>
+
+      <section>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold font-headline">Top Artists</h2>
+           <Button asChild variant="ghost" size="sm">
+              <Link href="/artists">
+                View all
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+            {topArtists.map((artist) => (
+              <div
+                key={artist.name}
+                className="group text-center cursor-pointer"
+                onClick={() => handleArtistClick(artist.name)}
+              >
+                <div className="relative aspect-square overflow-hidden rounded-full shadow-lg transition-transform duration-300 group-hover:scale-105">
+                  <Image
+                    src={artist.imageUrl}
+                    alt={artist.name}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                    data-ai-hint={`${artist.name} portrait`}
+                  />
+                </div>
+                <p className="mt-2 text-sm font-semibold truncate transition-colors group-hover:text-primary">
+                  {artist.name}
+                </p>
+              </div>
+            ))}
+        </div>
       </section>
       
       {featuredPlaylists.length > 0 && (
