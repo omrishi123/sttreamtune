@@ -210,6 +210,14 @@ export default function HomePage() {
           )}
       </section>
 
+      {featuredPlaylists.length > 0 && (
+         <PlaylistSection 
+            title="Featured Playlists" 
+            playlists={featuredPlaylists}
+            viewAllLink="/community"
+          />
+      )}
+
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold font-headline">Top Artists</h2>
@@ -245,14 +253,6 @@ export default function HomePage() {
         </div>
       </section>
       
-      {featuredPlaylists.length > 0 && (
-         <PlaylistSection 
-            title="Featured Playlists" 
-            playlists={featuredPlaylists}
-            viewAllLink="/community"
-          />
-      )}
-
       {recentCommunityPlaylists.length > 0 && (
          <PlaylistSection 
             title="Community Playlists" 
