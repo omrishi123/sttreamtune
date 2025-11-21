@@ -68,7 +68,7 @@ export default function SettingsPage() {
 
   const handleResetRecommendations = () => {
     clearAllRecommendationCaches();
-    toast({ title: 'Recommendations Reset', description: 'Your home page will now show fresh playlists.' });
+    toast({ title: 'Recommendations Reset', description: 'Your home page will now show fresh playlists. You may need to refresh the page.' });
   };
 
     const handleChangeCategories = () => {
@@ -210,7 +210,7 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                         <h4 className="font-semibold">Reset Recommended Playlists</h4>
-                        <p className="text-sm text-muted-foreground">Clears cached personalized playlists on the home page.</p>
+                        <p className="text-sm text-muted-foreground">Clears cached personalized playlists to fetch new ones.</p>
                     </div>
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -220,7 +220,7 @@ export default function SettingsPage() {
                             <AlertDialogHeader>
                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will clear all AI-generated genre playlists. They will be re-generated over time.
+                                This will clear all AI-generated genre playlists. They will be re-fetched the next time you visit the home page.
                             </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
