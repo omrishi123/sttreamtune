@@ -177,7 +177,7 @@ export default function HomePage() {
         <section>
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
-                {recommendedTracks.length > 5 && (
+                {recommendedTracks.length > 6 && (
                   <Button asChild variant="ghost" size="sm">
                       <Link href="/recommended">
                           View all
@@ -193,8 +193,8 @@ export default function HomePage() {
                   <Skeleton className="h-20 w-full" />
                </div>
             ) : recommendedTracks.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                  {recommendedTracks.slice(0, 5).map(track => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+                  {recommendedTracks.slice(0, 6).map(track => (
                       <TrackCard 
                         key={track.id} 
                         track={track} 
