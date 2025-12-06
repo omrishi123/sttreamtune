@@ -113,7 +113,7 @@ export default function HomePage() {
         setUserGenres(preferences.genres);
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [recentlyPlayed]);
 
   const featuredPlaylists = useMemo(() => {
     if (!communityPlaylists) return [];
