@@ -1,11 +1,33 @@
+# StreamTune
 
-# Firebase Studio
+**StreamTune** is a modern, feature-rich music streaming application that leverages the vast library of YouTube to provide a seamless and powerful listening experience across both web and Android. It combines robust playback features with AI-driven discovery tools, community sharing, and deep personalization.
 
-This is a NextJS starter in Firebase Studio.
+## Key Features
 
-To get started, take a look at src/app/page.tsx.
+-   **Unlimited Streaming:** Search and stream any song or music video directly from YouTube's extensive catalog.
+-   **AI Playlist Generator:** Describe any mood, genre, or vibe, and let our AI craft a personalized playlist for you in seconds.
+-   **Advanced YouTube Integration:**
+    -   Import any public YouTube playlist directly into your library.
+    -   Import entire YouTube channels, which automatically organizes their uploads and public playlists for you.
+-   **Community & Sharing:**
+    -   Create your own playlists and share them publicly with the StreamTune community.
+    -   Discover and explore playlists created by other users.
+    -   Share deep links to playlists that open directly inside the native Android app for a seamless experience.
+-   **Personalized Experience:**
+    -   The app learns from your listening history to provide endless "Recommended For You" tracks.
+    -   Select your favorite genres for tailored home page content.
+    -   Like songs and manage them in your dedicated "Liked Songs" playlist.
+-   **Native Android App:**
+    -   **Background Playback:** Keep your music playing even when the app is in the background or your screen is off.
+    -   **System Media Controls:** Control playback from your device's lock screen, notification shade, or connected Bluetooth devices.
+    -   **Sleep Timer:** Set a timer to automatically stop playback after a set duration.
+-   **User & Admin System:**
+    -   Full user authentication with email/password and Google Sign-In.
+    -   A secure Admin Dashboard to manage users, feature community playlists, and configure app settings.
 
-## YouTube API Key
+## Getting Started
+
+### YouTube API Key
 
 This project uses the YouTube Data API v3 to search for music and playlists. To enable this functionality, you must obtain a YouTube API key.
 
