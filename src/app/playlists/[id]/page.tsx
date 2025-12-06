@@ -34,6 +34,8 @@ import {
 import { getCachedPlaylistTracks, cachePlaylistTracks, getCachedSinglePlaylist, cacheSinglePlaylist } from "@/lib/recommendations";
 import { AddSongsDialog } from "@/components/add-songs-dialog";
 import { Icons } from "@/components/icons";
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
 
@@ -64,6 +66,23 @@ export default function PlaylistPage() {
     let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
     let fetchedTracks: Track[] = [];
 
+    // **NEW:** If not found locally, try fetching directly from Firestore
+    if (!foundPlaylist) {
+        try {
+            const playlistRef = doc(db, 'communityPlaylists', id);
+            const docSnap = await getDoc(playlistRef);
+            if (docSnap.exists()) {
+                foundPlaylist = { ...docSnap.data(), id: docSnap.id } as Playlist;
+                // Since community playlists have tracks embedded, use them directly
+                fetchedTracks = foundPlaylist.tracks || [];
+                addTracksToCache(fetchedTracks);
+            }
+        } catch (error) {
+            console.error("Error fetching playlist directly from Firestore:", error);
+        }
+    }
+
+
     // If playlist exists in user data (local, community, channel), get its tracks
     if (foundPlaylist) {
         if (foundPlaylist.public && foundPlaylist.tracks) {
@@ -74,7 +93,7 @@ export default function PlaylistPage() {
         } else { // Local playlist
             fetchedTracks = foundPlaylist.trackIds.map(tid => getTrackById(tid)).filter(Boolean) as Track[];
         }
-    } else { // Not in user library, check our persistent cache for YT playlists
+    } else { // Not in user library OR firestore, check our persistent cache for YT playlists
         foundPlaylist = getCachedSinglePlaylist(id);
         if (foundPlaylist) {
             let cachedTracks = getCachedPlaylistTracks(id);
