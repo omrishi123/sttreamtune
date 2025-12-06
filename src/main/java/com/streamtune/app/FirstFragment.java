@@ -155,7 +155,13 @@ public class FirstFragment extends Fragment {
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
         webView.addJavascriptInterface(new WebAppInterface(requireContext().getApplicationContext()), "Android");
-        webView.loadUrl("https://sttreamtune.vercel.app/");
+        
+        // Get initial URL from MainActivity (could be a deep link)
+        String urlToLoad = "https://sttreamtune.vercel.app/";
+        if (getActivity() instanceof MainActivity) {
+            urlToLoad = ((MainActivity) getActivity()).getInitialUrl();
+        }
+        webView.loadUrl(urlToLoad);
     }
 
     private void startSignInFlow() {
