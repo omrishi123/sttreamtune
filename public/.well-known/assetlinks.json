@@ -1,10 +1,9 @@
-{
+[{
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
     "package_name": "com.streamtune.app",
-    "sha256_cert_fingerprints": [
-      "REPLACE_WITH_YOUR_SHA256_FINGERPRINT"
-    ]
+    "sha256_cert_fingerprints":
+    ["3A:42:D0:A9:4B:8F:8B:03:5D:E0:40:EE:8C:57:49:AC:CF:25:4D:F7:B0:75:FE:6D:25:F0:E4:B7:1E:0A:E7:A1"]
   }
 }
