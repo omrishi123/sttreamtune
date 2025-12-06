@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -38,6 +39,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.streamtune.app.databinding.FragmentFirstBinding;
 
 import java.io.ByteArrayOutputStream;
@@ -154,7 +158,7 @@ public class FirstFragment extends Fragment {
         webSettings.setDomStorageEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
-        webView.addJavascriptInterface(new WebAppInterface(requireContext().getApplicationContext()), "Android");
+        webView.addJavascriptInterface(new WebAppInterface(requireContext()), "Android");
         
         // Get initial URL from MainActivity (could be a deep link)
         String urlToLoad = "https://sttreamtune.vercel.app/";
