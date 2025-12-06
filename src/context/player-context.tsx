@@ -57,26 +57,39 @@ interface PlayerContextType {
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
-// Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
-const serializeTimestamps = (obj: any): any => {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(serializeTimestamps);
-  }
-  const newObj: { [key: string]: any } = {};
-  for (const key in obj) {
-    const value = obj[key];
-    if (value && typeof value.toDate === 'function') {
-      newObj[key] = value.toDate().toISOString();
-    } else {
-      newObj[key] = serializeTimestamps(value);
+// Client-side helpers to generate queries
+const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
+  if (!recentlyPlayed.length) return [];
+  const artistCounts: { [artist: string]: number } = {};
+  recentlyPlayed.forEach(track => {
+    if (track.artist && track.artist !== 'Unknown Artist') {
+      artistCounts[track.artist] = (artistCounts[track.artist] || 0) + 1;
     }
-  }
-  return newObj;
+  });
+  return Object.entries(artistCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, count)
+    .map(entry => entry[0]);
 };
 
+const getPlaylistDnaQueries = (userPlaylists: Playlist[], communityPlaylists: Playlist[], count: number): string[] => {
+    if (!userPlaylists.length || !communityPlaylists.length) return [];
+    
+    const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
+    const dnaMatches: { query: string; score: number }[] = [];
+
+    communityPlaylists.forEach(publicPlaylist => {
+        const matchCount = publicPlaylist.trackIds.filter(tid => userTrackIds.has(tid)).length;
+        if (matchCount > 0) {
+            dnaMatches.push({ query: publicPlaylist.name, score: matchCount });
+        }
+    });
+
+    return dnaMatches
+        .sort((a, b) => b.score - a.score)
+        .slice(0, count)
+        .map(match => match.query);
+};
 
 export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
@@ -131,16 +144,22 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                 continuationToken: tokenToUse,
             });
         } else {
+            // For general recommendations, construct the query on the fly
             const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-            const plainUserPlaylists = serializeTimestamps(userPlaylists);
-            const plainRecentTracks = serializeTimestamps(recentTracks);
+            const topArtists = getTopArtists(recentTracks, 2);
+            const dnaQueries = getPlaylistDnaQueries(userPlaylists, communityPlaylists, 3);
+            const searchQueries = [...new Set([...topArtists, ...dnaQueries])];
+            const query = searchQueries.join(' | ');
+
+            if (!query) {
+                setIsFetchingMore(false);
+                return;
+            }
 
             results = await generateRecommendations({
-                recentlyPlayed: plainRecentTracks,
-                userPlaylists: plainUserPlaylists,
-                communityPlaylists: plainCommunityPlaylists,
+                query,
                 continuationToken: tokenToUse,
+                userHistory: { recentlyPlayed, userPlaylists }
             });
         }
 
@@ -414,16 +433,20 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setContinuationToken(continuationTokenValue);
     
     if (playlist?.id === 'recommended-for-you' && !searchQueryValue) {
+        // This case is for when starting playback from the "Recommended for you" section.
+        // We need to generate an initial query and get a continuation token.
         const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-        const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-        const plainUserPlaylists = serializeTimestamps(userPlaylists);
-        const plainRecentTracks = serializeTimestamps(recentTracks);
-        const results = await generateRecommendations({
-             recentlyPlayed: plainRecentTracks,
-            userPlaylists: plainUserPlaylists,
-            communityPlaylists: plainCommunityPlaylists,
-        });
-        setContinuationToken(results.nextContinuationToken);
+        const topArtists = getTopArtists(recentTracks, 2);
+        const dnaQueries = getPlaylistDnaQueries(userPlaylists, communityPlaylists, 3);
+        const query = [...new Set([...topArtists, ...dnaQueries])].join(' | ');
+
+        if (query) {
+            const results = await generateRecommendations({
+                query,
+                userHistory: { recentlyPlayed, userPlaylists },
+            });
+            setContinuationToken(results.nextContinuationToken);
+        }
     }
 
     if (window.Android?.startPlayback) {

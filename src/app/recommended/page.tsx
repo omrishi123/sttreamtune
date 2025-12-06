@@ -13,26 +13,6 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import type { Playlist, Track } from '@/lib/types';
 import { usePlayer } from '@/context/player-context';
 
-// Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
-const serializeTimestamps = (obj: any): any => {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(serializeTimestamps);
-  }
-  const newObj: { [key: string]: any } = {};
-  for (const key in obj) {
-    const value = obj[key];
-    if (value && typeof value.toDate === 'function') {
-      newObj[key] = value.toDate().toISOString();
-    } else {
-      newObj[key] = serializeTimestamps(value);
-    }
-  }
-  return newObj;
-};
-
 const recommendedPlaylist: Playlist = {
     id: 'recommended-for-you',
     name: 'Recommended For You',
@@ -44,45 +24,96 @@ const recommendedPlaylist: Playlist = {
     'data-ai-hint': 'infinite galaxy',
 };
 
+// Client-side helpers to generate queries
+const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
+  if (!recentlyPlayed.length) return [];
+  const artistCounts: { [artist: string]: number } = {};
+  recentlyPlayed.forEach(track => {
+    if (track.artist && track.artist !== 'Unknown Artist') {
+      artistCounts[track.artist] = (artistCounts[track.artist] || 0) + 1;
+    }
+  });
+  return Object.entries(artistCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, count)
+    .map(entry => entry[0]);
+};
+
+const getPlaylistDnaQueries = (userPlaylists: Playlist[], communityPlaylists: Playlist[], count: number): string[] => {
+    if (!userPlaylists.length || !communityPlaylists.length) return [];
+    
+    const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
+    const dnaMatches: { query: string; score: number }[] = [];
+
+    communityPlaylists.forEach(publicPlaylist => {
+        const matchCount = publicPlaylist.trackIds.filter(tid => userTrackIds.has(tid)).length;
+        if (matchCount > 0) {
+            dnaMatches.push({ query: publicPlaylist.name, score: matchCount });
+        }
+    });
+
+    return dnaMatches
+        .sort((a, b) => b.score - a.score)
+        .slice(0, count)
+        .map(match => match.query);
+};
+
 export default function RecommendedPage() {
     const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [hasHistory, setHasHistory] = useState(false);
     const [continuationToken, setContinuationToken] = useState<string | null>(null);
+    const [initialQuery, setInitialQuery] = useState<string | null>(null);
     
     const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache } = useUserData();
     const observer = useRef<IntersectionObserver>();
 
-    const fetchRecommendations = useCallback(async (isInitialLoad: boolean, currentContinuationToken: string | null = null) => {
-        if (!isInitialLoad && (!currentContinuationToken || isFetchingMore)) return;
+    const fetchRecommendations = useCallback(async (isInitialLoad: boolean) => {
+        if (!isInitialLoad && (!continuationToken || isFetchingMore)) return;
         
+        let query = initialQuery;
+
         if (isInitialLoad) {
             setIsLoading(true);
             setRecommendedTracks([]);
             setContinuationToken(null);
-        } else {
-            setIsFetchingMore(true);
-        }
-
-        try {
+            
             const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
             setHasHistory(recentTracks.length > 0 || userPlaylists.length > 0);
             
-            if (recentTracks.length === 0 && userPlaylists.length === 0 && isInitialLoad) {
+            if (recentTracks.length === 0 && userPlaylists.length === 0) {
                 setIsLoading(false);
                 return;
             }
 
-            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-            const plainUserPlaylists = serializeTimestamps(userPlaylists);
-            const plainRecentTracks = serializeTimestamps(recentTracks);
+            const topArtists = getTopArtists(recentTracks, 2);
+            const dnaQueries = getPlaylistDnaQueries(userPlaylists, communityPlaylists, 3);
+            const searchQueries = [...new Set([...topArtists, ...dnaQueries])];
+            
+            if (searchQueries.length === 0) {
+                setIsLoading(false);
+                return;
+            }
 
+            query = searchQueries.join(' | ');
+            setInitialQuery(query);
+
+        } else {
+            setIsFetchingMore(true);
+        }
+
+        if (!query) {
+             setIsLoading(false);
+             setIsFetchingMore(false);
+             return;
+        }
+
+        try {
             const results = await generateRecommendations({
-                recentlyPlayed: plainRecentTracks,
-                userPlaylists: plainUserPlaylists,
-                communityPlaylists: plainCommunityPlaylists,
-                continuationToken: isInitialLoad ? undefined : currentContinuationToken,
+                query: query,
+                continuationToken: isInitialLoad ? undefined : continuationToken,
+                userHistory: { recentlyPlayed, userPlaylists },
             });
             
             addTracksToCache(results.tracks);
@@ -100,7 +131,7 @@ export default function RecommendedPage() {
             setIsLoading(false);
             setIsFetchingMore(false);
         }
-    }, [isFetchingMore, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
+    }, [isFetchingMore, continuationToken, initialQuery, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, addTracksToCache]);
     
     useEffect(() => {
         fetchRecommendations(true);
@@ -113,7 +144,7 @@ export default function RecommendedPage() {
         
         observer.current = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting && continuationToken && !isFetchingMore) {
-                fetchRecommendations(false, continuationToken);
+                fetchRecommendations(false);
             }
         });
 

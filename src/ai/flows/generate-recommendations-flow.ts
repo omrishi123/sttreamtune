@@ -13,26 +13,40 @@
 import { z } from 'zod';
 import { searchYoutube, YoutubeSearchOutput } from './search-youtube-flow';
 import type { Playlist, Track } from '@/lib/types';
+import adminDb from '@/lib/firebase-admin';
 
-// Define input for the recommendation flow
+// Define input for the recommendation flow - it's just a simple query now
 const GenerateRecommendationsInputSchema = z.object({
-  recentlyPlayed: z.array(z.custom<Track>()).describe('A list of the user\'s recently played tracks with full metadata.'),
-  userPlaylists: z.array(z.custom<Playlist>()).describe('A list of the user\'s private playlists.'),
-  communityPlaylists: z.array(z.custom<Playlist>()).describe('A list of all public community playlists.'),
+  query: z.string().describe('A search query combining top artists and playlist DNA.'),
   continuationToken: z.string().optional().describe('The token for fetching the next page of results.'),
+  userHistory: z.object({
+      recentlyPlayed: z.array(z.string()).describe("A list of the user's recently played track IDs."),
+      userPlaylists: z.array(z.custom<Playlist>()).describe("A list of the user's private playlists."),
+  }).optional().describe("User's listening history, used only on the server.")
 });
 export type GenerateRecommendationsInput = z.infer<typeof GenerateRecommendationsInputSchema>;
 
 // Define the output, which matches the YouTube search output for consistency
 export type GenerateRecommendationsOutput = YoutubeSearchOutput;
 
+// Helper to get all public community playlists from Firestore
+async function getCommunityPlaylists(): Promise<Playlist[]> {
+    if (!adminDb) return [];
+    try {
+        const snapshot = await adminDb.collection('communityPlaylists').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Playlist));
+    } catch (error) {
+        console.error("Failed to fetch community playlists:", error);
+        return [];
+    }
+}
 
 // Helper to find the most frequent artists from the user's listening history
 const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
   if (!recentlyPlayed.length) return [];
   const artistCounts: { [artist: string]: number } = {};
   recentlyPlayed.forEach(track => {
-    if (track.artist !== 'Unknown Artist') {
+    if (track.artist && track.artist !== 'Unknown Artist') {
         artistCounts[track.artist] = (artistCounts[track.artist] || 0) + 1;
     }
   });
@@ -43,9 +57,12 @@ const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
 };
 
 // Helper to find queries based on shared songs between user and community playlists
-const getPlaylistDnaQueries = (userPlaylists: Playlist[], communityPlaylists: Playlist[], count: number): string[] => {
-    if (!userPlaylists.length || !communityPlaylists.length) return [];
+const getPlaylistDnaQueries = async (userPlaylists: Playlist[], count: number): Promise<string[]> => {
+    if (!userPlaylists.length) return [];
     
+    const communityPlaylists = await getCommunityPlaylists();
+    if (!communityPlaylists.length) return [];
+
     const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
     const dnaMatches: { query: string; score: number }[] = [];
 
@@ -63,13 +80,13 @@ const getPlaylistDnaQueries = (userPlaylists: Playlist[], communityPlaylists: Pl
         .map(match => match.query);
 };
 
-
 export async function generateRecommendations(input: GenerateRecommendationsInput): Promise<GenerateRecommendationsOutput> {
     
   // If a continuation token is provided, it means we are just fetching the next page of a previous search.
   // The query for that search is embedded within the token by YouTube, so we don't need the other inputs.
   if (input.continuationToken) {
     try {
+      // The query can be empty here because the token contains all necessary info for YouTube's backend.
       const moreResults = await searchYoutube({ query: '', continuationToken: input.continuationToken });
       return moreResults;
     } catch (error) {
@@ -79,54 +96,21 @@ export async function generateRecommendations(input: GenerateRecommendationsInpu
   }
 
   // --- If it's a new recommendation request (no token) ---
+  
+  // We use the pre-computed query from the client.
+  const combinedQuery = input.query;
 
-  // 1. Generate a list of search queries based on user's habits
-  const topArtists = getTopArtists(input.recentlyPlayed, 2); // Get top 2 artists
-  const dnaQueries = getPlaylistDnaQueries(input.userPlaylists, input.communityPlaylists, 3); // Get top 3 playlist DNA queries
-
-  const searchQueries = [...topArtists, ...dnaQueries];
-
-  // If there's absolutely no history or playlists to go on, we can't generate recommendations.
-  if (searchQueries.length === 0) {
+  // If there's no query, we can't generate recommendations.
+  if (!combinedQuery) {
     return { tracks: [], nextContinuationToken: null };
   }
-
-  // 2. Combine queries into a single, powerful search string.
-  // This tells YouTube to find content related to all these items.
-  const combinedQuery = [...new Set(searchQueries)].join(' | '); // The "|" acts like an "OR" in search
-
-  // 3. Perform the initial search
+  
   try {
     const initialResults = await searchYoutube({ query: combinedQuery });
 
-    // Remove any tracks that the user has recently played to keep recommendations fresh.
-    const recentIds = new Set(input.recentlyPlayed.map(t => t.id));
+    // The user's recently played track IDs are passed from the client to filter out seen tracks.
+    const recentIds = new Set(input.userHistory?.recentlyPlayed || []);
     const freshTracks = initialResults.tracks.filter(t => !recentIds.has(t.id));
-
-    // If we get too few results, try again with just the top artist to be safe
-    if (freshTracks.length < 5 && topArtists.length > 0) {
-        const fallbackResults = await searchYoutube({ query: topArtists[0] });
-        const moreFreshTracks = fallbackResults.tracks.filter(t => !recentIds.has(t.id) && !freshTracks.some(ft => ft.id === t.id));
-        
-        // Combine and ensure no duplicates
-        const finalTracks = [...freshTracks, ...moreFreshTracks];
-        const uniqueTrackIds = new Set();
-        const uniqueFinalTracks = finalTracks.filter(track => {
-            if (uniqueTrackIds.has(track.id)) {
-                return false;
-            }
-            uniqueTrackIds.add(track.id);
-            return true;
-        });
-
-        return {
-            tracks: uniqueFinalTracks,
-            // Use the continuation token from the *first* search to ensure the next "load more" is relevant
-            // to the original broad query, not the fallback.
-            nextContinuationToken: initialResults.nextContinuationToken,
-        };
-    }
-
 
     return {
         tracks: freshTracks,

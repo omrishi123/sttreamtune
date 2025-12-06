@@ -28,26 +28,6 @@ import { PlaylistSection } from '@/components/playlist-section';
 import { artists as allArtists } from '@/lib/artists';
 import { useRouter } from 'next/navigation';
 
-// Helper function to serialize any object with a 'toDate' method (like Firestore Timestamps)
-const serializeTimestamps = (obj: any): any => {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(serializeTimestamps);
-  }
-  const newObj: { [key: string]: any } = {};
-  for (const key in obj) {
-    const value = obj[key];
-    if (value && typeof value.toDate === 'function') {
-      newObj[key] = value.toDate().toISOString();
-    } else {
-      newObj[key] = serializeTimestamps(value);
-    }
-  }
-  return newObj;
-};
-
 // Define the virtual playlist for the home page recommendations
 const homeRecommendedPlaylist: Playlist = {
     id: 'recommended-for-you',
@@ -60,6 +40,39 @@ const homeRecommendedPlaylist: Playlist = {
     'data-ai-hint': 'infinite galaxy',
 };
 
+// Client-side helpers to generate queries
+const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
+  if (!recentlyPlayed.length) return [];
+  const artistCounts: { [artist: string]: number } = {};
+  recentlyPlayed.forEach(track => {
+    if (track.artist && track.artist !== 'Unknown Artist') {
+      artistCounts[track.artist] = (artistCounts[track.artist] || 0) + 1;
+    }
+  });
+  return Object.entries(artistCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, count)
+    .map(entry => entry[0]);
+};
+
+const getPlaylistDnaQueries = (userPlaylists: Playlist[], communityPlaylists: Playlist[], count: number): string[] => {
+    if (!userPlaylists.length || !communityPlaylists.length) return [];
+    
+    const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
+    const dnaMatches: { query: string; score: number }[] = [];
+
+    communityPlaylists.forEach(publicPlaylist => {
+        const matchCount = publicPlaylist.trackIds.filter(tid => userTrackIds.has(tid)).length;
+        if (matchCount > 0) {
+            dnaMatches.push({ query: publicPlaylist.name, score: matchCount });
+        }
+    });
+
+    return dnaMatches
+        .sort((a, b) => b.score - a.score)
+        .slice(0, count)
+        .map(match => match.query);
+};
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -73,20 +86,23 @@ export default function HomePage() {
       const fetchRecommendations = async () => {
           setLoadingRecommendations(true);
           const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
+          
           if (recentTracks.length > 0 || userPlaylists.length > 0) {
+            // Generate the query on the client
+            const topArtists = getTopArtists(recentTracks, 2);
+            const dnaQueries = getPlaylistDnaQueries(userPlaylists, communityPlaylists, 3);
+            const searchQueries = [...new Set([...topArtists, ...dnaQueries])];
             
-            // Serialize data before sending it to the server function
-            const plainCommunityPlaylists = serializeTimestamps(communityPlaylists);
-            const plainUserPlaylists = serializeTimestamps(userPlaylists);
-            const plainRecentTracks = serializeTimestamps(recentTracks);
+            if (searchQueries.length > 0) {
+                const combinedQuery = searchQueries.join(' | ');
 
-            const { tracks } = await generateRecommendations({
-                recentlyPlayed: plainRecentTracks,
-                userPlaylists: plainUserPlaylists,
-                communityPlaylists: plainCommunityPlaylists,
-            });
-            addTracksToCache(tracks);
-            setRecommendedTracks(tracks);
+                const { tracks } = await generateRecommendations({
+                    query: combinedQuery,
+                    userHistory: { recentlyPlayed, userPlaylists },
+                });
+                addTracksToCache(tracks);
+                setRecommendedTracks(tracks);
+            }
           }
           setLoadingRecommendations(false);
       };
@@ -97,7 +113,7 @@ export default function HomePage() {
         setUserGenres(preferences.genres);
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Changed: Removed dependencies to only run on initial load
+  }, []);
 
   const featuredPlaylists = useMemo(() => {
     if (!communityPlaylists) return [];
