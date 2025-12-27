@@ -13,7 +13,7 @@ import { getTrendingSongs } from './get-trending-songs-flow';
 
 const GenerateRecommendationsInputSchema = z.object({
   profile: z.custom<UserMusicProfile>().describe("The user's calculated music profile."),
-  queries: z.array(z.string()).describe("An array of smart search queries."),
+  queries: z.array(z.string()).optional().describe("An array of smart search queries."),
   userHistory: z.object({
       recentlyPlayedIds: z.array(z.string()),
       likedSongIds: z.array(z.string()),
@@ -88,7 +88,7 @@ function rankAndFilterTracks(
 
 
 export async function generateRecommendations(input: GenerateRecommendationsInput): Promise<GenerateRecommendationsOutput> {
-    const { profile, queries, userHistory, continuationToken, queryToContinue } = input;
+    const { profile, queries = [], userHistory, continuationToken, queryToContinue } = input;
 
     // --- PAGINATION LOGIC ---
     if (continuationToken && queryToContinue) {
