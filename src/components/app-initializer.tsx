@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useUserData } from "@/context/user-data-context";
@@ -12,8 +13,8 @@ export function AppInitializer() {
 
   useEffect(() => {
     if (currentTrack && currentTrack.id !== lastPlayedTrackId) {
-      addTrackToCache(currentTrack);
-      addRecentlyPlayed(currentTrack.id);
+      addTrackToCache({ ...currentTrack, playedAt: Date.now() }); // Add timestamp when caching
+      addRecentlyPlayed(currentTrack.id, Date.now()); // Pass timestamp to recently played
       setLastPlayedTrackId(currentTrack.id);
     }
   }, [currentTrack, addRecentlyPlayed, addTrackToCache, lastPlayedTrackId]);

@@ -12,6 +12,7 @@ export interface Track {
   duration: number; // in seconds
   'data-ai-hint'?: string;
   isLocal?: boolean; // To distinguish between youtube and local tracks
+  playedAt?: number; // Added for time-decay weighting in recommendations
 }
 
 export interface Playlist {
@@ -54,6 +55,16 @@ export interface UserData {
   recentlyPlayed: string[];
   channels: Channel[];
 }
+
+// New type for the user's music profile
+export type UserMusicProfile = {
+  topArtists: string[];
+  topKeywords: string[];
+  dominantGenres: string[];
+  energyLevel: 'chill' | 'normal' | 'high';
+  freshnessBias: number; // 0–1
+};
+
 
 // This schema still defines the full possible response from the flow
 export const GeneratePlaylistResponseSchema = z.object({

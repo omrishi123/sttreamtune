@@ -1,123 +1,149 @@
 
 'use server';
 /**
- * @fileOverview An API-free, personalized song recommender.
- *
- * This flow generates recommendations based on two main strategies:
- * 1.  **Artist Affinity**: Finds the user's most played artists and searches for more of their content.
- * 2.  **Playlist DNA**: Finds community playlists that share tracks with the user's private playlists and recommends songs from them.
- *
- * It uses the direct YouTube scraping search flow and supports pagination for infinite scrolling.
+ * @fileOverview A HYBRID RULE-BASED INTELLIGENT ENGINE for music recommendations.
+ * This flow executes a multi-query search strategy based on a user's music profile,
+ * then merges, filters, and ranks the results to provide high-quality, fresh recommendations.
  */
 
 import { z } from 'zod';
-import { searchYoutube, YoutubeSearchOutput } from './search-youtube-flow';
-import type { Playlist, Track } from '@/lib/types';
-import adminDb from '@/lib/firebase-admin';
+import { searchYoutube } from './search-youtube-flow';
+import type { Track, Playlist, UserMusicProfile } from '@/lib/types';
+import { getTrendingSongs } from './get-trending-songs-flow';
 
-// Define input for the recommendation flow - it's just a simple query now
 const GenerateRecommendationsInputSchema = z.object({
-  query: z.string().describe('A search query combining top artists and playlist DNA.'),
-  continuationToken: z.string().optional().describe('The token for fetching the next page of results.'),
+  profile: z.custom<UserMusicProfile>().describe("The user's calculated music profile."),
+  queries: z.array(z.string()).describe("An array of smart search queries."),
   userHistory: z.object({
-      recentlyPlayed: z.array(z.string()).describe("A list of the user's recently played track IDs."),
-      userPlaylists: z.array(z.custom<Playlist>()).describe("A list of the user's private playlists."),
-  }).optional().describe("User's listening history, used only on the server.")
+      recentlyPlayedIds: z.array(z.string()),
+      likedSongIds: z.array(z.string()),
+  }).describe("IDs of songs to exclude from results."),
+  continuationToken: z.string().optional().describe('Token for paginating a specific query.'),
+  queryToContinue: z.string().optional().describe('The original query string to paginate.')
 });
 export type GenerateRecommendationsInput = z.infer<typeof GenerateRecommendationsInputSchema>;
 
-// Define the output, which matches the YouTube search output for consistency
-export type GenerateRecommendationsOutput = YoutubeSearchOutput;
+export const GenerateRecommendationsOutputSchema = z.object({
+    tracks: z.array(z.custom<Track>()),
+    nextContinuationToken: z.string().nullable(),
+    continuationQuery: z.string().nullable(),
+});
+export type GenerateRecommendationsOutput = z.infer<typeof GenerateRecommendationsOutputSchema>;
 
-// Helper to get all public community playlists from Firestore
-async function getCommunityPlaylists(): Promise<Playlist[]> {
-    if (!adminDb) return [];
-    try {
-        const snapshot = await adminDb.collection('communityPlaylists').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Playlist));
-    } catch (error) {
-        console.error("Failed to fetch community playlists:", error);
-        return [];
+
+const titleBlacklist = ['karaoke', 'instrumental', 'cover', 'live', 'tutorial', 'lyrics'];
+
+function rankAndFilterTracks(
+    tracks: Track[], 
+    profile: UserMusicProfile, 
+    history: { recentlyPlayedIds: string[], likedSongIds: string[] }
+): Track[] {
+    const seenIds = new Set<string>([...history.recentlyPlayedIds, ...history.likedSongIds]);
+    const uniqueTracks = new Map<string, Track>();
+
+    for (const track of tracks) {
+        // Basic filtering
+        if (
+            seenIds.has(track.id) ||
+            track.duration < 60 ||
+            titleBlacklist.some(word => track.title.toLowerCase().includes(word))
+        ) {
+            continue;
+        }
+
+        // Scoring
+        let score = 0;
+        const lowerCaseTitle = track.title.toLowerCase();
+        const lowerCaseArtist = track.artist.toLowerCase();
+
+        // Strong match for top artists
+        if (profile.topArtists.some(artist => lowerCaseArtist.includes(artist.toLowerCase()))) {
+            score += 4;
+        }
+        // Good match for keywords in title
+        if (profile.topKeywords.some(keyword => lowerCaseTitle.includes(keyword.toLowerCase()))) {
+            score += 3;
+        }
+        // Decent match for genre keywords
+        if (profile.dominantGenres.some(genre => lowerCaseTitle.includes(genre.toLowerCase()))) {
+            score += 2;
+        }
+        
+        // Add a small amount of randomness to break ties
+        score += Math.random() * 0.5;
+
+        // Add the track with its score, keeping the one with the highest score if duplicate
+        const existing = uniqueTracks.get(track.id);
+        if (!existing || score > (existing as any).score) {
+            (track as any).score = score;
+            uniqueTracks.set(track.id, track);
+        }
     }
+
+    const rankedTracks = Array.from(uniqueTracks.values());
+    rankedTracks.sort((a, b) => (b as any).score - (a as any).score);
+    
+    return rankedTracks;
 }
 
-// Helper to find the most frequent artists from the user's listening history
-const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
-  if (!recentlyPlayed.length) return [];
-  const artistCounts: { [artist: string]: number } = {};
-  recentlyPlayed.forEach(track => {
-    if (track.artist && track.artist !== 'Unknown Artist') {
-        artistCounts[track.artist] = (artistCounts[track.artist] || 0) + 1;
-    }
-  });
-  return Object.entries(artistCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, count)
-    .map(entry => entry[0]);
-};
-
-// Helper to find queries based on shared songs between user and community playlists
-const getPlaylistDnaQueries = async (userPlaylists: Playlist[], count: number): Promise<string[]> => {
-    if (!userPlaylists.length) return [];
-    
-    const communityPlaylists = await getCommunityPlaylists();
-    if (!communityPlaylists.length) return [];
-
-    const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
-    const dnaMatches: { query: string; score: number }[] = [];
-
-    communityPlaylists.forEach(publicPlaylist => {
-        const matchCount = publicPlaylist.trackIds.filter(tid => userTrackIds.has(tid)).length;
-        if (matchCount > 0) {
-            // We use the public playlist name as a search query, weighted by how many songs it shares with the user's playlists.
-            dnaMatches.push({ query: publicPlaylist.name, score: matchCount });
-        }
-    });
-
-    return dnaMatches
-        .sort((a, b) => b.score - a.score)
-        .slice(0, count)
-        .map(match => match.query);
-};
 
 export async function generateRecommendations(input: GenerateRecommendationsInput): Promise<GenerateRecommendationsOutput> {
-    
-  // If a continuation token is provided, it means we are just fetching the next page of a previous search.
-  // The query for that search is embedded within the token by YouTube, so we don't need the other inputs.
-  if (input.continuationToken) {
-    try {
-      // The query can be empty here because the token contains all necessary info for YouTube's backend.
-      const moreResults = await searchYoutube({ query: '', continuationToken: input.continuationToken });
-      return moreResults;
-    } catch (error) {
-      console.error("Failed to fetch more recommendations:", error);
-      return { tracks: [], nextContinuationToken: null };
+    const { profile, queries, userHistory, continuationToken, queryToContinue } = input;
+
+    // --- PAGINATION LOGIC ---
+    if (continuationToken && queryToContinue) {
+        try {
+            const moreResults = await searchYoutube({ query: queryToContinue, continuationToken });
+            const freshTracks = rankAndFilterTracks(moreResults.tracks, profile, userHistory);
+            return {
+                tracks: freshTracks,
+                nextContinuationToken: moreResults.nextContinuationToken,
+                continuationQuery: queryToContinue, // Pass the query along
+            };
+        } catch (error) {
+            console.error(`Failed to fetch more results for query: ${queryToContinue}`, error);
+            return { tracks: [], nextContinuationToken: null, continuationQuery: null };
+        }
     }
-  }
 
-  // --- If it's a new recommendation request (no token) ---
-  
-  // We use the pre-computed query from the client.
-  const combinedQuery = input.query;
+    // --- FALLBACK LOGIC ---
+    if (queries.length === 0) {
+        try {
+            const trendingTracks = await getTrendingSongs();
+            const freshTracks = rankAndFilterTracks(trendingTracks, profile, userHistory);
+            return {
+                tracks: freshTracks.slice(0, 20), // Limit trending results
+                nextContinuationToken: null,
+                continuationQuery: null
+            };
+        } catch (error) {
+            console.error("Failed to fetch fallback trending songs:", error);
+            return { tracks: [], nextContinuationToken: null, continuationQuery: null };
+        }
+    }
 
-  // If there's no query, we can't generate recommendations.
-  if (!combinedQuery) {
-    return { tracks: [], nextContinuationToken: null };
-  }
-  
-  try {
-    const initialResults = await searchYoutube({ query: combinedQuery });
+    // --- MULTI-QUERY SEARCH LOGIC ---
+    try {
+        const searchPromises = queries.map(q => searchYoutube({ query: q }));
+        const searchResults = await Promise.all(searchPromises);
 
-    // The user's recently played track IDs are passed from the client to filter out seen tracks.
-    const recentIds = new Set(input.userHistory?.recentlyPlayed || []);
-    const freshTracks = initialResults.tracks.filter(t => !recentIds.has(t.id));
+        // We only care about the first valid continuation token for the "load more" button
+        const firstValidContinuation = searchResults.find(res => res.nextContinuationToken);
+        const nextToken = firstValidContinuation?.nextContinuationToken || null;
+        // Find which of our original queries provided this token
+        const continuationQuery = nextToken ? queries[searchResults.indexOf(firstValidContinuation!)] : null;
+        
+        const allTracks = searchResults.flatMap(res => res.tracks);
+        const finalTracks = rankAndFilterTracks(allTracks, profile, userHistory);
 
-    return {
-        tracks: freshTracks,
-        nextContinuationToken: initialResults.nextContinuationToken,
-    };
-  } catch (error) {
-    console.error("Failed to fetch initial recommendations:", error);
-    return { tracks: [], nextContinuationToken: null };
-  }
+        return {
+            tracks: finalTracks,
+            nextContinuationToken: nextToken,
+            continuationQuery: continuationQuery,
+        };
+
+    } catch (error) {
+        console.error("Failed to fetch initial recommendations:", error);
+        return { tracks: [], nextContinuationToken: null, continuationQuery: null };
+    }
 }

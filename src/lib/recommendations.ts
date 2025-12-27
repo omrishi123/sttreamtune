@@ -1,14 +1,14 @@
 
 
-import { generateRecommendations, GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
-import type { Track, Playlist } from './types';
+import { generateRecommendations as generateRecommendationsFlow, GenerateRecommendationsOutput } from '@/ai/flows/generate-recommendations-flow';
+import type { Track, Playlist, UserMusicProfile } from './types';
 
-const MAX_SEARCH_HISTORY = 5;
+const MAX_SEARCH_HISTORY = 10;
 const SEARCH_HISTORY_KEY = 'searchHistory';
 const RECOMMENDATIONS_CACHE_KEY = 'recommendedTracksCache';
 const RECOMMENDED_PLAYLISTS_CACHE_PREFIX = 'recommended-playlists-';
 const PLAYLIST_TRACKS_CACHE_PREFIX = 'playlist-tracks-';
-const SINGLE_PLAYLIST_CACHE_PREFIX = 'single-playlist-'; // New cache for individual YT playlists
+const SINGLE_PLAYLIST_CACHE_PREFIX = 'single-playlist-';
 
 interface RecommendationCache {
     history: string[];
@@ -26,7 +26,6 @@ interface PlaylistTracksCache {
     timestamp: number;
 }
 
-// A simple cache for individual playlist objects
 interface SinglePlaylistCache {
     playlist: Playlist;
     timestamp: number;
@@ -46,11 +45,14 @@ export const getSearchHistory = (): string[] => {
 }
 
 export const updateSearchHistory = (query: string) => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !query) return;
     try {
         const history = getSearchHistory();
-        const updatedHistory = [query, ...history.filter((item: string) => item !== query)].slice(0, MAX_SEARCH_HISTORY);
+        const updatedHistory = [query.trim(), ...history.filter((item: string) => item.toLowerCase() !== query.trim().toLowerCase())].slice(0, MAX_SEARCH_HISTORY);
         localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updatedHistory));
+        
+        // CRITICAL: A new search means the old recommendations are stale.
+        clearRecommendationsCache();
     } catch (error) {
         console.error("Failed to update search history:", error);
     }
@@ -59,46 +61,8 @@ export const updateSearchHistory = (query: string) => {
 export const clearSearchHistoryCache = () => {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(SEARCH_HISTORY_KEY);
-    localStorage.removeItem(RECOMMENDATIONS_CACHE_KEY);
+    clearRecommendationsCache();
 }
-
-
-// ====== SONG RECOMMENDATIONS ======
-export const getCachedRecommendations = async (): Promise<{ tracks: GenerateRecommendationsOutput, fromCache: boolean }> => {
-    if (typeof window === 'undefined') return { tracks: [], fromCache: false };
-
-    const currentHistory = getSearchHistory();
-    if (currentHistory.length === 0) {
-        return { tracks: [], fromCache: false };
-    }
-
-    try {
-        const cachedData = localStorage.getItem(RECOMMENDATIONS_CACHE_KEY);
-        if (cachedData) {
-            const cache: RecommendationCache = JSON.parse(cachedData);
-            if (JSON.stringify(cache.history) === JSON.stringify(currentHistory)) {
-                return { tracks: cache.tracks, fromCache: true };
-            }
-        }
-    } catch (error) {
-        console.error("Failed to read recommendation cache:", error);
-    }
-    
-    try {
-        const results = await generateRecommendations({ history: currentHistory });
-        const newCache: RecommendationCache = {
-            history: currentHistory,
-            tracks: results,
-            timestamp: Date.now(),
-        };
-        localStorage.setItem(RECOMMENDATIONS_CACHE_KEY, JSON.stringify(newCache));
-        
-        return { tracks: results, fromCache: false };
-    } catch (error) {
-         console.error('Failed to fetch recommendations:', error);
-         return { tracks: [], fromCache: false };
-    }
-};
 
 // ====== PERSONALIZED PLAYLIST RECOMMENDATIONS ======
 export const getCachedRecommendedPlaylists = (genre: string): Playlist[] | null => {
@@ -107,7 +71,6 @@ export const getCachedRecommendedPlaylists = (genre: string): Playlist[] | null 
         const cached = localStorage.getItem(`${RECOMMENDED_PLAYLISTS_CACHE_PREFIX}${genre}`);
         if (cached) {
             const data: RecommendedPlaylistCache = JSON.parse(cached);
-            // Optional: Add TTL logic here if needed, e.g., if (Date.now() - data.timestamp < some_ttl)
             return data.playlists;
         }
         return null;
@@ -191,7 +154,7 @@ export const cacheSinglePlaylist = (playlist: Playlist) => {
 
 
 // ====== CACHE MANAGEMENT ======
-export const clearAllRecommendationCaches = () => {
+export const clearRecommendationsCache = () => {
     if (typeof window === 'undefined') return;
     try {
         Object.keys(localStorage).forEach(key => {
@@ -203,9 +166,21 @@ export const clearAllRecommendationCaches = () => {
                 localStorage.removeItem(key);
             }
         });
-        // Also clear song recommendations if they exist
-        localStorage.removeItem(RECOMMENDATIONS_CACHE_KEY);
     } catch (error) {
         console.error("Failed to clear recommendation caches:", error);
     }
 };
+
+// New function to just clear the AI genre playlists
+export const clearAIGenrePlaylistsCache = () => {
+     if (typeof window === 'undefined') return;
+    try {
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith(RECOMMENDED_PLAYLISTS_CACHE_PREFIX)) {
+                localStorage.removeItem(key);
+            }
+        });
+    } catch (error) {
+        console.error("Failed to clear AI genre playlist caches:", error);
+    }
+}

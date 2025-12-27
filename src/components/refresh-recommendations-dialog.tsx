@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { clearAllRecommendationCaches } from '@/lib/recommendations';
+import { clearRecommendationsCache } from '@/lib/recommendations';
 import { updateUserRefreshPromptTimestamp } from '@/lib/preferences';
 
 interface RefreshDialogProps {
@@ -25,7 +25,7 @@ export function RefreshRecommendationsDialog({ isOpen, onOpenChange }: RefreshDi
   const { toast } = useToast();
 
   const handleRefresh = () => {
-    clearAllRecommendationCaches();
+    clearRecommendationsCache();
     updateUserRefreshPromptTimestamp();
     toast({
       title: 'Recommendations Refreshed',

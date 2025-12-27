@@ -23,7 +23,7 @@ interface UserDataContextType extends UserData {
   likeAnimationTrigger: number;
   isLiked: (trackId: string) => boolean;
   toggleLike: (track: Track) => void;
-  addRecentlyPlayed: (trackId: string) => void;
+  addRecentlyPlayed: (trackId: string, playedAt: number) => void;
   getTrackById: (trackId: string) => Track | undefined;
   createPlaylist: (name: string, description: string, isPublic: boolean, isVerified?: boolean) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, track: Track) => void;
@@ -50,7 +50,9 @@ const getInitialUserData = (userId: string): UserData => {
     const storedData = window.localStorage.getItem(`userData-${userId}`);
     if (storedData) {
       const parsedData = JSON.parse(storedData);
-      return { ...defaults, ...parsedData, channels: parsedData.channels || [] };
+      // Ensure recentlyPlayed is an array of strings, not objects
+      const sanitizedRecentlyPlayed = (parsedData.recentlyPlayed || []).map((item: any) => typeof item === 'object' ? item.id : item);
+      return { ...defaults, ...parsedData, channels: parsedData.channels || [], recentlyPlayed: sanitizedRecentlyPlayed };
     }
   } catch (error) {
     console.error("Error reading user data from localStorage:", error);
@@ -68,7 +70,7 @@ const getInitialTrackCache = (): CachedTracks => {
         return initialMockTracks;
     }
     try {
-      const storedTracks = window.localStorage.getItem('trackCache'); // Simplified to a single cache
+      const storedTracks = window.localStorage.getItem('trackCache');
       const parsedTracks = storedTracks ? JSON.parse(storedTracks) : {};
       return { ...initialMockTracks, ...parsedTracks };
     } catch (error) {
@@ -179,9 +181,10 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addRecentlyPlayed = (trackId: string) => {
+  const addRecentlyPlayed = (trackId: string, playedAt: number) => {
+    addTrackToCache({ ...getTrackById(trackId)!, playedAt }); // Update cache with timestamp
     setUserData(prev => {
-      const newRecentlyPlayed = [trackId, ...prev.recentlyPlayed.filter(id => id !== trackId)].slice(0, 500);
+      const newRecentlyPlayed = [trackId, ...prev.recentlyPlayed.filter(id => id !== trackId)].slice(0, 50);
       return { ...prev, recentlyPlayed: newRecentlyPlayed };
     });
   };
@@ -213,7 +216,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       public: isPublic,
       owner: currentUser.name, 
       ownerId: currentUser.id,
-      ownerIsVerified: isVerified, // Set verification status from parameter
+      ownerIsVerified: isVerified,
       coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
       'data-ai-hint': 'playlist cover',
     };
@@ -268,7 +271,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       });
   
     } else { // Private Playlist Logic
-      // Check for duplicates before updating state
       const targetPlaylist = userData.playlists.find(p => p.id === playlistId);
       if (targetPlaylist && targetPlaylist.trackIds.includes(track.id)) {
         toast({
@@ -278,7 +280,6 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // If not a duplicate, update state and then show success toast
       setUserData(prev => ({
           ...prev,
           playlists: prev.playlists.map(p =>
@@ -393,11 +394,12 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       };
     }
      if (playlistId === 'recently-played') {
+      const recentTracks = userData.recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
       return {
         id: 'recently-played',
         name: 'Recently Played',
         description: 'Tracks you\'ve listened to recently',
-        coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
+        coverArt: recentTracks.length > 0 ? recentTracks[0].artwork : 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
         trackIds: userData.recentlyPlayed,
         public: false,
         owner: currentUser.name || "You",
@@ -504,6 +506,3 @@ export const useUserData = (): UserDataContextType => {
   }
   return context;
 };
-
-
-    
