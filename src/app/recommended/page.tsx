@@ -133,7 +133,7 @@ export default function RecommendedPage() {
                     }
                 }
                 profile.topKeywords.forEach(kw => generatedQueries.push(`${kw} vibe songs`));
-                profile.dominantGenres.forEach(g => generatedQueries.push(`${g} playlist`);
+                profile.dominantGenres.forEach(g => generatedQueries.push(`${g} playlist`));
                 
                 queries = [...new Set(generatedQueries)];
             }
