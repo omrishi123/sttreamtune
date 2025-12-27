@@ -21,9 +21,9 @@ const GenerateRecommendationsInputSchema = z.object({
   continuationToken: z.string().optional().describe('Token for paginating a specific query.'),
   queryToContinue: z.string().optional().describe('The original query string to paginate.')
 });
-export type GenerateRecommendationsInput = z.infer<typeof GenerateRecommendationsInputSchema>;
+type GenerateRecommendationsInput = z.infer<typeof GenerateRecommendationsInputSchema>;
 
-export const GenerateRecommendationsOutputSchema = z.object({
+const GenerateRecommendationsOutputSchema = z.object({
     tracks: z.array(z.custom<Track>()),
     nextContinuationToken: z.string().nullable(),
     continuationQuery: z.string().nullable(),
