@@ -11,7 +11,7 @@ import { searchYoutube, YoutubeSearchOutput } from "@/ai/flows/search-youtube-fl
 import { usePlayer } from "@/context/player-context";
 import { useUserData } from "@/context/user-data-context";
 import { useToast } from "@/hooks/use-toast";
-import { clearAllRecommendationCaches, updateSearchHistory } from "@/lib/recommendations";
+import { clearRecommendationsCache, updateSearchHistory } from "@/lib/recommendations";
 import { Track } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SaveSearchDialog } from "@/components/save-search-dialog";
@@ -89,7 +89,7 @@ export default function SearchPage() {
         });
       } else {
         updateSearchHistory(searchQuery);
-        clearAllRecommendationCaches();
+        clearRecommendationsCache();
       }
     } catch (error: any) {
       console.error("Search failed:", error);
