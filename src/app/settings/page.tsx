@@ -34,7 +34,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { usePlayer } from '@/context/player-context';
 import { useToast } from '@/hooks/use-toast';
-import { clearAllRecommendationCaches, clearSearchHistoryCache } from '@/lib/recommendations';
+import { clearRecommendationsCache, clearSearchHistoryCache } from '@/lib/recommendations';
 import { clearUserPreferences } from '@/lib/preferences';
 import { User, Palette, Film, HardDrive, Trash2, RefreshCcw, ListMusic } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -67,13 +67,13 @@ export default function SettingsPage() {
   };
 
   const handleResetRecommendations = () => {
-    clearAllRecommendationCaches();
+    clearRecommendationsCache();
     toast({ title: 'Recommendations Reset', description: 'Your home page will now show fresh playlists. You may need to refresh the page.' });
   };
 
     const handleChangeCategories = () => {
     clearUserPreferences(); 
-    clearAllRecommendationCaches();
+    clearRecommendationsCache();
     clearSearchHistoryCache();
     router.push('/welcome');
   };
