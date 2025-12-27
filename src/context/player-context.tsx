@@ -1,14 +1,16 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect, useCallback } from 'react';
-import type { Track, Playlist, User } from '@/lib/types';
+import type { Track, Playlist, User, UserMusicProfile } from '@/lib/types';
 import YouTube from 'react-youtube';
 import { useUserData } from './user-data-context';
 import { generateRecommendations } from '@/ai/flows/generate-recommendations-flow';
 import { searchYoutube } from '@/ai/flows/search-youtube-flow';
 import { onAuthChange } from '@/lib/auth';
 import { getPlaybackQuality, savePlaybackQuality } from '@/lib/preferences';
+import { getSearchHistory } from '@/lib/recommendations';
 
 // Extend the window type to include our optional AndroidBridge and callbacks
 declare global {
@@ -34,7 +36,7 @@ interface PlayerContextType {
   pause: () => void;
   playNext: () => void;
   playPrev: () => void;
-  setQueueAndPlay: (tracks: Track[], startTrackId?: string, playlist?: Playlist, searchQuery?: string | null, continuationToken?: string | null) => void;
+  setQueueAndPlay: (tracks: Track[], startTrackId?: string, playlist?: Playlist, searchQuery?: string | null, continuationToken?: string | null, continuationQuery?: string | null) => void;
   playerRef: React.RefObject<YouTube | null>;
   progress: number;
   handleSeek: (value: number[]) => void;
@@ -57,39 +59,61 @@ interface PlayerContextType {
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
-// Client-side helpers to generate queries
-const getTopArtists = (recentlyPlayed: Track[], count: number): string[] => {
-  if (!recentlyPlayed.length) return [];
-  const artistCounts: { [artist: string]: number } = {};
-  recentlyPlayed.forEach(track => {
-    if (track.artist && track.artist !== 'Unknown Artist') {
-      artistCounts[track.artist] = (artistCounts[track.artist] || 0) + 1;
-    }
-  });
-  return Object.entries(artistCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, count)
-    .map(entry => entry[0]);
+// #region Client-Side Profile Generation (For Fallbacks)
+const getWeightedArtists = (recentlyPlayed: Track[]): string[] => {
+    if (recentlyPlayed.length === 0) return [];
+    const scores: Record<string, number> = {};
+    const now = Date.now();
+    recentlyPlayed.forEach(track => {
+        if (!track.artist || track.artist === 'Unknown Artist' || !track.playedAt) return;
+        const ageHours = (now - track.playedAt) / 36e5;
+        const weight = Math.exp(-ageHours / 48);
+        scores[track.artist] = (scores[track.artist] || 0) + weight;
+    });
+    return Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([artist]) => artist);
 };
 
-const getPlaylistDnaQueries = (userPlaylists: Playlist[], communityPlaylists: Playlist[], count: number): string[] => {
-    if (!userPlaylists.length || !communityPlaylists.length) return [];
-    
-    const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
-    const dnaMatches: { query: string; score: number }[] = [];
+const extractKeywords = (searches: string[]): string[] => {
+    const blacklist = ['song', 'music', 'video', 'official', 'lyrics', 'audio', 'hd'];
+    const words: Record<string, number> = {};
+    searches.forEach(q => {
+        q.toLowerCase().split(/\s+/).forEach(w => {
+            if (w.length < 3 || blacklist.includes(w) || !isNaN(Number(w))) return;
+            words[w] = (words[w] || 0) + 1;
+        });
+    });
+    return Object.entries(words).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([w]) => w);
+};
 
+const getPlaylistDna = (userPlaylists: Playlist[], communityPlaylists: Playlist[]): string[] => {
+    if (!userPlaylists.length || !communityPlaylists.length) return [];
+    const userTrackIds = new Set(userPlaylists.flatMap(p => p.trackIds));
+    if (userTrackIds.size === 0) return [];
+    const dnaMatches: { query: string; score: number }[] = [];
     communityPlaylists.forEach(publicPlaylist => {
+        if (publicPlaylist.trackIds.length === 0) return;
         const matchCount = publicPlaylist.trackIds.filter(tid => userTrackIds.has(tid)).length;
-        if (matchCount > 0) {
-            dnaMatches.push({ query: publicPlaylist.name, score: matchCount });
+        const overlapPercentage = matchCount / publicPlaylist.trackIds.length;
+        if (overlapPercentage > 0.1) {
+            dnaMatches.push({ query: publicPlaylist.name, score: overlapPercentage });
         }
     });
-
-    return dnaMatches
-        .sort((a, b) => b.score - a.score)
-        .slice(0, count)
-        .map(match => match.query);
+    return dnaMatches.sort((a, b) => b.score - a.score).slice(0, 3).map(match => match.query);
 };
+
+const buildUserMusicProfile = (
+    recentlyPlayed: Track[],
+    searchHistory: string[],
+    userPlaylists: Playlist[],
+    communityPlaylists: Playlist[]
+): UserMusicProfile => {
+    const topArtists = getWeightedArtists(recentlyPlayed);
+    const topKeywords = extractKeywords(searchHistory);
+    const playlistDna = getPlaylistDna(userPlaylists, communityPlaylists);
+    const dominantGenres = [...new Set([...topKeywords, ...playlistDna])];
+    return { topArtists, topKeywords, dominantGenres, energyLevel: 'normal', freshnessBias: 0.5 };
+};
+// #endregion
 
 export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
@@ -115,9 +139,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
 
   // New state for infinite queue
   const [continuationToken, setContinuationToken] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [continuationQuery, setContinuationQuery] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserMusicProfile | null>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache } = useUserData();
+  const { recentlyPlayed, playlists: userPlaylists, communityPlaylists, getTrackById, addTracksToCache, likedSongs } = useUserData();
    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -130,38 +155,27 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   }, [queue]);
   
   const fetchMoreTracks = useCallback(async () => {
-    if (isFetchingMore) return;
-
-    const tokenToUse = continuationToken;
-    if (!tokenToUse) return;
+    if (isFetchingMore || !continuationToken) return;
 
     setIsFetchingMore(true);
     try {
-        let results;
-        if (searchQuery) {
-            results = await searchYoutube({
-                query: searchQuery,
-                continuationToken: tokenToUse,
-            });
-        } else {
-            // For general recommendations, construct the query on the fly
+        let profile = userProfile;
+        if (!profile) {
             const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-            const topArtists = getTopArtists(recentTracks, 2);
-            const dnaQueries = getPlaylistDnaQueries(userPlaylists, communityPlaylists, 3);
-            const searchQueries = [...new Set([...topArtists, ...dnaQueries])];
-            const query = searchQueries.join(' | ');
-
-            if (!query) {
-                setIsFetchingMore(false);
-                return;
-            }
-
-            results = await generateRecommendations({
-                query,
-                continuationToken: tokenToUse,
-                userHistory: { recentlyPlayed, userPlaylists }
-            });
+            const searchHistory = getSearchHistory();
+            profile = buildUserMusicProfile(recentTracks, searchHistory, userPlaylists, communityPlaylists);
+            setUserProfile(profile);
         }
+
+        const results = await generateRecommendations({
+            profile: profile,
+            userHistory: {
+                recentlyPlayedIds: recentlyPlayed,
+                likedSongIds: likedSongs,
+            },
+            continuationToken: continuationToken,
+            queryToContinue: continuationQuery,
+        });
 
         if (results && results.tracks.length > 0) {
             addTracksToCache(results.tracks);
@@ -169,8 +183,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
             const newQueue = [...queueRef.current, ...newTracks];
             setQueueState(newQueue);
             setContinuationToken(results.nextContinuationToken);
+            setContinuationQuery(results.continuationQuery);
 
-            if (isNativePlayback && window.Android?.startPlayback) {
+             if (isNativePlayback && window.Android?.updatePlaybackQueue) {
                 const currentIndex = newQueue.findIndex(t => t.id === currentTrack?.id);
                 if (currentIndex !== -1) {
                     const playlistForNative = newQueue.map(t => ({
@@ -180,7 +195,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
                         thumbnailUrl: `https://img.youtube.com/vi/${t.youtubeVideoId}/mqdefault.jpg`,
                     }));
                     const playlistJson = JSON.stringify(playlistForNative);
-                    window.Android.startPlayback(playlistJson, currentIndex);
+                    window.Android.updatePlaybackQueue(playlistJson, currentIndex);
                 }
             }
         } else {
@@ -191,7 +206,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     } finally {
         setIsFetchingMore(false);
     }
-}, [isFetchingMore, continuationToken, searchQuery, recentlyPlayed, getTrackById, communityPlaylists, userPlaylists, addTracksToCache, isNativePlayback, currentTrack?.id]);
+}, [isFetchingMore, continuationToken, userProfile, recentlyPlayed, getTrackById, userPlaylists, communityPlaylists, likedSongs, addTracksToCache, continuationQuery, isNativePlayback, currentTrack?.id]);
 
 
   useEffect(() => {
@@ -417,7 +432,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     startTrackId?: string, 
     playlist?: Playlist,
     searchQueryValue: string | null = null,
-    continuationTokenValue: string | null = null
+    continuationTokenValue: string | null = null,
+    continuationQueryValue: string | null = null,
   ) => {
     const newQueue = [...tracks];
     const trackToPlay = startTrackId 
@@ -429,24 +445,15 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setQueueState(newQueue);
     setCurrentPlaylist(playlist || null);
     
-    setSearchQuery(searchQueryValue);
+    setContinuationQuery(searchQueryValue || continuationQueryValue);
     setContinuationToken(continuationTokenValue);
     
-    if (playlist?.id === 'recommended-for-you' && !searchQueryValue) {
-        // This case is for when starting playback from the "Recommended for you" section.
-        // We need to generate an initial query and get a continuation token.
+    // Build initial user profile if we start from a recommendation context
+    if (playlist?.id === 'recommended-for-you') {
         const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
-        const topArtists = getTopArtists(recentTracks, 2);
-        const dnaQueries = getPlaylistDnaQueries(userPlaylists, communityPlaylists, 3);
-        const query = [...new Set([...topArtists, ...dnaQueries])].join(' | ');
-
-        if (query) {
-            const results = await generateRecommendations({
-                query,
-                userHistory: { recentlyPlayed, userPlaylists },
-            });
-            setContinuationToken(results.nextContinuationToken);
-        }
+        const searchHistory = getSearchHistory();
+        const profile = buildUserMusicProfile(recentTracks, searchHistory, userPlaylists, communityPlaylists);
+        setUserProfile(profile);
     }
 
     if (window.Android?.startPlayback) {

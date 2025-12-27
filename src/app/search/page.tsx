@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -120,7 +121,7 @@ export default function SearchPage() {
 
   const handlePlayTrack = (trackId: string) => {
     // When playing from search, set the context for the infinite queue
-    setQueueAndPlay(results, trackId, undefined, query, continuationToken);
+    setQueueAndPlay(results, trackId, undefined, query, continuationToken, query);
   };
 
   return (
