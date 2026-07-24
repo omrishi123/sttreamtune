@@ -1,5 +1,4 @@
 
-
 import {z} from 'zod';
 
 export interface Track {
@@ -27,6 +26,7 @@ export interface Playlist {
   ownerIsVerified?: boolean; // To display verification badge
   'data-ai-hint'?: string;
   isLikedSongs?: boolean;
+  isSupermix?: boolean; // NEW: To identify the personalized infinite mix
   tracks?: Track[]; // For public playlists, embed full track objects
   isFeatured?: boolean;
   isChannelPlaylist?: boolean; // To identify playlists managed within a channel

@@ -123,7 +123,7 @@ const PlaylistGrid = ({ playlists, title, isGuestPrivateSection = false }: { pla
 const DefaultPlaylistGrid = ({ playlists }: { playlists: Playlist[] }) => {
   return (
     <div className="mt-8">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {playlists.map((playlist) => (
           <PlaylistCard key={playlist.id} playlist={playlist} />
         ))}
@@ -187,6 +187,18 @@ export default function LibraryPage() {
     }
     return undefined;
   };
+
+  const supermixPlaylist: Playlist = {
+    id: "recommended-for-you",
+    name: "Your Supermix",
+    description: "Endless discovery based on your taste.",
+    owner: "StreamTune AI",
+    public: false,
+    trackIds: [],
+    coverArt: "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif",
+    'data-ai-hint': 'infinite galaxy',
+    isSupermix: true,
+  };
   
   const likedSongsPlaylist: Playlist = {
     id: "liked-songs",
@@ -221,7 +233,7 @@ export default function LibraryPage() {
     return communityPlaylists.filter(p => p.ownerId === currentUser.id);
   }, [communityPlaylists, currentUser]);
 
-  const defaultPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist];
+  const defaultPlaylists = [supermixPlaylist, likedSongsPlaylist, recentlyPlayedPlaylist];
   const isGuest = currentUser?.id === 'guest';
 
   return (

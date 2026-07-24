@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -15,18 +14,19 @@ import type { Playlist, Track, UserMusicProfile } from '@/lib/types';
 import { getSearchHistory, clearRecommendationsCache } from '@/lib/recommendations';
 import { useToast } from '@/hooks/use-toast';
 
-const recommendedPlaylist: Playlist = {
+const supermixPlaylist: Playlist = {
     id: 'recommended-for-you',
-    name: 'Recommended For You',
+    name: 'Your Supermix',
     description: "An endless feed of music based on your listening habits.",
     owner: "StreamTune AI",
     public: false,
     trackIds: [],
     coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
     'data-ai-hint': 'infinite galaxy',
+    isSupermix: true,
 };
 
-// #region Client-Side Profile Generation (Copied from home page)
+// #region Client-Side Profile Generation
 const getWeightedArtists = (recentlyPlayed: Track[]): string[] => {
     if (recentlyPlayed.length === 0) return [];
     const scores: Record<string, number> = {};
@@ -120,7 +120,8 @@ export default function RecommendedPage() {
                 const recentTracks = recentlyPlayed.map(id => getTrackById(id)).filter(Boolean) as Track[];
                 const searchHistory = getSearchHistory();
                 
-                setHasHistory(recentTracks.length > 0 || searchHistory.length > 0 || userPlaylists.length > 0);
+                const currentHasHistory = recentTracks.length > 0 || searchHistory.length > 0 || userPlaylists.length > 0;
+                setHasHistory(currentHasHistory);
 
                 profile = buildUserMusicProfile(recentTracks, searchHistory, userPlaylists, communityPlaylists);
                 setUserProfile(profile);
@@ -176,7 +177,7 @@ export default function RecommendedPage() {
 
     const handleRefresh = () => {
         toast({
-            title: "Refreshing Recommendations",
+            title: "Refreshing Your Supermix",
             description: "Getting a fresh batch of songs for you...",
         });
         fetchRecommendations(true, true);
@@ -197,13 +198,13 @@ export default function RecommendedPage() {
 
     return (
         <div className="space-y-8">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                  <div>
                     <h1 className="text-4xl font-bold font-headline tracking-tight">
-                        Recommended For You
+                        Your Supermix
                     </h1>
                     <p className="text-muted-foreground mt-2">
-                        An endless feed of music based on your listening habits.
+                        Your personal, infinite radio station. Tailored to your taste, always playing.
                     </p>
                 </div>
                 <Button onClick={handleRefresh} variant="outline" disabled={isLoading || isFetchingMore}>
@@ -223,7 +224,7 @@ export default function RecommendedPage() {
                             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                                 <Sparkles className="w-8 h-8 text-primary" />
                             </div>
-                            <h3 className="font-semibold text-xl">Nothing to recommend yet!</h3>
+                            <h3 className="font-semibold text-xl">Nothing to mix yet!</h3>
                             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                                 We need to know what you like first. Play some songs or search for music to get personalized recommendations.
                             </p>
@@ -236,7 +237,7 @@ export default function RecommendedPage() {
                     <>
                         <TrackList 
                             tracks={recommendedTracks} 
-                            playlist={{...recommendedPlaylist, trackIds: recommendedTracks.map(t => t.id)}} 
+                            playlist={{...supermixPlaylist, trackIds: recommendedTracks.map(t => t.id)}} 
                             onTrackRendered={lastTrackElementRef} 
                         />
                         {isFetchingMore && (
@@ -251,7 +252,7 @@ export default function RecommendedPage() {
                              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                                 <Sparkles className="w-8 h-8 text-primary" />
                             </div>
-                            <h3 className="font-semibold text-xl">Could not generate recommendations</h3>
+                            <h3 className="font-semibold text-xl">Could not generate your mix</h3>
                             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                                 Please try playing a few more songs and check back later.
                             </p>
