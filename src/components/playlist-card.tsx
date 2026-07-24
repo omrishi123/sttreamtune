@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link";
@@ -15,9 +14,7 @@ import {
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Icons } from "./icons";
-
-const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
-const PLACEHOLDER_IMAGE_URL = "https://i.postimg.cc/SswWC87w/streamtune.png";
+import { DEFAULT_PLAYLIST_COVER, APP_LOGO_URL } from "@/lib/constants";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -32,10 +29,10 @@ const cardVariants = {
 };
 
 export function PlaylistCard({ playlist }: { playlist: Playlist }) {
-  const [imgSrc, setImgSrc] = useState(playlist.coverArt || PLACEHOLDER_IMAGE_URL);
+  const [imgSrc, setImgSrc] = useState(playlist.coverArt || APP_LOGO_URL);
 
   useEffect(() => {
-    setImgSrc(playlist.coverArt || PLACEHOLDER_IMAGE_URL);
+    setImgSrc(playlist.coverArt || APP_LOGO_URL);
   }, [playlist.coverArt]);
 
   return (
@@ -55,7 +52,7 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
               height={300}
               className="aspect-square object-cover transition-transform group-hover:scale-105"
               data-ai-hint={playlist['data-ai-hint']}
-              onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
+              onError={() => setImgSrc(DEFAULT_PLAYLIST_COVER)}
               unoptimized
             />
           </CardContent>

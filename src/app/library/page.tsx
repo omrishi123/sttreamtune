@@ -22,6 +22,7 @@ import { ImportChannelDialog } from "@/components/import-channel-dialog";
 import { onAuthChange } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import { DEFAULT_PLAYLIST_COVER } from '@/lib/constants';
 
 const PlaylistGrid = ({ playlists, title, isGuestPrivateSection = false }: { playlists: Playlist[], title?: string, isGuestPrivateSection?: boolean }) => {
     if (playlists.length === 0) {
@@ -195,7 +196,7 @@ export default function LibraryPage() {
     owner: "StreamTune AI",
     public: false,
     trackIds: [],
-    coverArt: "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif",
+    coverArt: DEFAULT_PLAYLIST_COVER,
     'data-ai-hint': 'infinite galaxy',
     isSupermix: true,
   };
@@ -207,7 +208,7 @@ export default function LibraryPage() {
     owner: "You",
     public: false,
     trackIds: likedSongs,
-    coverArt: getFirstTrackArtwork(likedSongs) || "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif",
+    coverArt: getFirstTrackArtwork(likedSongs) || DEFAULT_PLAYLIST_COVER,
     'data-ai-hint': 'glowing heart',
     isLikedSongs: true,
   };
@@ -219,7 +220,7 @@ export default function LibraryPage() {
     owner: "You",
     public: false,
     trackIds: [],
-    coverArt: "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif",
+    coverArt: DEFAULT_PLAYLIST_COVER,
     'data-ai-hint': 'time clock',
   }
 

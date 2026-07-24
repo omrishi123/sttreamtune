@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Track, Playlist, User } from '@/lib/types';
 import { onAuthChange } from '@/lib/auth';
 import { Icons } from './icons';
+import { DEFAULT_PLAYLIST_COVER } from '@/lib/constants';
 
 interface SaveSearchDialogProps {
   children: React.ReactNode;
@@ -57,7 +58,7 @@ export function SaveSearchDialog({ children, searchResults }: SaveSearchDialogPr
     setIsLoading(true);
 
     const trackIds = searchResults.map(track => track.id);
-    const coverArt = searchResults.length > 0 ? searchResults[0].artwork : 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif';
+    const coverArt = searchResults.length > 0 ? searchResults[0].artwork : DEFAULT_PLAYLIST_COVER;
 
     const newPlaylist: Playlist = {
         id: `playlist-${Date.now()}`,

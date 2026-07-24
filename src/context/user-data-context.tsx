@@ -1,5 +1,4 @@
 
-
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import type { User, UserData, Playlist, Track, Channel } from '@/lib/types';
@@ -11,6 +10,7 @@ import { removeTrackFromPublicPlaylist } from '@/ai/flows/update-playlist-flow';
 import { deletePublicPlaylist } from '@/ai/flows/delete-playlist-flow';
 import { useToast } from '@/hooks/use-toast';
 import { getCachedSinglePlaylist } from '@/lib/recommendations';
+import { DEFAULT_PLAYLIST_COVER } from '@/lib/constants';
 
 const LIKED_SONGS_PLAYLIST_ID = 'liked-songs';
 
@@ -217,7 +217,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
       owner: currentUser.name, 
       ownerId: currentUser.id,
       ownerIsVerified: isVerified,
-      coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
+      coverArt: DEFAULT_PLAYLIST_COVER,
       'data-ai-hint': 'playlist cover',
     };
 
@@ -384,7 +384,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         id: LIKED_SONGS_PLAYLIST_ID,
         name: 'Liked Songs',
         description: `${userData.likedSongs.length} songs`,
-        coverArt: 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
+        coverArt: DEFAULT_PLAYLIST_COVER,
         'data-ai-hint': 'glowing heart',
         trackIds: userData.likedSongs,
         public: false,
@@ -399,7 +399,7 @@ export const UserDataProvider = ({ children }: { children: ReactNode }) => {
         id: 'recently-played',
         name: 'Recently Played',
         description: 'Tracks you\'ve listened to recently',
-        coverArt: recentTracks.length > 0 ? recentTracks[0].artwork : 'https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif',
+        coverArt: recentTracks.length > 0 ? recentTracks[0].artwork : DEFAULT_PLAYLIST_COVER,
         trackIds: userData.recentlyPlayed,
         public: false,
         owner: currentUser.name || "You",

@@ -36,8 +36,7 @@ import { AddSongsDialog } from "@/components/add-songs-dialog";
 import { Icons } from "@/components/icons";
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-
-const FALLBACK_IMAGE_URL = "https://i.postimg.cc/mkvv8tmp/digital-art-music-player-with-colorful-notes-black-background-900370-14342.avif";
+import { DEFAULT_PLAYLIST_COVER } from "@/lib/constants";
 
 export default function PlaylistPage() {
   const params = useParams();
@@ -66,7 +65,7 @@ export default function PlaylistPage() {
     let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
     let fetchedTracks: Track[] = [];
 
-    // **NEW:** If not found locally, try fetching directly from Firestore
+    // If not found locally, try fetching directly from Firestore
     if (!foundPlaylist) {
         try {
             const playlistRef = doc(db, 'communityPlaylists', id);
@@ -259,7 +258,7 @@ export default function PlaylistPage() {
       <div className="relative -mx-6 -mt-6 p-6 pt-16 pb-8 overflow-hidden">
         <div className="absolute inset-0 z-0">
             <Image
-            src={imgSrc || FALLBACK_IMAGE_URL}
+            src={imgSrc || DEFAULT_PLAYLIST_COVER}
             alt=""
             fill
             className="object-cover blur-3xl scale-125 opacity-50 dark:opacity-30"
@@ -276,7 +275,7 @@ export default function PlaylistPage() {
                 className="rounded-lg shadow-2xl aspect-square object-cover w-[150px] h-[150px] sm:w-[175px] sm:h-[175px] md:w-[200px] md:h-[200px] flex-shrink-0"
                 priority
                 data-ai-hint={playlist['data-ai-hint']}
-                onError={() => setImgSrc(FALLBACK_IMAGE_URL)}
+                onError={() => setImgSrc(DEFAULT_PLAYLIST_COVER)}
                 unoptimized
             />
             <div className="space-y-3 min-w-0">

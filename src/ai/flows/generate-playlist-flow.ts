@@ -15,6 +15,7 @@ import { searchYoutube } from './search-youtube-flow';
 import type { YoutubeSearchOutput } from './search-youtube-flow';
 import { GeneratePlaylistResponse, GeneratePlaylistResponseSchema } from '@/lib/types';
 import { nanoid } from 'nanoid';
+import { DEFAULT_PLAYLIST_COVER } from '@/lib/constants';
 
 const GeneratePlaylistInputSchema = z.object({
   prompt: z.string().describe('The user-provided prompt for the playlist to be generated.'),
@@ -98,7 +99,7 @@ const generatePlaylistFlow = ai.defineFlow(
         }
     }
 
-    const coverArtUrl = uniqueTracks.length > 0 ? uniqueTracks[0].artwork : 'https://i.postimg.cc/SswWC87w/streamtune.png';
+    const coverArtUrl = uniqueTracks.length > 0 ? uniqueTracks[0].artwork : DEFAULT_PLAYLIST_COVER;
 
     // Step 4: Format the final playlist object
     const finalPlaylist = {

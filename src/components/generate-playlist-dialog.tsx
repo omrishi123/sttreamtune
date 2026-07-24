@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState } from 'react';
@@ -37,6 +36,7 @@ import { Switch } from './ui/switch';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { nanoid } from 'nanoid';
+import { DEFAULT_PLAYLIST_COVER } from '@/lib/constants';
 
 export function GeneratePlaylistDialog({ children }: { children: React.ReactNode }) {
   const [prompt, setPrompt] = useState('');
@@ -101,6 +101,10 @@ export function GeneratePlaylistDialog({ children }: { children: React.ReactNode
       const playlistToSave = { ...result.playlist };
       
       playlistToSave.ownerId = user.id;
+      // Ensure we have a valid cover art
+      if (!playlistToSave.coverArt || playlistToSave.coverArt.includes('streamtune.png')) {
+          playlistToSave.coverArt = DEFAULT_PLAYLIST_COVER;
+      }
 
       if (isPublic) {
          const publicPlaylistData = {
