@@ -5,25 +5,27 @@
 ## Key Features
 
 -   **Unlimited Streaming:** Search and stream any song or music video directly from YouTube's extensive catalog.
--   **AI Playlist Generator:** Describe any mood, genre, or vibe, and let our AI craft a personalized playlist for you in seconds.
+-   **Your Supermix (Infinite Radio):** A dedicated, intelligent radio station that analyzes your listening habits, search history, and liked songs to provide an endless, perfectly-tailored stream of music.
+-   **AI Playlist Generator:** Describe any mood, genre, or vibe (e.g., "Mellow acoustic tracks for a rainy afternoon"), and our Gemini-powered AI crafts a personalized playlist for you instantly.
+-   **Universal Downloads:** High-quality audio downloading available on both Web and Android. Save your favorite tracks directly to your device for offline enjoyment.
 -   **Advanced YouTube Integration:**
-    -   Import any public YouTube playlist directly into your library.
-    -   Import entire YouTube channels, which automatically organizes their uploads and public playlists for you.
+    *   **Channel Import:** Import an entire YouTube channel to automatically organize their uploads and public playlists into your library.
+    *   **Playlist Import:** Bring any public YouTube playlist directly into your StreamTune collection.
 -   **Community & Sharing:**
-    -   Create your own playlists and share them publicly with the StreamTune community.
-    -   Discover and explore playlists created by other users.
-    -   Share deep links to playlists that open directly inside the native Android app for a seamless experience.
+    *   Create and share your own playlists publicly with the StreamTune community.
+    *   Discover, explore, and "Like" playlists created by other users.
+    *   Share deep links to playlists that open directly inside the native Android app.
 -   **Personalized Experience:**
-    -   The app learns from your listening history to provide endless "Recommended For You" tracks.
-    -   Select your favorite genres for tailored home page content.
-    -   Like songs and manage them in your dedicated "Liked Songs" playlist.
+    *   **Listening Stats:** Track your most-played artists, genres, and total listening time.
+    *   **Verified Creators:** Special badges for recognized community contributors and artists.
+    *   **Genre Preferences:** Tailored home page content based on your selected music taste.
 -   **Native Android App:**
-    -   **Background Playback:** Keep your music playing even when the app is in the background or your screen is off.
-    -   **System Media Controls:** Control playback from your device's lock screen, notification shade, or connected Bluetooth devices.
-    -   **Sleep Timer:** Set a timer to automatically stop playback after a set duration.
--   **User & Admin System:**
-    -   Full user authentication with email/password and Google Sign-In.
-    -   A secure Admin Dashboard to manage users, feature community playlists, and configure app settings.
+    *   **Background Playback:** Keep your music playing even when the app is in the background or your screen is off.
+    *   **System Media Controls:** Control playback from your lock screen, notification shade, or connected Bluetooth devices.
+    *   **Sleep Timer:** Set a timer (or custom duration) to automatically stop playback when you fall asleep.
+-   **Premium UI & Customization:**
+    *   Multiple gorgeous themes including **Sunset Groove**, **Zenith**, **Dark**, and **Light**.
+    *   Smooth animations and high-fidelity interface built with ShadCN UI and Framer Motion.
 
 ## Getting Started
 
@@ -45,5 +47,6 @@ This project uses the YouTube Data API v3 to search for music and playlists. To 
     *   Add the following line to your `.env` file, replacing `YOUR_API_KEY` with the key you just copied:
         ```
         YOUTUBE_API_KEY=YOUR_API_KEY
+        GEMINI_API_KEY=YOUR_GEMINI_KEY
         ```
 6.  **Restart your development server** for the new environment variable to be loaded.
