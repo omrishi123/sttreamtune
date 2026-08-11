@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -123,6 +122,7 @@ function AnimatedLoadingScreen({ isVisible, isFirstLoad }: { isVisible: boolean,
                     <div className="text-base opacity-85 text-white">{subtitle}</div>
                     <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
                     
+                    <div className="mt-4 text-xs opacity-65 text-white">App Made By Om Rishi i.g omrishi07</div>
                     <div className="mt-4 text-xs opacity-65 text-white">Pro tip: long-press to add songs to Quick Queue</div>
                 </div>
             </div>
