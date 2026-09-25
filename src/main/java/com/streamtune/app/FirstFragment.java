@@ -41,9 +41,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.GoogleAuthProvider;
 import com.streamtune.app.databinding.FragmentFirstBinding;
 
 import java.io.ByteArrayOutputStream;
@@ -99,7 +96,7 @@ public class FirstFragment extends Fragment {
     }
 
     private void setupActivityLaunchers() {
-        // THIS LAUNCHER HANDLES THE RESULT FROM THE GOOGLE SIGN-IN ACTIVITY
+        // HANDLES GOOGLE SIGN-IN RESULT
         signInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -108,7 +105,6 @@ public class FirstFragment extends Fragment {
                         try {
                             GoogleSignInAccount account = task.getResult(ApiException.class);
                             if (account != null && account.getIdToken() != null) {
-                                // NEW: Send the idToken to the WebView
                                 sendIdTokenToWebView(account.getIdToken());
                             } else {
                                 Log.w(TAG, "Google sign in failed: No ID Token found.");
@@ -118,25 +114,28 @@ public class FirstFragment extends Fragment {
                             Log.w(TAG, "Google sign in failed", e);
                             Toast.makeText(getContext(), "Sign in failed: " + e.getStatusCode(), Toast.LENGTH_SHORT).show();
                         }
-                    } else {
-                        Log.w(TAG, "Sign in cancelled or failed with result code: " + result.getResultCode());
                     }
                 });
 
+        // HANDLES PROFILE IMAGE PICKER RESULT
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null && result.getData().getData() != null) {
                         Uri imageUri = result.getData().getData();
-                        Log.d("ProfileImage", "Image selected: " + imageUri.toString());
                         convertImageUriToBase64AndSend(imageUri);
                     }
                 });
 
+        // HANDLES RUNTIME PERMISSION REQUESTS (MIC, STORAGE)
         requestPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
-                    // Logic handled where the launcher is called
+                    if (isGranted) {
+                        Log.d(TAG, "Permission granted by user.");
+                    } else {
+                        Log.w(TAG, "Permission denied by user.");
+                    }
                 });
     }
 
@@ -163,19 +162,16 @@ public class FirstFragment extends Fragment {
             public void onPermissionRequest(final PermissionRequest request) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     for (String res : request.getResources()) {
+                        // CRITICAL: Handle microphone request from the web page (Voice Search)
                         if (res.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
-                            // Check for mic permission
                             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                                 request.grant(request.getResources());
                             } else {
-                                // If not granted, we request it. The user might have to try voice search again 
-                                // after granting it, as web permission requests are usually one-shot.
                                 requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
                             }
                             return;
                         }
                     }
-                    // Grant other requested permissions automatically (like camera if we add it)
                     request.grant(request.getResources());
                 }
             }
@@ -183,7 +179,6 @@ public class FirstFragment extends Fragment {
 
         webView.addJavascriptInterface(new WebAppInterface(requireContext()), "Android");
         
-        // Get initial URL from MainActivity (could be a deep link)
         String urlToLoad = "https://sttreamtune.vercel.app/";
         if (getActivity() instanceof MainActivity) {
             urlToLoad = ((MainActivity) getActivity()).getInitialUrl();
@@ -192,21 +187,15 @@ public class FirstFragment extends Fragment {
     }
 
     private void startSignInFlow() {
-        if (mGoogleSignInClient == null) {
-            Log.e(TAG, "GoogleSignInClient not initialized.");
-            return;
-        }
-        // Always sign out first to allow account switching
+        if (mGoogleSignInClient == null) return;
         mGoogleSignInClient.signOut().addOnCompleteListener(requireActivity(), task -> {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
             signInLauncher.launch(signInIntent);
         });
     }
 
-    // NEW: Send the ID token to the WebView
     private void sendIdTokenToWebView(String idToken) {
         if (webView != null) {
-            // Important: Escape the token to prevent errors in JavaScript if it contains quotes
             String escapedToken = idToken.replace("'", "\\'");
             String jsCallback = "javascript:handleGoogleSignInFromNative('" + escapedToken + "')";
             webView.post(() -> webView.evaluateJavascript(jsCallback, null));
@@ -270,7 +259,6 @@ public class FirstFragment extends Fragment {
 
     public void pickProfileImage() {
         if (getContext() == null) return;
-
         String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 ? Manifest.permission.READ_MEDIA_IMAGES
                 : Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -289,8 +277,6 @@ public class FirstFragment extends Fragment {
 
     private void convertImageUriToBase64AndSend(Uri imageUri) {
         if (getContext() == null) return;
-        Toast.makeText(getContext(), "Processing image...", Toast.LENGTH_SHORT).show();
-
         executorService.submit(() -> {
             try (InputStream inputStream = requireActivity().getContentResolver().openInputStream(imageUri)) {
                 Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
@@ -304,14 +290,10 @@ public class FirstFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         String javascript = "if(window.updateProfileImage) { window.updateProfileImage('" + dataUrl + "'); }";
                         webView.evaluateJavascript(javascript, null);
-                        Toast.makeText(getContext(), "Image sent to web app!", Toast.LENGTH_SHORT).show();
                     });
                 }
             } catch (Exception e) {
                 Log.e("ProfileImage", "Failed to convert image to Base64", e);
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Failed to process image.", Toast.LENGTH_SHORT).show());
-                }
             }
         });
     }
