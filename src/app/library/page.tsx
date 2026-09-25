@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -189,18 +188,6 @@ export default function LibraryPage() {
     return undefined;
   };
 
-  const supermixPlaylist: Playlist = {
-    id: "recommended-for-you",
-    name: "Your Supermix",
-    description: "Endless discovery based on your taste.",
-    owner: "StreamTune AI",
-    public: false,
-    trackIds: [],
-    coverArt: DEFAULT_PLAYLIST_COVER,
-    'data-ai-hint': 'infinite galaxy',
-    isSupermix: true,
-  };
-  
   const likedSongsPlaylist: Playlist = {
     id: "liked-songs",
     name: "Liked Songs",
@@ -234,7 +221,7 @@ export default function LibraryPage() {
     return communityPlaylists.filter(p => p.ownerId === currentUser.id);
   }, [communityPlaylists, currentUser]);
 
-  const defaultPlaylists = [supermixPlaylist, likedSongsPlaylist, recentlyPlayedPlaylist];
+  const defaultPlaylists = [likedSongsPlaylist, recentlyPlayedPlaylist];
   const isGuest = currentUser?.id === 'guest';
 
   return (
