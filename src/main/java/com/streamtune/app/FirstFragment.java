@@ -19,6 +19,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -134,11 +136,7 @@ public class FirstFragment extends Fragment {
         requestPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
-                    if (isGranted) {
-                        launchImagePicker();
-                    } else {
-                        Toast.makeText(getContext(), "Permission denied to read images.", Toast.LENGTH_SHORT).show();
-                    }
+                    // Logic handled where the launcher is called
                 });
     }
 
@@ -158,6 +156,31 @@ public class FirstFragment extends Fragment {
         webSettings.setDomStorageEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+        
+        webView.setWebViewClient(new WebViewClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    for (String res : request.getResources()) {
+                        if (res.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+                            // Check for mic permission
+                            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                request.grant(request.getResources());
+                            } else {
+                                // If not granted, we request it. The user might have to try voice search again 
+                                // after granting it, as web permission requests are usually one-shot.
+                                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+                            }
+                            return;
+                        }
+                    }
+                    // Grant other requested permissions automatically (like camera if we add it)
+                    request.grant(request.getResources());
+                }
+            }
+        });
+
         webView.addJavascriptInterface(new WebAppInterface(requireContext()), "Android");
         
         // Get initial URL from MainActivity (could be a deep link)
@@ -180,7 +203,7 @@ public class FirstFragment extends Fragment {
         });
     }
 
-    // NEW: Function to send the ID token to the WebView
+    // NEW: Send the ID token to the WebView
     private void sendIdTokenToWebView(String idToken) {
         if (webView != null) {
             // Important: Escape the token to prevent errors in JavaScript if it contains quotes
