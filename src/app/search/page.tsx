@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -99,9 +98,11 @@ export default function SearchPage() {
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Speech recognition error", event.error);
       setIsListening(false);
+      // 'no-speech' is a normal timeout when the user doesn't say anything
+      // We handle it silently to prevent noisy error overlays
       if (event.error !== 'no-speech') {
+          console.error("Speech recognition error", event.error);
           toast({
               variant: "destructive",
               title: "Voice Search Error",
