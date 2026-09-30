@@ -1,17 +1,40 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { PlayerProvider } from '@/context/player-context';
 import { LayoutProvider } from '@/components/layout-provider';
-import { UserDataProvider } from '@/context/user-data-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import Script from 'next/script';
 
-
 export const metadata: Metadata = {
-  title: 'StreamTune',
-  description: 'A modern, responsive music streaming application.',
+  title: 'SttreamTune - Unlimited Music & AI Playlists',
+  description: 'Stream any song from YouTube with SttreamTune. Experience the best free music streaming with AI-powered playlists, Your Supermix, and a premium UI. Discover Streamtune, Tunestream, and more.',
+  keywords: ['sttreamtune', 'streamtune', 'tune stream', 'music streaming', 'free music', 'AI playlists', 'YouTube music player', 'offline music', 'SttreamTune App'],
+  authors: [{ name: 'Om Rishi', url: 'https://instagram.com/omrishi07' }],
+  verification: {
+    google: 'QevZ0DEoeeFjs-ZVStT1cz-lGZKKzgbENyllLalIaDE',
+  },
+  openGraph: {
+    title: 'SttreamTune - Your Vibe, Perfected',
+    description: 'The ultimate music streaming experience. Unlimited songs, AI discovery, and premium glassmorphic UI.',
+    url: 'https://sttreamtune.vercel.app',
+    siteName: 'SttreamTune',
+    images: [
+      {
+        url: 'https://i.postimg.cc/SswWC87w/streamtune.png',
+        width: 800,
+        height: 600,
+        alt: 'SttreamTune Logo',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SttreamTune - Music Streaming Redefined',
+    description: 'Unlimited music and AI-driven discovery at your fingertips.',
+    images: ['https://i.postimg.cc/SswWC87w/streamtune.png'],
+  },
 };
 
 export default function RootLayout({
