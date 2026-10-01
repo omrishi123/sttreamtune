@@ -70,9 +70,9 @@
     --border: 271 76% 25%;
     
     /* Vibrant Sunset Leaks */
-    --leak-1: 25 95% 53%; /* Deep Orange */
-    --leak-2: 330 80% 60%; /* Rose Pink */
-    --leak-3: 280 80% 50%; /* Electric Purple */
+    --leak-1: 25 95% 53%;
+    --leak-2: 330 80% 60%;
+    --leak-3: 280 80% 50%;
   }
 
   /* Zenith Theme */
@@ -87,9 +87,9 @@
     --border: 220 30% 30%;
     
     /* Sophisticated Zenith Leaks */
-    --leak-1: 180 60% 45%; /* Cyber Teal */
-    --leak-2: 40 40% 70%;  /* Pale Gold */
-    --leak-3: 200 60% 50%; /* Sky Blue */
+    --leak-1: 180 60% 45%;
+    --leak-2: 40 40% 70%;
+    --leak-3: 200 60% 50%;
   }
 }
 
@@ -115,17 +115,6 @@
   overflow: hidden;
 }
 
-/* Add noise for texture */
-.atmospheric-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  pointer-events: none;
-  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
-  filter: contrast(150%) brightness(1000%);
-}
-
 .light-leak {
   position: absolute;
   width: 120vw;
@@ -137,28 +126,9 @@
   animation: pulse-leak 25s infinite alternate ease-in-out;
 }
 
-.leak-1 {
-  top: -40%;
-  right: -20%;
-  background: hsl(var(--leak-1));
-}
-
-.leak-2 {
-  bottom: -30%;
-  left: -20%;
-  background: hsl(var(--leak-2));
-  animation-delay: -8s;
-}
-
-.leak-3 {
-  top: 10%;
-  left: 10%;
-  background: hsl(var(--leak-3));
-  width: 100vw;
-  height: 100vw;
-  opacity: 0.15;
-  animation-delay: -4s;
-}
+.leak-1 { top: -40%; right: -20%; background: hsl(var(--leak-1)); }
+.leak-2 { bottom: -30%; left: -20%; background: hsl(var(--leak-2)); animation-delay: -8s; }
+.leak-3 { top: 10%; left: 10%; background: hsl(var(--leak-3)); width: 100vw; height: 100vw; opacity: 0.15; animation-delay: -4s; }
 
 @keyframes pulse-leak {
   0% { transform: scale(1) translate(0, 0); opacity: 0.18; }
@@ -166,20 +136,19 @@
   100% { transform: scale(1.1) translate(-5%, 10%); opacity: 0.22; }
 }
 
-/* Premium Satin Glassmorphism */
+/* Premium Satin Glassmorphism - Ultra Transparent Fix */
 .glass-panel {
-  @apply bg-background/40 backdrop-blur-3xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+  @apply bg-background/5 backdrop-blur-3xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
 }
 
 .light .glass-panel {
-  @apply bg-white/40 border-black/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)];
+  @apply bg-white/5 border-black/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.05)];
 }
 
 .glass-morphic {
-  @apply bg-background/20 backdrop-blur-2xl border-t border-white/10;
+  @apply bg-transparent backdrop-blur-2xl border-t border-white/5;
 }
 
-/* iOS 27 Specific Utilities */
 .ios-squircle {
   border-radius: 2.5rem;
 }
@@ -199,13 +168,11 @@
   @apply shadow-2xl;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-foreground/10 rounded-full hover:bg-foreground/20 transition-colors;
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-foreground/10 rounded-full hover:bg-foreground/20 transition-colors; }
+
+@keyframes bounce-loader {
+  0%, 100% { height: 4px; }
+  50% { height: 12px; }
 }

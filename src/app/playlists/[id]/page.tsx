@@ -218,21 +218,21 @@ export default function PlaylistPage() {
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      {/* Cinematic Header with Fluid Adjustments */}
-      <div className="relative -mx-6 -mt-6 p-6 pt-16 pb-8 overflow-hidden min-h-[300px] flex items-end">
+      {/* Cinematic Header with Perfect Fit Alignment */}
+      <div className="relative -mx-4 md:-mx-10 -mt-6 p-6 pt-12 md:pt-16 pb-6 overflow-hidden min-h-[260px] flex items-end">
         <div className="absolute inset-0 z-0">
             <Image
                 src={imgSrc || DEFAULT_PLAYLIST_COVER}
                 alt=""
                 fill
-                className="object-cover blur-[100px] scale-125 opacity-50 transition-opacity duration-1000"
+                className="object-cover blur-[80px] scale-110 opacity-50 transition-opacity duration-1000"
                 unoptimized
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
             <div className="absolute inset-0 bg-black/5" />
         </div>
         
-        <header className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 text-center md:text-left w-full max-w-full">
+        <header className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-5 md:gap-8 text-center md:text-left w-full max-w-full">
             <motion.div 
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -242,9 +242,9 @@ export default function PlaylistPage() {
                 <Image
                     src={imgSrc || playlist.coverArt}
                     alt={playlist.name}
-                    width={220}
-                    height={220}
-                    className="rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.4)] aspect-square object-cover w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] md:w-[220px] md:h-[220px]"
+                    width={200}
+                    height={200}
+                    className="rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.4)] aspect-square object-cover w-[140px] h-[160px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px]"
                     priority
                     data-ai-hint={playlist['data-ai-hint']}
                     onError={() => setImgSrc(DEFAULT_PLAYLIST_COVER)}
@@ -252,24 +252,24 @@ export default function PlaylistPage() {
                 />
             </motion.div>
             
-            <div className="space-y-3 flex-1 min-w-0 max-w-full overflow-hidden">
+            <div className="space-y-2 flex-1 min-w-0 max-w-full overflow-hidden">
                 <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Playlist</p>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter text-white drop-shadow-sm line-clamp-2 text-balance leading-tight">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/50">Playlist</p>
+                    <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-headline tracking-tighter text-white drop-shadow-sm line-clamp-2 text-balance leading-tight">
                         {playlist.name}
                     </h1>
                 </div>
                 
                 {playlist.description && (
-                  <p className="text-white/70 text-sm md:text-base max-w-3xl line-clamp-2 md:line-clamp-3 leading-snug text-balance">
+                  <p className="text-white/70 text-xs md:text-sm max-w-3xl line-clamp-2 leading-snug text-balance">
                     {playlist.description}
                   </p>
                 )}
                 
-                <div className="text-xs md:text-sm text-white/80 flex items-center justify-center md:justify-start gap-2 flex-wrap font-medium">
+                <div className="text-[10px] md:text-sm text-white/80 flex items-center justify-center md:justify-start gap-2 flex-wrap font-medium">
                     <span className="flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded-full backdrop-blur-md">
                         {playlist.owner}
-                        {playlist.ownerIsVerified && <Icons.verified className="h-4 w-4" />}
+                        {playlist.ownerIsVerified && <Icons.verified className="h-3.5 w-3.5" />}
                     </span>
                     <span className="opacity-40">•</span>
                     <span>{tracks.length} tracks</span>
@@ -278,33 +278,33 @@ export default function PlaylistPage() {
                 </div>
                 
                 <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 pt-1">
-                    <Button size="lg" className="rounded-full h-12 px-6 text-base font-bold shadow-lg hover:scale-105 transition-transform" onClick={handlePlayPlaylist}>
-                        <Play className="mr-2 h-5 w-5 fill-current"/>
+                    <Button size="sm" className="rounded-full h-10 px-6 text-sm font-bold shadow-lg hover:scale-105 transition-transform" onClick={handlePlayPlaylist}>
+                        <Play className="mr-2 h-4 w-4 fill-current"/>
                         Play
                     </Button>
                     {canEdit && (
                         <AddSongsDialog playlist={playlist} onTrackAdded={handleTrackAdded}>
-                            <Button size="lg" variant="outline" className="rounded-full h-12 glass-panel hover:bg-white/10 px-6 text-sm">
-                                <Plus className="mr-2 h-4 w-4" />
+                            <Button size="sm" variant="outline" className="rounded-full h-10 glass-panel hover:bg-white/10 px-4 text-xs">
+                                <Plus className="mr-2 h-3.5 w-3.5" />
                                 Add Songs
                             </Button>
                         </AddSongsDialog>
                     )}
-                    <Button size="icon" variant="outline" className="rounded-full h-12 w-12 glass-panel hover:bg-white/10" onClick={handleShare}>
-                        <Share2 className="h-4 w-4"/>
+                    <Button size="icon" variant="outline" className="rounded-full h-10 w-10 glass-panel hover:bg-white/10" onClick={handleShare}>
+                        <Share2 className="h-3.5 w-3.5"/>
                     </Button>
                     {canEdit && (
                         <AlertDialog>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="outline" className="rounded-full h-12 w-12 glass-panel hover:bg-white/10" disabled={isDeleting}>
-                                <MoreHorizontal className="h-4 w-4" />
+                            <Button size="icon" variant="outline" className="rounded-full h-10 w-10 glass-panel hover:bg-white/10" disabled={isDeleting}>
+                                <MoreHorizontal className="h-3.5 w-3.5" />
                             </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="glass-panel">
                             <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                                <Trash2 className="mr-2 h-4 w-4" />
+                                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 text-xs">
+                                <Trash2 className="mr-2 h-3.5 w-3.5" />
                                 <span>Delete Playlist</span>
                                 </DropdownMenuItem>
                             </AlertDialogTrigger>
@@ -330,7 +330,7 @@ export default function PlaylistPage() {
             </div>
         </header>
        </div>
-      <section className="px-6 pb-12">
+      <section className="px-1 md:px-6 pb-4">
         <TrackList 
           tracks={tracks} 
           playlist={playlist} 
