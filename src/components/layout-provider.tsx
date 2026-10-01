@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -43,19 +42,18 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                 char: notes[Math.floor(Math.random() * notes.length)],
                 style: {
                     left: `${Math.random() * 100}vw`,
-                    animationDelay: `${Math.random() * 1}s`, // Reduced delay for faster start
-                    fontSize: `${14 + Math.random() * 20}px`,
+                    animationDelay: `${Math.random() * 0.5}s`,
+                    fontSize: `${16 + Math.random() * 24}px`,
                 },
             };
-            setParticles(prev => [...prev, newParticle].slice(-25)); // Increased particle limit
+            setParticles(prev => [...prev, newParticle].slice(-30));
 
             setTimeout(() => {
                 setParticles(prev => prev.filter(p => p.id !== newParticle.id));
             }, 6000);
         };
         
-        // Spawn particles more frequently
-        const particleInterval = setInterval(spawnParticle, 200);
+        const particleInterval = setInterval(spawnParticle, 180);
         return () => clearInterval(particleInterval);
     }, []);
 
@@ -68,14 +66,14 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                 }
                 return oldProgress + 2;
             });
-        }, 100); 
+        }, 80); 
 
         const subtitleInterval = setInterval(() => {
             setSubtitle(prev => {
                 const currentIndex = loadingSubtitles.indexOf(prev);
                 return loadingSubtitles[(currentIndex + 1) % loadingSubtitles.length];
             });
-        }, 2000);
+        }, 1800);
 
         return () => {
             clearInterval(progressTimer);
@@ -85,52 +83,52 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
 
     return (
          <div className={cn(
-            "fixed inset-0 z-[200] overflow-hidden bg-[#0d001a] transition-opacity duration-1000 ease-in-out",
+            "fixed inset-0 z-[200] overflow-hidden bg-[#1a0033] transition-opacity duration-1000 ease-in-out",
             isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
          )}>
-            {/* Deep Purple Gradient Background */}
-            <div className="fixed inset-0 bg-gradient-to-b from-[#2a004f] via-[#0d001a] to-[#0d001a]"></div>
+            {/* Lighter, More Vibrant Purple Gradient Background */}
+            <div className="fixed inset-0 bg-gradient-to-br from-[#3b0066] via-[#1a0033] to-[#0f0026]"></div>
             
-            {/* Floating Particles - Pure white and visible */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden text-white/40">
+            {/* Floating Particles - Boosted visibility */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden text-white/50">
                 {particles.map(p => (
-                    <div key={p.id} className="note absolute bottom-[-40px] animate-float font-bold" style={p.style}>
+                    <div key={p.id} className="note absolute bottom-[-40px] animate-float font-bold drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" style={p.style}>
                         {p.char}
                     </div>
                 ))}
             </div>
 
             <div className="fixed inset-0 grid place-items-center p-6">
-                <div className="w-full max-w-[420px] aspect-[16/11] rounded-[40px] p-8 text-center bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center">
+                <div className="w-full max-w-[420px] aspect-[16/11] rounded-[40px] p-8 text-center bg-white/10 backdrop-blur-3xl border border-white/20 shadow-[0_30px_100px_rgba(0,0,0,0.4)] flex flex-col items-center justify-center">
                     
                     {/* Header: Glowy Icon + Name */}
                     <div className="flex items-center gap-4 mb-8">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-cyan-400/40 blur-xl rounded-2xl animate-pulse"></div>
-                            <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-300 to-blue-600 flex items-center justify-center shadow-lg">
-                                <Music className="h-7 w-7 text-white" />
+                            <div className="absolute inset-0 bg-cyan-400/50 blur-2xl rounded-2xl animate-pulse"></div>
+                            <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-cyan-300 to-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(124,246,255,0.4)]">
+                                <Music className="h-8 w-8 text-white" />
                             </div>
                         </div>
-                        <span className="text-4xl font-bold tracking-tight text-white font-headline">StreamTune</span>
+                        <span className="text-4xl font-bold tracking-tight text-white font-headline drop-shadow-md">StreamTune</span>
                     </div>
 
                     {/* Orange Bouncing Equalizer Bars */}
                     <div className="flex justify-center gap-2 mb-6 h-6 items-end">
-                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:-0.4s]"></span>
-                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:-0.2s]"></span>
-                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader"></span>
-                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:0.2s]"></span>
-                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:0.4s]"></span>
+                        <span className="w-2 rounded-full bg-orange-500 animate-bounce-loader [animation-delay:-0.4s]"></span>
+                        <span className="w-2 rounded-full bg-orange-500 animate-bounce-loader [animation-delay:-0.2s]"></span>
+                        <span className="w-2 rounded-full bg-orange-500 animate-bounce-loader"></span>
+                        <span className="w-2 rounded-full bg-orange-500 animate-bounce-loader [animation-delay:0.2s]"></span>
+                        <span className="w-2 rounded-full bg-orange-500 animate-bounce-loader [animation-delay:0.4s]"></span>
                     </div>
 
                     {/* Subtitle & Progress */}
                     <div className="space-y-2">
-                        <div className="text-xl font-medium text-white/80">{subtitle}</div>
-                        <div className="text-2xl font-bold tracking-wider text-white">{progress}%</div>
+                        <div className="text-xl font-medium text-white/90">{subtitle}</div>
+                        <div className="text-2xl font-bold tracking-wider text-white drop-shadow-sm">{progress}%</div>
                     </div>
                     
                     {/* Credit Footer */}
-                    <div className="mt-10 text-xs opacity-50 font-medium text-white tracking-wide">
+                    <div className="mt-10 text-xs opacity-60 font-medium text-white tracking-wide">
                         App Made By Om Rishi i.g omrishi07
                     </div>
                 </div>
