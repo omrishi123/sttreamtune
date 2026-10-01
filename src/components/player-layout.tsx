@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -49,6 +48,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   DropdownMenuPortal,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -121,13 +122,13 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     <SidebarProvider defaultOpen>
       <AppInitializer />
       <LikeAnimation trigger={likeAnimationTrigger} />
-      <div className="relative flex h-screen flex-col">
+      <div className="relative flex h-screen flex-col bg-transparent">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar
             side="left"
             variant="sidebar"
             collapsible="icon"
-            className="hidden md:flex border-r border-sidebar-border bg-sidebar"
+            className="hidden md:flex border-r border-white/5 bg-black/20 backdrop-blur-3xl"
           >
             <SidebarHeader>
               <Link
@@ -148,6 +149,10 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                       asChild
                       isActive={pathname === item.href}
                       tooltip={item.label}
+                      className={cn(
+                        "transition-all duration-300",
+                        pathname === item.href ? "bg-white/10 shadow-lg" : "hover:bg-white/5"
+                      )}
                     >
                       <Link href={item.href}>
                         <item.icon />
@@ -159,12 +164,12 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
               </SidebarMenu>
               {!isGuest && currentUserPlaylists && currentUserPlaylists.length > 0 && (
                 <>
-                  <SidebarSeparator />
+                  <SidebarSeparator className="bg-white/5" />
                   <SidebarGroup>
-                    <SidebarGroupLabel className="flex items-center justify-between">
+                    <SidebarGroupLabel className="flex items-center justify-between text-white/40">
                       <span>Playlists</span>
                       <AddPlaylistDialog>
-                        <button className="p-1 hover:text-sidebar-foreground transition-colors">
+                        <button className="p-1 hover:text-white transition-colors">
                           <PlusCircle className="h-4 w-4" />
                         </button>
                       </AddPlaylistDialog>
@@ -176,6 +181,10 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                             asChild
                             isActive={pathname === `/playlists/${playlist.id}`}
                             tooltip={playlist.name}
+                            className={cn(
+                                "transition-all duration-300",
+                                pathname === `/playlists/${playlist.id}` ? "bg-white/10" : "hover:bg-white/5"
+                            )}
                           >
                             <Link href={`/playlists/${playlist.id}`}>
                               <Icons.playlist className="text-muted-foreground" />
@@ -192,10 +201,10 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
             <SidebarFooter>
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <SidebarMenuButton asChild tooltip="Profile" className="w-full justify-start">
+                   <SidebarMenuButton asChild tooltip="Profile" className="w-full justify-start hover:bg-white/5">
                       <div className="flex items-center gap-2">
                         <div className="relative">
-                          <Avatar className="h-7 w-7">
+                          <Avatar className="h-7 w-7 ring-1 ring-white/10">
                             <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
                             <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                           </Avatar>
@@ -207,54 +216,54 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                       </div>
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 mb-2 ml-2" side="top" align="start">
+                <DropdownMenuContent className="w-56 mb-2 ml-2 glass-panel" side="top" align="start">
                   <DropdownMenuLabel className="flex items-center gap-2">
                     <span>{user.name}</span>
                     {user.isVerified && <Icons.verified className="h-4 w-4" />}
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest} className="hover:bg-white/10">
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/settings')}>
+                  <DropdownMenuItem onClick={() => router.push('/settings')} className="hover:bg-white/10">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
+                    <DropdownMenuSubTrigger className="hover:bg-white/10">
                       <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                       <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                       <span>Toggle theme</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => setTheme("light")}>
+                      <DropdownMenuSubContent className="glass-panel">
+                        <DropdownMenuItem onClick={() => setTheme("light")} className="hover:bg-white/10">
                           Light
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("dark")}>
+                        <DropdownMenuItem onClick={() => setTheme("dark")} className="hover:bg-white/10">
                           Dark
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("sunset")}>
+                        <DropdownMenuItem onClick={() => setTheme("sunset")} className="hover:bg-white/10">
                           Sunset Groove
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("zenith")}>
+                        <DropdownMenuItem onClick={() => setTheme("zenith")} className="hover:bg-white/10">
                           Zenith
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("system")}>
+                        <DropdownMenuItem onClick={() => setTheme("system")} className="hover:bg-white/10">
                           System
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
                    {!isGuest && (
-                    <DropdownMenuItem onClick={handleLogout}>
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive hover:bg-destructive/10">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>
                   )}
                   {isGuest && (
-                     <DropdownMenuItem onClick={() => router.push('/login')}>
+                     <DropdownMenuItem onClick={() => router.push('/login')} className="hover:bg-white/10">
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log in</span>
                       </DropdownMenuItem>
@@ -263,9 +272,8 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
               </DropdownMenu>
             </SidebarFooter>
           </Sidebar>
-          <SidebarInset className="overflow-y-auto bg-background pb-48 md:pb-24">
-             <div className="absolute inset-0 z-[-1] bg-gradient-to-tr from-background via-primary/10 to-accent/10 dark:via-primary/5 dark:to-accent/5 opacity-70 blur-3xl"></div>
-            <header className="p-4 md:hidden flex items-center justify-between">
+          <SidebarInset className="overflow-y-auto bg-transparent pb-48 md:pb-24">
+            <header className="p-4 md:hidden flex items-center justify-between sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
                  <Link
                     href="/"
                     className="flex items-center gap-2 text-lg font-semibold"
@@ -278,7 +286,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <div className="relative">
-                        <Avatar className="h-8 w-8 cursor-pointer">
+                        <Avatar className="h-8 w-8 cursor-pointer ring-1 ring-white/20">
                           <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
                           <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                         </Avatar>
@@ -287,54 +295,54 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                           )}
                       </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 mr-4" side="bottom" align="end">
+                    <DropdownMenuContent className="w-56 mr-4 glass-panel" side="bottom" align="end">
                       <DropdownMenuLabel className="flex items-center gap-2">
                         <span>{user.name}</span>
                         {user.isVerified && <Icons.verified className="h-4 w-4" />}
                       </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest}>
+                      <DropdownMenuSeparator className="bg-white/10" />
+                      <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest} className="hover:bg-white/10">
                         <UserIcon className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push('/settings')}>
+                      <DropdownMenuItem onClick={() => router.push('/settings')} className="hover:bg-white/10">
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>
                       </DropdownMenuItem>
                       <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
+                        <DropdownMenuSubTrigger className="hover:bg-white/10">
                           <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                           <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                           <span>Toggle theme</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuPortal>
-                          <DropdownMenuSubContent>
-                            <DropdownMenuItem onClick={() => setTheme("light")}>
+                          <DropdownMenuSubContent className="glass-panel">
+                            <DropdownMenuItem onClick={() => setTheme("light")} className="hover:bg-white/10">
                               Light
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("dark")}>
+                            <DropdownMenuItem onClick={() => setTheme("dark")} className="hover:bg-white/10">
                               Dark
                             </DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => setTheme("sunset")}>
+                             <DropdownMenuItem onClick={() => setTheme("sunset")} className="hover:bg-white/10">
                               Sunset Groove
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("zenith")}>
+                            <DropdownMenuItem onClick={() => setTheme("zenith")} className="hover:bg-white/10">
                               Zenith
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("system")}>
+                            <DropdownMenuItem onClick={() => setTheme("system")} className="hover:bg-white/10">
                               System
                             </DropdownMenuItem>
                           </DropdownMenuSubContent>
                         </DropdownMenuPortal>
                       </DropdownMenuSub>
                       {!isGuest && (
-                        <DropdownMenuItem onClick={handleLogout}>
+                        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive hover:bg-destructive/10">
                           <LogOut className="mr-2 h-4 w-4" />
                           <span>Log out</span>
                         </DropdownMenuItem>
                       )}
                       {isGuest && (
-                         <DropdownMenuItem onClick={() => router.push('/login')}>
+                         <DropdownMenuItem onClick={() => router.push('/login')} className="hover:bg-white/10">
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>Log in</span>
                           </DropdownMenuItem>
@@ -342,14 +350,14 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </header>
-            <main className="p-6 pt-0 md:pt-6">
+            <main className="p-6 pt-6 relative">
                 {children}
             </main>
           </SidebarInset>
         </div>
         <Player />
         {isMobile && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-neutral-900/80 border-t border-white/10 z-50 md:hidden backdrop-blur-2xl">
+          <nav className="fixed bottom-0 left-0 right-0 bg-black/40 border-t border-white/5 z-50 md:hidden backdrop-blur-3xl">
             <div className="flex justify-around items-center h-16 px-2">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
