@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -65,7 +64,7 @@ interface PlayerLayoutProps {
   user: AppUser | null;
 }
 
-// DEFINING THIS OUTSIDE TO PREVENT RE-INITIALIZATION ON RENDER
+// Define ThemeSubMenu outside to prevent instant closure on re-render
 const ThemeSubMenu = ({ 
   theme, 
   setTheme, 
@@ -141,7 +140,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
             side="left"
             variant="sidebar"
             collapsible="icon"
-            className="hidden md:flex border-r border-white/5 bg-background/10 backdrop-blur-3xl"
+            className="hidden md:flex border-r border-white/5 bg-background/5 backdrop-blur-3xl"
           >
             <SidebarHeader className="pt-6 px-4">
               <Link
@@ -216,7 +215,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
             <SidebarFooter className="p-4">
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <button className="flex items-center gap-3 w-full p-2 rounded-2xl hover:bg-foreground/5 transition-all group">
+                   <button className="flex items-center gap-3 w-full p-2 rounded-2xl hover:bg-foreground/5 transition-all group text-left">
                       <div className="relative">
                         <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-primary/50 transition-all shadow-md">
                           <AvatarImage src={userAvatar} alt={user.name} />
@@ -226,7 +225,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                            <Icons.verified className="absolute -bottom-1 -right-1 h-4 w-4 shadow-sm" />
                         )}
                       </div>
-                      <div className="flex-1 text-left group-data-[collapsible=icon]:hidden">
+                      <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                         <p className="text-sm font-bold truncate leading-none">{user.name}</p>
                         <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-tighter">{isGuest ? 'Guest User' : 'Premium'}</p>
                       </div>
