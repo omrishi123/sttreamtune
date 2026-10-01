@@ -219,7 +219,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="rounded-lg h-10 px-3">
                       <Sun className="mr-3 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 opacity-60" />
-                      <Moon className="absolute mr-3 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 opacity-60" />
+                      < Moon className="absolute mr-3 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 opacity-60" />
                       <span className="font-medium capitalize">{theme} theme</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
@@ -303,20 +303,20 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
         <Player />
         
         {isMobile && (
-          <nav className="fixed bottom-4 left-4 right-4 glass-panel h-16 z-50 md:hidden flex justify-around items-center px-4 rounded-2xl shadow-2xl">
+          <nav className="fixed bottom-3 left-4 right-4 glass-panel h-14 z-50 md:hidden flex justify-around items-center px-4 rounded-2xl shadow-2xl">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link key={item.href} href={item.href} className="relative flex flex-col items-center gap-1 group">
+                <Link key={item.href} href={item.href} className="relative flex flex-col items-center gap-0.5 group">
                    {isActive && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full blur-[2px]" />
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary rounded-full blur-[1px]" />
                    )}
                    <item.icon className={cn(
-                     "h-6 w-6 transition-all",
+                     "h-5 w-5 transition-all",
                      isActive ? "text-primary scale-110" : "text-muted-foreground/60 group-hover:text-foreground"
                    )} />
                    <span className={cn(
-                     "text-[10px] font-bold uppercase tracking-tight",
+                     "text-[9px] font-bold uppercase tracking-tight",
                      isActive ? "text-primary" : "text-muted-foreground/40"
                    )}>{item.label}</span>
                 </Link>

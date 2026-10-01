@@ -157,7 +157,7 @@ export function Player() {
   if (isMobile) {
     return (
       <>
-       <footer className="fixed bottom-24 left-4 right-4 glass-panel px-4 py-3 flex flex-col gap-2 rounded-2xl shadow-2xl z-40">
+       <footer className="fixed bottom-[4.75rem] left-4 right-4 glass-panel px-4 py-3 flex flex-col gap-2 rounded-2xl shadow-2xl z-40">
         
         {/* Top Row: Song Info & Like/Queue */}
         <div 
