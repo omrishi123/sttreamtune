@@ -264,7 +264,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
               </DropdownMenu>
             </SidebarFooter>
           </Sidebar>
-          <SidebarInset className="bg-transparent pb-32 md:pb-24 overflow-y-auto overflow-x-hidden w-full">
+          <SidebarInset className="bg-transparent pb-36 md:pb-24 overflow-y-auto overflow-x-hidden w-full">
             <header className="p-4 md:hidden flex items-center justify-between sticky top-0 z-50 glass-morphic">
                  <Link href="/" className="flex items-center gap-2">
                     <Icons.logo className="h-6 w-6 text-primary" />

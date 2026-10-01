@@ -28,6 +28,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getCachedPlaylistTracks, cachePlaylistTracks, getCachedSinglePlaylist, cacheSinglePlaylist } from "@/lib/recommendations";
 import { AddSongsDialog } from "@/components/add-songs-dialog";
@@ -217,9 +218,8 @@ export default function PlaylistPage() {
   );
 
   return (
-    <div className="space-y-6 overflow-x-hidden">
-      {/* Cinematic Header with Perfect Fit Alignment */}
-      <div className="relative -mx-4 md:-mx-10 -mt-6 p-6 pt-12 md:pt-16 pb-6 overflow-hidden min-h-[260px] flex items-end">
+    <div className="space-y-4 overflow-x-hidden">
+      <div className="relative -mx-4 md:-mx-10 -mt-6 p-6 pt-12 md:pt-16 pb-6 overflow-hidden min-h-[220px] flex items-end">
         <div className="absolute inset-0 z-0">
             <Image
                 src={imgSrc || DEFAULT_PLAYLIST_COVER}
@@ -244,7 +244,7 @@ export default function PlaylistPage() {
                     alt={playlist.name}
                     width={200}
                     height={200}
-                    className="rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.4)] aspect-square object-cover w-[140px] h-[160px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px]"
+                    className="rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.4)] aspect-square object-cover w-[130px] h-[130px] sm:w-[170px] sm:h-[170px] md:w-[200px] md:h-[200px]"
                     priority
                     data-ai-hint={playlist['data-ai-hint']}
                     onError={() => setImgSrc(DEFAULT_PLAYLIST_COVER)}
@@ -261,7 +261,7 @@ export default function PlaylistPage() {
                 </div>
                 
                 {playlist.description && (
-                  <p className="text-white/70 text-xs md:text-sm max-w-3xl line-clamp-2 leading-snug text-balance">
+                  <p className="text-white/70 text-xs md:text-sm max-w-3xl line-clamp-3 leading-snug text-balance">
                     {playlist.description}
                   </p>
                 )}
