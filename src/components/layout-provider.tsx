@@ -15,12 +15,13 @@ import { cn } from "@/lib/utils";
 import { hasSelectedPreferences, clearUserPreferences } from "@/lib/preferences";
 import { useRecommendationRefresh } from "@/hooks/use-recommendation-refresh";
 import { RefreshRecommendationsDialog } from "@/components/refresh-recommendations-dialog";
+import { Music } from "lucide-react";
 
 const loadingSubtitles = [
-    "Tuning your vibe…",
-    "Finding your rhythm…",
-    "Warming up the equalizer…",
-    "Curating the perfect flow…"
+    "Tuning your vibe...",
+    "Finding your rhythm...",
+    "Warming up the equalizer...",
+    "Curating the perfect flow..."
 ];
 
 interface Particle {
@@ -35,29 +36,27 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
-        const notes = ["♪", "♫", "♬", "𝄞"];
+        const notes = ["♪", "♫", "♬", "♭"];
         const spawnParticle = () => {
             const newParticle: Particle = {
                 id: Date.now() + Math.random(),
                 char: notes[Math.floor(Math.random() * notes.length)],
                 style: {
                     left: `${Math.random() * 100}vw`,
-                    animationDelay: `${Math.random() * 3}s`,
-                    fontSize: `${14 + Math.random() * 20}px`,
+                    animationDelay: `${Math.random() * 2}s`,
+                    fontSize: `${12 + Math.random() * 18}px`,
                 },
             };
-            setParticles(prev => [...prev, newParticle]);
+            setParticles(prev => [...prev, newParticle].slice(-15));
 
             setTimeout(() => {
                 setParticles(prev => prev.filter(p => p.id !== newParticle.id));
-            }, 7000);
+            }, 6000);
         };
         
-        const particleInterval = setInterval(spawnParticle, 200);
-        
+        const particleInterval = setInterval(spawnParticle, 400);
         return () => clearInterval(particleInterval);
     }, []);
-
 
     useEffect(() => {
         const progressTimer = setInterval(() => {
@@ -66,16 +65,16 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
                     clearInterval(progressTimer);
                     return 100;
                 }
-                return oldProgress + 5;
+                return oldProgress + 2;
             });
-        }, 150); 
+        }, 100); 
 
         const subtitleInterval = setInterval(() => {
             setSubtitle(prev => {
                 const currentIndex = loadingSubtitles.indexOf(prev);
                 return loadingSubtitles[(currentIndex + 1) % loadingSubtitles.length];
             });
-        }, 1200);
+        }, 2000);
 
         return () => {
             clearInterval(progressTimer);
@@ -85,46 +84,59 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
 
     return (
          <div className={cn(
-            "fixed inset-0 z-[200] overflow-hidden bg-[#0096ff] transition-opacity duration-700 ease-in-out",
+            "fixed inset-0 z-[200] overflow-hidden bg-[#0d001a] transition-opacity duration-1000 ease-in-out",
             isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
          )}>
-            <div className="fixed inset-0 bg-gradient-to-br from-[#0096ff] via-[#007acc] to-[#005c99]"></div>
+            {/* Deep Purple Gradient Background */}
+            <div className="fixed inset-0 bg-gradient-to-b from-[#2a004f] via-[#0d001a] to-[#0d001a]"></div>
             
-            <div className="fixed inset-0 pointer-events-none overflow-hidden text-white/40">
+            {/* Floating Particles at bottom */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden text-white/20">
                 {particles.map(p => (
-                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float" style={p.style}>
+                    <div key={p.id} className="note absolute bottom-[-30px] opacity-0 animate-float" style={p.style}>
                         {p.char}
                     </div>
                 ))}
             </div>
 
             <div className="fixed inset-0 grid place-items-center p-6">
-                <div className="w-full max-w-[480px] rounded-3xl p-8 text-center bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl">
-                    <div className="inline-grid grid-flow-col items-center gap-4 text-3xl font-extrabold tracking-tight text-white animate-pulse">
-                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-lg">
-                            <Icons.logo className="h-6 w-6 text-[#0096ff]"/>
-                        </div>
-                        <span>StreamTune</span>
-                    </div>
-
-                    <div className="flex justify-center gap-1.5 my-6 h-10 items-end">
-                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.4s]"></span>
-                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.3s]"></span>
-                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.2s]"></span>
-                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.1s]"></span>
-                        <span className="w-2 rounded bg-white animate-bounce-loader"></span>
-                    </div>
-
-                    <div className="text-lg font-medium text-white/90">{subtitle}</div>
-                    <div className="mt-2 font-bold tracking-wider text-white">{progress}%</div>
+                <div className="w-full max-w-[420px] aspect-[16/11] rounded-[40px] p-8 text-center bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center">
                     
-                    <div className="mt-8 text-xs opacity-60 font-medium text-white">Made by Om Rishi</div>
+                    {/* Header: Glowy Icon + Name */}
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-cyan-400/40 blur-xl rounded-2xl animate-pulse"></div>
+                            <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-cyan-300 to-blue-600 flex items-center justify-center shadow-lg">
+                                <Music className="h-7 w-7 text-white" />
+                            </div>
+                        </div>
+                        <span className="text-4xl font-bold tracking-tight text-white font-headline">StreamTune</span>
+                    </div>
+
+                    {/* Orange Bouncing Equalizer Bars */}
+                    <div className="flex justify-center gap-2 mb-6 h-6 items-end">
+                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:-0.4s]"></span>
+                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:-0.2s]"></span>
+                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader"></span>
+                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:0.2s]"></span>
+                        <span className="w-2 rounded-full bg-[#f97316] animate-bounce-loader [animation-delay:0.4s]"></span>
+                    </div>
+
+                    {/* Subtitle & Progress */}
+                    <div className="space-y-2">
+                        <div className="text-xl font-medium text-white/80">{subtitle}</div>
+                        <div className="text-2xl font-bold tracking-wider text-white">{progress}%</div>
+                    </div>
+                    
+                    {/* Credit Footer */}
+                    <div className="mt-10 text-xs opacity-50 font-medium text-white tracking-wide">
+                        App Made By Om Rishi i.g omrishi07
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
-
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -137,7 +149,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
   const { showRefreshDialog, setShowRefreshDialog } = useRecommendationRefresh();
-
 
   useEffect(() => {
     const unsubscribe = onAuthChange((fbUser) => {
