@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -37,6 +36,7 @@ import { Icons } from "@/components/icons";
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DEFAULT_PLAYLIST_COVER } from "@/lib/constants";
+import { motion } from "framer-motion";
 
 export default function PlaylistPage() {
   const params = useParams();
@@ -65,14 +65,12 @@ export default function PlaylistPage() {
     let foundPlaylist: Playlist | undefined | null = getPlaylistById(id);
     let fetchedTracks: Track[] = [];
 
-    // If not found locally, try fetching directly from Firestore
     if (!foundPlaylist) {
         try {
             const playlistRef = doc(db, 'communityPlaylists', id);
             const docSnap = await getDoc(playlistRef);
             if (docSnap.exists()) {
                 foundPlaylist = { ...docSnap.data(), id: docSnap.id } as Playlist;
-                // Since community playlists have tracks embedded, use them directly
                 fetchedTracks = foundPlaylist.tracks || [];
                 addTracksToCache(fetchedTracks);
             }
@@ -81,45 +79,38 @@ export default function PlaylistPage() {
         }
     }
 
-
-    // If playlist exists in user data (local, community, channel), get its tracks
     if (foundPlaylist) {
         if (foundPlaylist.public && foundPlaylist.tracks) {
             fetchedTracks = foundPlaylist.tracks;
             addTracksToCache(fetchedTracks);
         } else if (foundPlaylist.isChannelPlaylist) {
              fetchedTracks = foundPlaylist.tracks || [];
-        } else { // Local playlist
+        } else {
             fetchedTracks = foundPlaylist.trackIds.map(tid => getTrackById(tid)).filter(Boolean) as Track[];
         }
-    } else { // Not in user library OR firestore, check our persistent cache for YT playlists
+    } else {
         foundPlaylist = getCachedSinglePlaylist(id);
         if (foundPlaylist) {
             let cachedTracks = getCachedPlaylistTracks(id);
             if (cachedTracks) {
                 fetchedTracks = cachedTracks;
             } else {
-                 // Playlist metadata was cached but tracks weren't, fetch tracks now
                 fetchedTracks = await fetchTracksForPlaylist(id);
-                cachePlaylistTracks(id, fetchedTracks); // Save tracks to cache
+                cachePlaylistTracks(id, fetchedTracks);
                 addTracksToCache(fetchedTracks);
             }
-        } else { // Not in any cache, fetch from YouTube API
+        } else {
             try {
                 const ytPlaylistDetails = await getYoutubePlaylistDetails({ playlistId: id });
                 if (ytPlaylistDetails) {
                     fetchedTracks = await fetchTracksForPlaylist(id);
-                    addTracksToCache(fetchedTracks); // Add tracks to master track cache
-                    
+                    addTracksToCache(fetchedTracks);
                     foundPlaylist = {
                         ...ytPlaylistDetails,
                         trackIds: fetchedTracks.map(t => t.id),
                     };
-
-                    // CRITICAL FIX: Save the fetched playlist and its tracks to their respective persistent caches
                     cacheSinglePlaylist(foundPlaylist);
                     cachePlaylistTracks(id, fetchedTracks);
-
                 }
             } catch (error) {
                 console.error("Failed to fetch from YouTube", error);
@@ -145,64 +136,45 @@ export default function PlaylistPage() {
 
   const handleTrackAdded = (newTrack: Track) => {
     if (!playlist) return;
-    
-    // Immediately update the UI state to reflect the addition
     setTracks(currentTracks => {
-        // Prevent adding duplicates to the view, though context should also prevent this
         if (currentTracks.some(t => t.id === newTrack.id)) {
             return currentTracks;
         }
         return [...currentTracks, newTrack];
     });
-
-    // Let the context handle the actual data persistence and logic
     addTrackToPlaylist(playlist.id, newTrack); 
   };
   
   const handleRemoveTrackFromLocalPlaylist = (trackId: string) => {
     if (!playlist) return;
-
     const newTracks = tracks.filter(t => t.id !== trackId);
     const newTrackIds = newTracks.map(t => t.id);
-
     const updatedPlaylist = { ...playlist, tracks: newTracks, trackIds: newTrackIds };
     setPlaylist(updatedPlaylist);
     setTracks(newTracks);
-
     if (playlist.isChannelPlaylist) {
       const channelId = playlist.id;
-      const newChannelData = {
-          id: channelId,
-          name: playlist.name,
-          logo: playlist.coverArt,
-          uploads: newTracks,
-          playlists: [] 
-      };
+      const newChannelData = { id: channelId, name: playlist.name, logo: playlist.coverArt, uploads: newTracks, playlists: [] };
       updateChannel(newChannelData);
     }
-
     toast({ title: "Track Removed", description: "The track has been removed from this playlist." });
   };
 
-
   if (isLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 p-6 pt-20">
         <header className="flex flex-col sm:flex-row items-center gap-6">
           <Skeleton className="w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] rounded-lg shadow-lg flex-shrink-0" />
           <div className="space-y-3 text-center sm:text-left w-full">
             <Skeleton className="h-4 w-24 mx-auto sm:mx-0" />
             <Skeleton className="h-10 w-60 mx-auto sm:mx-0" />
             <Skeleton className="h-4 w-full max-w-sm mx-auto sm:mx-0" />
-            <Skeleton className="h-4 w-48 mx-auto sm:mx-0" />
             <Skeleton className="h-12 w-32 mt-4 mx-auto sm:mx-0" />
           </div>
         </header>
-        <section>
-          <div className="space-y-2">
-            {Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-          </div>
-        </section>
+        <div className="space-y-2">
+            {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
       </div>
     );
   }
@@ -222,10 +194,7 @@ export default function PlaylistPage() {
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "Link Copied!",
-      description: "Playlist link has been copied to your clipboard.",
-    });
+    toast({ title: "Link Copied!", description: "Playlist link copied to clipboard." });
   }
 
   const handleDeletePlaylist = async () => {
@@ -234,18 +203,11 @@ export default function PlaylistPage() {
     const result = await deletePlaylist(playlist.id);
     setIsDeleting(false);
     if (result.success) {
-        toast({
-            title: "Playlist Deleted",
-            description: `"${playlist.name}" has been deleted.`,
-        });
+        toast({ title: "Playlist Deleted", description: `"${playlist.name}" has been deleted.` });
         router.push('/library');
         router.refresh(); 
     } else {
-        toast({
-            variant: "destructive",
-            title: "Deletion Failed",
-            description: result.message,
-        });
+        toast({ variant: "destructive", title: "Deletion Failed", description: result.message });
     }
   };
 
@@ -255,98 +217,117 @@ export default function PlaylistPage() {
 
   return (
     <div className="space-y-8">
-      <div className="relative -mx-6 -mt-6 p-6 pt-16 pb-8 overflow-hidden">
+      {/* Cinematic Header with Seamless Blending */}
+      <div className="relative -mx-6 -mt-6 p-6 pt-20 pb-12 overflow-hidden min-h-[350px] flex items-end">
         <div className="absolute inset-0 z-0">
             <Image
-            src={imgSrc || DEFAULT_PLAYLIST_COVER}
-            alt=""
-            fill
-            className="object-cover blur-3xl scale-125 opacity-50 dark:opacity-30"
-            unoptimized
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-        </div>
-        <header className="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-            <Image
-                src={imgSrc || playlist.coverArt}
-                alt={playlist.name}
-                width={200}
-                height={200}
-                className="rounded-lg shadow-2xl aspect-square object-cover w-[150px] h-[150px] sm:w-[175px] sm:h-[175px] md:w-[200px] md:h-[200px] flex-shrink-0"
-                priority
-                data-ai-hint={playlist['data-ai-hint']}
-                onError={() => setImgSrc(DEFAULT_PLAYLIST_COVER)}
+                src={imgSrc || DEFAULT_PLAYLIST_COVER}
+                alt=""
+                fill
+                className="object-cover blur-[120px] scale-150 opacity-60 transition-opacity duration-1000"
                 unoptimized
             />
-            <div className="space-y-3 min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-wider">Playlist</p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-headline tracking-tighter line-clamp-3 break-words">
-                {playlist.name}
-            </h1>
-            {playlist.description && <p className="text-muted-foreground text-sm line-clamp-2">{playlist.description}</p>}
-            <div className="text-sm text-muted-foreground flex items-center justify-center md:justify-start gap-1.5">
-                <span>Created by</span>
-                <span className="text-foreground font-medium">{playlist.owner}</span>
-                {playlist.ownerIsVerified && <Icons.verified className="h-4 w-4 text-blue-500" />}
-                <span>{" \u2022 "}</span>
-                <span>{tracks.length} songs, about {totalMinutes} min</span>
-            </div>
-            <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 pt-2">
-                <Button size="lg" onClick={handlePlayPlaylist}>
-                    <Play className="mr-2 h-5 w-5"/>
-                    Play
-                </Button>
-                {canEdit && (
-                    <AddSongsDialog playlist={playlist} onTrackAdded={handleTrackAdded}>
-                        <Button size="lg" variant="outline">
-                            <Plus className="mr-2 h-5 w-5" />
-                            Add Songs
-                        </Button>
-                    </AddSongsDialog>
-                )}
-                <Button size="lg" variant="outline" onClick={handleShare}>
-                    <Share2 className="mr-2 h-5 w-5"/>
-                    Share
-                </Button>
-                {canEdit && (
-                    <AlertDialog>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button size="lg" variant="outline" disabled={isDeleting}>
-                            <MoreHorizontal className="h-5 w-5" />
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                        <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete playlist</span>
-                            </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the
-                            playlist "{playlist.name}".
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
-                            {isDeleting ? 'Deleting...' : 'Delete'}
-                        </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                    </AlertDialog>
-                )}
-            </div>
+            {/* Seamless Blending Mask: Fades from top (light leaks) to bottom (solid content bg) */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+            <div className="absolute inset-0 bg-black/10" />
+        </div>
+        
+        <header className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-8 text-center md:text-left w-full">
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="relative group flex-shrink-0"
+            >
+                <Image
+                    src={imgSrc || playlist.coverArt}
+                    alt={playlist.name}
+                    width={240}
+                    height={240}
+                    className="rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] aspect-square object-cover w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] md:w-[240px] md:h-[240px]"
+                    priority
+                    data-ai-hint={playlist['data-ai-hint']}
+                    onError={() => setImgSrc(DEFAULT_PLAYLIST_COVER)}
+                    unoptimized
+                />
+                <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
+            </motion.div>
+            
+            <div className="space-y-4 flex-1 min-w-0">
+                <div className="space-y-1">
+                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/60">Playlist</p>
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline tracking-tighter text-white drop-shadow-sm line-clamp-2">
+                        {playlist.name}
+                    </h1>
+                </div>
+                
+                {playlist.description && <p className="text-white/70 text-base max-w-2xl line-clamp-2 leading-relaxed">{playlist.description}</p>}
+                
+                <div className="text-sm text-white/80 flex items-center justify-center md:justify-start gap-2 flex-wrap font-medium">
+                    <span className="flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded-full">
+                        {playlist.owner}
+                        {playlist.ownerIsVerified && <Icons.verified className="h-4 w-4" />}
+                    </span>
+                    <span className="opacity-40 text-xs">{" • "}</span>
+                    <span>{tracks.length} tracks</span>
+                    <span className="opacity-40 text-xs">{" • "}</span>
+                    <span>{totalMinutes} min</span>
+                </div>
+                
+                <div className="flex items-center justify-center md:justify-start flex-wrap gap-3 pt-2">
+                    <Button size="lg" className="rounded-full h-14 px-8 text-lg font-bold shadow-xl hover:scale-105 transition-transform" onClick={handlePlayPlaylist}>
+                        <Play className="mr-2 h-6 w-6 fill-current"/>
+                        Play
+                    </Button>
+                    {canEdit && (
+                        <AddSongsDialog playlist={playlist} onTrackAdded={handleTrackAdded}>
+                            <Button size="lg" variant="outline" className="rounded-full h-14 glass-panel hover:bg-white/10">
+                                <Plus className="mr-2 h-5 w-5" />
+                                Add Songs
+                            </Button>
+                        </AddSongsDialog>
+                    )}
+                    <Button size="lg" variant="outline" className="rounded-full h-14 w-14 p-0 glass-panel hover:bg-white/10" onClick={handleShare}>
+                        <Share2 className="h-5 w-5"/>
+                    </Button>
+                    {canEdit && (
+                        <AlertDialog>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button size="lg" variant="outline" className="rounded-full h-14 w-14 p-0 glass-panel hover:bg-white/10" disabled={isDeleting}>
+                                <MoreHorizontal className="h-5 w-5" />
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="glass-panel">
+                            <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete Playlist</span>
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent className="glass-panel">
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete "{playlist.name}".
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90 rounded-full" disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
             </div>
         </header>
        </div>
-      <section>
+      <section className="px-6 pb-20">
         <TrackList 
           tracks={tracks} 
           playlist={playlist} 

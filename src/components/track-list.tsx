@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Play, Music, Heart, PlusCircle, Trash2, MoreHorizontal } from "lucide-react";
@@ -67,11 +66,9 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
   };
 
   const handleRemoveTrack = (trackId: string) => {
-    // If a custom remove handler is provided (for local channel playlists), use it.
     if (onRemoveTrack) {
       onRemoveTrack(trackId);
     } else if (playlist) {
-      // Otherwise, use the default context handler (for user and public playlists).
       removeTrackFromPlaylist(playlist.id, trackId);
     }
   };
@@ -83,21 +80,20 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Can edit if it's a private playlist, a public one they own, or a local channel playlist.
   const canEditPlaylist = currentUser && playlist && (
     playlist.isChannelPlaylist ||
     (playlist.public ? playlist.ownerId === currentUser.id : true)
   );
 
   return (
-    <Table>
+    <Table className="border-separate border-spacing-y-1">
       <TableHeader>
-        <TableRow>
-          <TableHead className="w-12 text-center">#</TableHead>
-          <TableHead>Title</TableHead>
-          <TableHead className="hidden md:table-cell">Album</TableHead>
-          <TableHead className="hidden sm:table-cell">Duration</TableHead>
-          <TableHead className="text-right">
+        <TableRow className="border-none hover:bg-transparent">
+          <TableHead className="w-12 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground/60">#</TableHead>
+          <TableHead className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Title</TableHead>
+          <TableHead className="hidden md:table-cell text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Album</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Duration</TableHead>
+          <TableHead className="text-right text-xs font-bold uppercase tracking-widest text-muted-foreground/60 pr-4">
             <span className="sr-only">Actions</span>
           </TableHead>
         </TableRow>
@@ -113,56 +109,59 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
             <TableRow
               key={`${track.id}-${index}`}
               ref={isLastElement ? onTrackRendered : null}
-              className="group"
+              className={cn(
+                "group border-none transition-all duration-200 ease-out",
+                isActive ? "bg-white/10" : "hover:bg-white/5"
+              )}
               onDoubleClick={() => handlePlayTrack(track)}
-              data-state={isActive ? "selected" : undefined}
             >
-              <TableCell className="text-center text-muted-foreground">
+              <TableCell className="text-center rounded-l-xl">
                 <div 
                   className="relative h-5 flex items-center justify-center cursor-pointer"
                   onClick={() => handlePlayTrack(track)}
                 >
-                  <span className="group-hover:hidden">{isActive && isPlaying ? <Music className="h-4 w-4 text-primary animate-pulse" /> : index + 1}</span>
-                   <Button variant="ghost" size="icon" className="absolute inset-0 h-full w-full hidden group-hover:flex items-center justify-center">
-                    <Play className="h-4 w-4" />
+                  <span className={cn("group-hover:hidden font-medium tabular-nums", isActive ? "text-primary" : "text-muted-foreground/60")}>
+                    {isActive && isPlaying ? <Music className="h-4 w-4 text-primary animate-pulse" /> : index + 1}
+                  </span>
+                   <Button variant="ghost" size="icon" className="absolute inset-0 h-full w-full hidden group-hover:flex items-center justify-center hover:bg-transparent">
+                    <Play className="h-4 w-4 fill-current" />
                   </Button>
                 </div>
               </TableCell>
-              <TableCell className="max-w-[150px] sm:max-w-xs break-words">
-                <div className="font-medium">{track.title}</div>
-                <div className="text-sm text-muted-foreground">
+              <TableCell className="max-w-[200px] sm:max-w-xs break-words">
+                <div className={cn("font-semibold line-clamp-1", isActive ? "text-primary" : "text-foreground")}>{track.title}</div>
+                <div className="text-xs text-muted-foreground font-medium hover:text-foreground transition-colors cursor-pointer">
                   {track.artist}
                 </div>
               </TableCell>
-              <TableCell className="hidden md:table-cell break-words">
+              <TableCell className="hidden md:table-cell text-muted-foreground font-medium italic opacity-70">
                 {track.album}
               </TableCell>
-              <TableCell className="hidden sm:table-cell text-muted-foreground">
+              <TableCell className="hidden sm:table-cell tabular-nums font-medium text-muted-foreground/60">
                 {formatDuration(track.duration)}
               </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100", isTrackLiked && "opacity-100")} onClick={() => toggleLike(track)}>
-                      <Heart className={cn("h-4 w-4", isTrackLiked && "fill-primary text-primary")} />
+              <TableCell className="text-right rounded-r-xl pr-4">
+                <div className="flex items-center justify-end gap-2">
+                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100 transition-all active:scale-90", isTrackLiked && "opacity-100 text-primary")} onClick={() => toggleLike(track)}>
+                      <Heart className={cn("h-4 w-4", isTrackLiked && "fill-current")} />
                    </Button>
-                   <span className="text-muted-foreground w-8 mx-1 sm:hidden">{formatDuration(track.duration)}</span>
                    
                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                         <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100">
+                         <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-8 w-8 hover:bg-white/10 rounded-full transition-all">
                            <MoreHorizontal className="h-4 w-4" />
                          </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="glass-panel">
                         <AddToPlaylistMenu track={track}>
                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                               <PlusCircle className="mr-2 h-4 w-4" />
-                              <span>Add to playlist</span>
+                              <span>Add to Playlist</span>
                            </DropdownMenuItem>
                         </AddToPlaylistMenu>
                         {canEditPlaylist && (
                           <>
-                            <DropdownMenuSeparator />
+                            <DropdownMenuSeparator className="bg-white/10" />
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                  <DropdownMenuItem
@@ -170,19 +169,19 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
                                     onSelect={(e) => e.preventDefault()}
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    <span>Remove from playlist</span>
+                                    <span>Remove from Playlist</span>
                                   </DropdownMenuItem>
                               </AlertDialogTrigger>
-                              <AlertDialogContent>
+                              <AlertDialogContent className="glass-panel">
                                  <AlertDialogHeader>
-                                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                   <AlertDialogTitle>Remove Track?</AlertDialogTitle>
                                    <AlertDialogDescription>
-                                     This will permanently remove "{track.title}" from this playlist.
+                                     Remove "{track.title}" from this collection?
                                    </AlertDialogDescription>
                                  </AlertDialogHeader>
                                  <AlertDialogFooter>
-                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                   <AlertDialogAction onClick={() => handleRemoveTrack(track.id)} className="bg-destructive hover:bg-destructive/90">
+                                   <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                                   <AlertDialogAction onClick={() => handleRemoveTrack(track.id)} className="bg-destructive hover:bg-destructive/90 rounded-full">
                                      Remove
                                    </AlertDialogAction>
                                  </AlertDialogFooter>
@@ -192,7 +191,6 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
                         )}
                       </DropdownMenuContent>
                    </DropdownMenu>
-
                 </div>
               </TableCell>
             </TableRow>
