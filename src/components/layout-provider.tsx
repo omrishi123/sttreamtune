@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { hasSelectedPreferences, clearUserPreferences } from "@/lib/preferences";
 import { useRecommendationRefresh } from "@/hooks/use-recommendation-refresh";
 import { RefreshRecommendationsDialog } from "@/components/refresh-recommendations-dialog";
-import { pingUserActivity } from "@/lib/user-activity";
 
 const loadingSubtitles = [
     "Tuning your vibe…",
@@ -29,7 +28,7 @@ interface Particle {
   style: React.CSSProperties;
 }
 
-function AnimatedLoadingScreen({ isVisible, isFirstLoad }: { isVisible: boolean, isFirstLoad: boolean }) {
+function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean; isFirstLoad: boolean }) {
     const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
     const [particles, setParticles] = useState<Particle[]>([]);
     const [progress, setProgress] = useState(0);
@@ -53,7 +52,7 @@ function AnimatedLoadingScreen({ isVisible, isFirstLoad }: { isVisible: boolean,
             }, 7000);
         };
         
-        const particleInterval = setInterval(spawnParticle, 150);
+        const particleInterval = setInterval(spawnParticle, 200);
         
         return () => clearInterval(particleInterval);
     }, []);
@@ -68,7 +67,7 @@ function AnimatedLoadingScreen({ isVisible, isFirstLoad }: { isVisible: boolean,
                 }
                 return oldProgress + 5;
             });
-        }, 175); 
+        }, 150); 
 
         const subtitleInterval = setInterval(() => {
             setSubtitle(prev => {
@@ -85,44 +84,40 @@ function AnimatedLoadingScreen({ isVisible, isFirstLoad }: { isVisible: boolean,
 
     return (
          <div className={cn(
-            "fixed inset-0 z-[200] overflow-hidden bg-[#0b1020] transition-opacity duration-700 ease-in-out",
+            "fixed inset-0 z-[200] overflow-hidden bg-background transition-opacity duration-700 ease-in-out",
             isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
          )}>
-            <div className="fixed inset-0 bg-gradient-to-br from-[#1e1e2f] via-[#3b0066] to-[#001f54] bg-[size:300%_300%] animate-gradient-move filter saturate-110"></div>
-            <div 
-                className="fixed inset-[-100px] animate-drift mix-blend-soft-light opacity-45 pointer-events-none" 
-                style={{backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.05'/></svg>")`}}
-            ></div>
+            <div className="fixed inset-0 bg-gradient-to-br from-background via-muted/30 to-background"></div>
             
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 {particles.map(p => (
-                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float text-white" style={p.style}>
+                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float text-primary/40" style={p.style}>
                         {p.char}
                     </div>
                 ))}
             </div>
 
             <div className="fixed inset-0 grid place-items-center p-6">
-                <div className="w-full max-w-[520px] rounded-3xl p-7 text-center shadow-[0_30px_80px_rgba(0,0,0,.35),inset_0_0_0_1px_rgba(255,255,255,.08)] bg-white/5 backdrop-blur-lg">
-                    <div className="inline-grid grid-flow-col items-center gap-3.5 text-3xl sm:text-4xl font-extrabold tracking-wide animate-pulse text-shadow-[0_4px_30px_rgba(167,139,250,.45)] text-white">
-                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,_#7cf6ff,_transparent_55%),linear-gradient(135deg,_rgba(124,246,255,.55),_rgba(167,139,250,.5))] shadow-[0_10px_30px_rgba(124,246,255,.35),inset_0_0_18px_rgba(255,255,255,.25)]">
-                            <Icons.logo className="h-6 w-6 text-white"/>
+                <div className="w-full max-w-[480px] rounded-3xl p-8 text-center glass-panel">
+                    <div className="inline-grid grid-flow-col items-center gap-4 text-3xl font-extrabold tracking-tight animate-pulse text-foreground">
+                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary shadow-lg">
+                            <Icons.logo className="h-6 w-6 text-primary-foreground"/>
                         </div>
-                        <span className="text-white">StreamTune</span>
+                        <span>StreamTune</span>
                     </div>
 
-                     <div className="flex justify-center gap-2 my-5 h-8 items-end">
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.4s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.3s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.2s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader [animation-delay:-0.1s]"></span>
-                        <span className="w-1.5 rounded bg-primary animate-bounce-loader"></span>
+                    <div className="flex justify-center gap-1.5 my-6 h-10 items-end">
+                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.4s]"></span>
+                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.3s]"></span>
+                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.2s]"></span>
+                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.1s]"></span>
+                        <span className="w-2 rounded bg-primary animate-bounce-loader"></span>
                     </div>
 
-                    <div className="text-base opacity-85 text-white">{subtitle}</div>
-                    <div className="mt-1.5 font-bold tracking-wider text-white">{progress}%</div>
+                    <div className="text-lg font-medium text-muted-foreground">{subtitle}</div>
+                    <div className="mt-2 font-bold tracking-wider text-primary">{progress}%</div>
                     
-                    <div className="mt-4 text-xs opacity-65 text-white">App Made By Om Rishi i.g omrishi07</div>
+                    <div className="mt-8 text-xs opacity-50 font-medium">Made by Om Rishi</div>
                 </div>
             </div>
         </div>
@@ -147,7 +142,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthChange((fbUser) => {
         if(fbUser) {
-            pingUserActivity(fbUser);
             if(user && user.id !== fbUser.id) {
                 clearUserPreferences();
             }
@@ -155,7 +149,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             if (hasSelectedPreferences()) {
                 setIsReadyForApp(true);
                 setIsFirstLoad(false);
-            } else if (!isWelcomePage) {
+            } else if (!isWelcomePage && !isAuthPage) {
                 setIsFirstLoad(true);
                 router.replace('/welcome');
             }
@@ -165,13 +159,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [user, router, isWelcomePage]);
+  }, [user, router, isWelcomePage, isAuthPage]);
   
-  // This effect handles the case where the user lands directly on the welcome page.
   useEffect(() => {
       if (isWelcomePage) {
           setIsReadyForApp(true);
-          setIsFirstLoad(true);
       }
   }, [isWelcomePage]);
 
@@ -186,10 +178,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         <div className="light-leak leak-2" />
         <div className="light-leak leak-3" />
       </div>
+      
       <AnimatedLoadingScreen isVisible={!isReadyForApp} isFirstLoad={isFirstLoad} />
       
       {isReadyForApp && user ? (
-         <div className="transition-opacity duration-500 ease-in-out opacity-100">
+         <div className="transition-opacity duration-1000 ease-in-out opacity-100">
             <UserDataProvider>
               <PlayerProvider>
                 <PlayerLayout user={user}>

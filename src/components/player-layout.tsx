@@ -12,12 +12,10 @@ import {
   PlusCircle,
   User as UserIcon,
   LogOut,
-  Radio,
   Flame,
   ShieldCheck,
   Moon,
   Sun,
-  MicVocal,
   Settings,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -38,7 +36,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarInset,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -55,12 +52,11 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { User as AppUser, Playlist } from "@/lib/types";
+import type { User as AppUser } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserData } from "@/context/user-data-context";
 import { AddPlaylistDialog } from "./add-playlist-dialog";
 import { AppInitializer } from "./app-initializer";
-import { AnimatePresence, motion } from 'framer-motion';
 import { LikeAnimation } from "./LikeAnimation";
 
 interface PlayerLayoutProps {
@@ -73,7 +69,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { playlists: userPlaylists, likeAnimationTrigger } = useUserData();
-  const { setTheme } = useTheme();
+  const { setTheme, theme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -92,28 +88,14 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   useEffect(() => {
     if (user?.isAdmin) {
       setNavItems(prev => {
-        if (prev.some(item => item.href === '/admin')) {
-          return prev;
-        }
-        return [
-          ...prev,
-          { href: "/admin", label: "Admin", icon: ShieldCheck }
-        ];
+        if (prev.some(item => item.href === '/admin')) return prev;
+        return [...prev, { href: "/admin", label: "Admin", icon: ShieldCheck }];
       });
     }
   }, [user]);
 
-  
-  const currentUserPlaylists = userPlaylists;
-
-  if (isMobile === undefined) {
-     return null; // Return null during SSR or initial client render
-  }
-
-  if (!user) {
-    // This case should not be hit if LayoutProvider logic is correct, but as a fallback
-    return null;
-  }
+  if (isMobile === undefined) return null;
+  if (!user) return null;
   
   const isGuest = user.id === 'guest';
   const userAvatar = user.photoURL || "https://placehold.co/100x100.png";
@@ -122,26 +104,28 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
     <SidebarProvider defaultOpen>
       <AppInitializer />
       <LikeAnimation trigger={likeAnimationTrigger} />
-      <div className="relative flex h-screen flex-col bg-transparent">
+      <div className="relative flex h-screen flex-col bg-transparent overflow-hidden">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar
             side="left"
             variant="sidebar"
             collapsible="icon"
-            className="hidden md:flex border-r border-white/5 bg-black/20 backdrop-blur-3xl"
+            className="hidden md:flex border-r border-white/5 bg-background/10 backdrop-blur-3xl"
           >
-            <SidebarHeader>
+            <SidebarHeader className="pt-6 px-4">
               <Link
                 href="/"
-                className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground"
+                className="flex items-center gap-3 text-xl font-bold text-foreground"
               >
-                <Icons.logo className="h-6 w-6" />
-                <span className="font-headline group-data-[collapsible=icon]:hidden">
+                <div className="bg-primary p-1.5 rounded-xl shadow-lg">
+                    <Icons.logo className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <span className="font-headline group-data-[collapsible=icon]:hidden tracking-tighter">
                   StreamTune
                 </span>
               </Link>
             </SidebarHeader>
-            <SidebarContent>
+            <SidebarContent className="px-2">
               <SidebarMenu>
                 {navItems.map((item) => (
                   <SidebarMenuItem key={item.label}>
@@ -150,45 +134,45 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                       isActive={pathname === item.href}
                       tooltip={item.label}
                       className={cn(
-                        "transition-all duration-300",
-                        pathname === item.href ? "bg-white/10 shadow-lg" : "hover:bg-white/5"
+                        "transition-all duration-300 rounded-xl h-11",
+                        pathname === item.href ? "bg-primary/10 text-primary shadow-sm" : "hover:bg-foreground/5"
                       )}
                     >
                       <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.label}</span>
+                        <item.icon className="h-5 w-5" />
+                        <span className="font-medium">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
-              {!isGuest && currentUserPlaylists && currentUserPlaylists.length > 0 && (
+              {!isGuest && userPlaylists && userPlaylists.length > 0 && (
                 <>
-                  <SidebarSeparator className="bg-white/5" />
+                  <SidebarSeparator className="my-4 opacity-10" />
                   <SidebarGroup>
-                    <SidebarGroupLabel className="flex items-center justify-between text-white/40">
-                      <span>Playlists</span>
+                    <SidebarGroupLabel className="flex items-center justify-between px-3 text-muted-foreground/60 text-[10px] uppercase font-bold tracking-widest">
+                      <span>Library</span>
                       <AddPlaylistDialog>
-                        <button className="p-1 hover:text-white transition-colors">
+                        <button className="p-1 hover:text-foreground transition-colors">
                           <PlusCircle className="h-4 w-4" />
                         </button>
                       </AddPlaylistDialog>
                     </SidebarGroupLabel>
-                    <SidebarMenu>
-                      {currentUserPlaylists.map((playlist) => (
+                    <SidebarMenu className="mt-2">
+                      {userPlaylists.map((playlist) => (
                         <SidebarMenuItem key={playlist.id}>
                           <SidebarMenuButton
                             asChild
                             isActive={pathname === `/playlists/${playlist.id}`}
                             tooltip={playlist.name}
                             className={cn(
-                                "transition-all duration-300",
-                                pathname === `/playlists/${playlist.id}` ? "bg-white/10" : "hover:bg-white/5"
+                                "transition-all duration-300 rounded-xl",
+                                pathname === `/playlists/${playlist.id}` ? "bg-foreground/10" : "hover:bg-foreground/5"
                             )}
                           >
                             <Link href={`/playlists/${playlist.id}`}>
-                              <Icons.playlist className="text-muted-foreground" />
-                              <span>{playlist.name}</span>
+                              <Icons.playlist className="h-4 w-4 opacity-60" />
+                              <span className="truncate">{playlist.name}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -198,96 +182,82 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                 </>
               )}
             </SidebarContent>
-            <SidebarFooter>
+            <SidebarFooter className="p-4">
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <SidebarMenuButton asChild tooltip="Profile" className="w-full justify-start hover:bg-white/5">
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <Avatar className="h-7 w-7 ring-1 ring-white/10">
-                            <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
-                            <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
-                          </Avatar>
-                          {user.isVerified && (
-                             <Icons.verified className="absolute -bottom-1 -right-1 h-4 w-4" />
-                          )}
-                        </div>
-                        <span className="font-medium">{user.name}</span>
+                   <button className="flex items-center gap-3 w-full p-2 rounded-2xl hover:bg-foreground/5 transition-all group">
+                      <div className="relative">
+                        <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-primary/50 transition-all shadow-md">
+                          <AvatarImage src={userAvatar} alt={user.name} />
+                          <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
+                        </Avatar>
+                        {user.isVerified && (
+                           <Icons.verified className="absolute -bottom-1 -right-1 h-4 w-4 shadow-sm" />
+                        )}
                       </div>
-                    </SidebarMenuButton>
+                      <div className="flex-1 text-left group-data-[collapsible=icon]:hidden">
+                        <p className="text-sm font-bold truncate leading-none">{user.name}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-tighter">{isGuest ? 'Guest User' : 'Premium'}</p>
+                      </div>
+                    </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 mb-2 ml-2 glass-panel" side="top" align="start">
-                  <DropdownMenuLabel className="flex items-center gap-2">
-                    <span>{user.name}</span>
-                    {user.isVerified && <Icons.verified className="h-4 w-4" />}
+                <DropdownMenuContent className="w-64 mb-4 glass-panel p-2" side="right" align="end" sideOffset={12}>
+                  <DropdownMenuLabel className="px-3 py-2">
+                    <p className="text-sm font-bold">{user.name}</p>
+                    <p className="text-xs text-muted-foreground font-medium">{user.email}</p>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest} className="hover:bg-white/10">
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                  <DropdownMenuSeparator className="my-2 opacity-10" />
+                  <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest} className="rounded-lg h-10 px-3">
+                    <UserIcon className="mr-3 h-4 w-4 opacity-60" />
+                    <span className="font-medium">Account Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/settings')} className="hover:bg-white/10">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                  <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg h-10 px-3">
+                    <Settings className="mr-3 h-4 w-4 opacity-60" />
+                    <span className="font-medium">Preferences</span>
                   </DropdownMenuItem>
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="hover:bg-white/10">
-                      <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                      <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                      <span>Toggle theme</span>
+                    <DropdownMenuSubTrigger className="rounded-lg h-10 px-3">
+                      <Sun className="mr-3 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 opacity-60" />
+                      <Moon className="absolute mr-3 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 opacity-60" />
+                      <span className="font-medium capitalize">{theme} theme</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent className="glass-panel">
-                        <DropdownMenuItem onClick={() => setTheme("light")} className="hover:bg-white/10">
-                          Light
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("dark")} className="hover:bg-white/10">
-                          Dark
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("sunset")} className="hover:bg-white/10">
-                          Sunset Groove
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("zenith")} className="hover:bg-white/10">
-                          Zenith
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("system")} className="hover:bg-white/10">
-                          System
-                        </DropdownMenuItem>
+                      <DropdownMenuSubContent className="glass-panel min-w-[140px] p-1">
+                        <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-md">Light</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-md">Dark</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("sunset")} className="rounded-md">Sunset Groove</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("zenith")} className="rounded-md">Zenith</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("system")} className="rounded-md">System</DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
-                   {!isGuest && (
-                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive hover:bg-destructive/10">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
+                  <DropdownMenuSeparator className="my-2 opacity-10" />
+                   {!isGuest ? (
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg h-10 px-3">
+                      <LogOut className="mr-3 h-4 w-4" />
+                      <span className="font-bold">Sign Out</span>
                     </DropdownMenuItem>
-                  )}
-                  {isGuest && (
-                     <DropdownMenuItem onClick={() => router.push('/login')} className="hover:bg-white/10">
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log in</span>
+                  ) : (
+                     <DropdownMenuItem onClick={() => router.push('/login')} className="text-primary focus:text-primary focus:bg-primary/10 rounded-lg h-10 px-3">
+                        <LogOut className="mr-3 h-4 w-4" />
+                        <span className="font-bold">Sign In</span>
                       </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarFooter>
           </Sidebar>
-          <SidebarInset className="overflow-y-auto bg-transparent pb-48 md:pb-24">
-            <header className="p-4 md:hidden flex items-center justify-between sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
-                 <Link
-                    href="/"
-                    className="flex items-center gap-2 text-lg font-semibold"
-                  >
-                    <Icons.logo className="h-6 w-6" />
-                    <span className="font-headline">
-                      StreamTune
-                    </span>
+          <SidebarInset className="bg-transparent pb-48 md:pb-32 overflow-y-auto">
+            <header className="p-4 md:hidden flex items-center justify-between sticky top-0 z-50 glass-morphic">
+                 <Link href="/" className="flex items-center gap-2">
+                    <Icons.logo className="h-6 w-6 text-primary" />
+                    <span className="font-headline font-bold text-lg">StreamTune</span>
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <div className="relative">
-                        <Avatar className="h-8 w-8 cursor-pointer ring-1 ring-white/20">
-                          <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="user avatar" />
+                        <Avatar className="h-9 w-9 border-2 border-foreground/10">
+                          <AvatarImage src={userAvatar} alt={user.name} />
                           <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                         </Avatar>
                          {user.isVerified && (
@@ -295,101 +265,62 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                           )}
                       </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 mr-4 glass-panel" side="bottom" align="end">
-                      <DropdownMenuLabel className="flex items-center gap-2">
-                        <span>{user.name}</span>
-                        {user.isVerified && <Icons.verified className="h-4 w-4" />}
+                    <DropdownMenuContent className="w-64 mr-4 glass-panel p-2" side="bottom" align="end" sideOffset={8}>
+                       <DropdownMenuLabel className="px-3 py-2">
+                        <p className="text-sm font-bold">{user.name}</p>
+                        <p className="text-xs text-muted-foreground font-medium">{user.email}</p>
                       </DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-white/10" />
-                      <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest} className="hover:bg-white/10">
-                        <UserIcon className="mr-2 h-4 w-4" />
+                      <DropdownMenuSeparator className="my-2 opacity-10" />
+                      <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest} className="rounded-lg h-11">
+                        <UserIcon className="mr-3 h-4 w-4" />
                         <span>Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push('/settings')} className="hover:bg-white/10">
-                        <Settings className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg h-11">
+                        <Settings className="mr-3 h-4 w-4" />
                         <span>Settings</span>
                       </DropdownMenuItem>
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger className="hover:bg-white/10">
-                          <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                          <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                          <span>Toggle theme</span>
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuPortal>
-                          <DropdownMenuSubContent className="glass-panel">
-                            <DropdownMenuItem onClick={() => setTheme("light")} className="hover:bg-white/10">
-                              Light
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("dark")} className="hover:bg-white/10">
-                              Dark
-                            </DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => setTheme("sunset")} className="hover:bg-white/10">
-                              Sunset Groove
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("zenith")} className="hover:bg-white/10">
-                              Zenith
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("system")} className="hover:bg-white/10">
-                              System
-                            </DropdownMenuItem>
-                          </DropdownMenuSubContent>
-                        </DropdownMenuPortal>
-                      </DropdownMenuSub>
-                      {!isGuest && (
-                        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive hover:bg-destructive/10">
-                          <LogOut className="mr-2 h-4 w-4" />
+                      {!isGuest ? (
+                        <DropdownMenuItem onClick={handleLogout} className="text-destructive rounded-lg h-11">
+                          <LogOut className="mr-3 h-4 w-4" />
                           <span>Log out</span>
                         </DropdownMenuItem>
-                      )}
-                      {isGuest && (
-                         <DropdownMenuItem onClick={() => router.push('/login')} className="hover:bg-white/10">
-                            <LogOut className="mr-2 h-4 w-4" />
+                      ) : (
+                         <DropdownMenuItem onClick={() => router.push('/login')} className="text-primary rounded-lg h-11">
+                            <LogOut className="mr-3 h-4 w-4" />
                             <span>Log in</span>
                           </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </header>
-            <main className="p-6 pt-6 relative">
+            <main className="relative z-10 px-6 py-6 md:px-10 md:py-8 max-w-[1800px] mx-auto">
                 {children}
             </main>
           </SidebarInset>
         </div>
+        
         <Player />
+        
         {isMobile && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-black/40 border-t border-white/5 z-50 md:hidden backdrop-blur-3xl">
-            <div className="flex justify-around items-center h-16 px-2">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link key={item.href} href={item.href} className="flex-1 group">
-                    <div className="flex flex-col items-center justify-center gap-1 h-full">
-                      <div className={cn(
-                        "relative flex items-center justify-center w-12 h-7 rounded-full transition-all duration-300",
-                        isActive 
-                          ? "bg-white/20"
-                          : "group-hover:bg-white/10"
-                      )}>
-                         <div className={cn(
-                           "absolute inset-0 rounded-full bg-primary opacity-0 blur-md transition-opacity duration-300",
-                           isActive && "opacity-40"
-                         )}></div>
-                         <item.icon className={cn(
-                           "h-5 w-5 z-10 transition-colors duration-300",
-                           isActive ? "text-white" : "text-neutral-400 group-hover:text-white"
-                         )} />
-                      </div>
-                      <span className={cn(
-                        "text-[10px] font-medium transition-colors duration-300",
-                        isActive ? "text-white" : "text-neutral-400 group-hover:text-white"
-                      )}>
-                        {item.label}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+          <nav className="fixed bottom-0 left-0 right-0 glass-morphic h-16 z-50 md:hidden flex justify-around items-center px-4">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link key={item.href} href={item.href} className="relative flex flex-col items-center gap-1 group">
+                   {isActive && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full blur-[2px]" />
+                   )}
+                   <item.icon className={cn(
+                     "h-6 w-6 transition-all",
+                     isActive ? "text-primary scale-110" : "text-muted-foreground/60 group-hover:text-foreground"
+                   )} />
+                   <span className={cn(
+                     "text-[10px] font-bold uppercase tracking-tight",
+                     isActive ? "text-primary" : "text-muted-foreground/40"
+                   )}>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         )}
       </div>
