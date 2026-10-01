@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -84,40 +85,40 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean; isFirstLoad:
 
     return (
          <div className={cn(
-            "fixed inset-0 z-[200] overflow-hidden bg-background transition-opacity duration-700 ease-in-out",
+            "fixed inset-0 z-[200] overflow-hidden bg-[#0096ff] transition-opacity duration-700 ease-in-out",
             isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
          )}>
-            <div className="fixed inset-0 bg-gradient-to-br from-background via-muted/30 to-background"></div>
+            <div className="fixed inset-0 bg-gradient-to-br from-[#0096ff] via-[#007acc] to-[#005c99]"></div>
             
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+            <div className="fixed inset-0 pointer-events-none overflow-hidden text-white/40">
                 {particles.map(p => (
-                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float text-primary/40" style={p.style}>
+                    <div key={p.id} className="note absolute bottom-[-24px] opacity-0 animate-float" style={p.style}>
                         {p.char}
                     </div>
                 ))}
             </div>
 
             <div className="fixed inset-0 grid place-items-center p-6">
-                <div className="w-full max-w-[480px] rounded-3xl p-8 text-center glass-panel">
-                    <div className="inline-grid grid-flow-col items-center gap-4 text-3xl font-extrabold tracking-tight animate-pulse text-foreground">
-                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary shadow-lg">
-                            <Icons.logo className="h-6 w-6 text-primary-foreground"/>
+                <div className="w-full max-w-[480px] rounded-3xl p-8 text-center bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl">
+                    <div className="inline-grid grid-flow-col items-center gap-4 text-3xl font-extrabold tracking-tight text-white animate-pulse">
+                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-lg">
+                            <Icons.logo className="h-6 w-6 text-[#0096ff]"/>
                         </div>
                         <span>StreamTune</span>
                     </div>
 
                     <div className="flex justify-center gap-1.5 my-6 h-10 items-end">
-                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.4s]"></span>
-                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.3s]"></span>
-                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.2s]"></span>
-                        <span className="w-2 rounded bg-primary animate-bounce-loader [animation-delay:-0.1s]"></span>
-                        <span className="w-2 rounded bg-primary animate-bounce-loader"></span>
+                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.4s]"></span>
+                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.3s]"></span>
+                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.2s]"></span>
+                        <span className="w-2 rounded bg-white animate-bounce-loader [animation-delay:-0.1s]"></span>
+                        <span className="w-2 rounded bg-white animate-bounce-loader"></span>
                     </div>
 
-                    <div className="text-lg font-medium text-muted-foreground">{subtitle}</div>
-                    <div className="mt-2 font-bold tracking-wider text-primary">{progress}%</div>
+                    <div className="text-lg font-medium text-white/90">{subtitle}</div>
+                    <div className="mt-2 font-bold tracking-wider text-white">{progress}%</div>
                     
-                    <div className="mt-8 text-xs opacity-50 font-medium">Made by Om Rishi</div>
+                    <div className="mt-8 text-xs opacity-60 font-medium text-white">Made by Om Rishi</div>
                 </div>
             </div>
         </div>
