@@ -265,7 +265,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
               </DropdownMenu>
             </SidebarFooter>
           </Sidebar>
-          <SidebarInset className="bg-transparent pb-48 md:pb-32 overflow-y-auto">
+          <SidebarInset className="bg-transparent pb-36 md:pb-28 overflow-y-auto overflow-x-hidden w-full">
             <header className="p-4 md:hidden flex items-center justify-between sticky top-0 z-50 glass-morphic">
                  <Link href="/" className="flex items-center gap-2">
                     <Icons.logo className="h-6 w-6 text-primary" />
@@ -316,7 +316,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </header>
-            <main className="relative z-10 px-6 py-6 md:px-10 md:py-8 max-w-[1800px] mx-auto">
+            <main className="relative z-10 px-4 md:px-10 py-6 md:py-8 max-w-[1800px] mx-auto w-full">
                 {children}
             </main>
           </SidebarInset>
@@ -325,7 +325,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
         <Player />
         
         {isMobile && (
-          <nav className="fixed bottom-3 left-4 right-4 glass-panel h-14 z-50 md:hidden flex justify-around items-center px-4 rounded-2xl shadow-2xl">
+          <nav className="fixed bottom-3 left-4 right-4 glass-panel h-14 z-50 md:hidden flex justify-around items-center px-4 rounded-2xl shadow-2xl overflow-hidden">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (

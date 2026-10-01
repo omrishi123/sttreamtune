@@ -5,7 +5,7 @@ import { getTracksForPlaylist as fetchTracksForPlaylist, getYoutubePlaylistDetai
 import { notFound, useParams, useRouter } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { Button } from "@/components/ui/button";
-import { Play, Share2, MoreHorizontal, Trash2, ShieldCheck, Plus } from "lucide-react";
+import { Play, Share2, MoreHorizontal, Trash2, Plus } from "lucide-react";
 import type { Playlist, Track, User } from "@/lib/types";
 import { useUserData } from "@/context/user-data-context";
 import React, { useEffect, useState, useCallback } from "react";
@@ -28,7 +28,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getCachedPlaylistTracks, cachePlaylistTracks, getCachedSinglePlaylist, cacheSinglePlaylist } from "@/lib/recommendations";
 import { AddSongsDialog } from "@/components/add-songs-dialog";
@@ -193,8 +192,10 @@ export default function PlaylistPage() {
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({ title: "Link Copied!", description: "Playlist link copied to clipboard." });
+    if (typeof window !== 'undefined') {
+        navigator.clipboard.writeText(window.location.href);
+        toast({ title: "Link Copied!", description: "Playlist link copied to clipboard." });
+    }
   }
 
   const handleDeletePlaylist = async () => {
@@ -216,86 +217,88 @@ export default function PlaylistPage() {
   );
 
   return (
-    <div className="space-y-8">
-      {/* Cinematic Header with Seamless Blending */}
-      <div className="relative -mx-6 -mt-6 p-6 pt-20 pb-12 overflow-hidden min-h-[350px] flex items-end">
+    <div className="space-y-6 overflow-x-hidden">
+      {/* Cinematic Header with Fluid Adjustments */}
+      <div className="relative -mx-6 -mt-6 p-6 pt-16 pb-8 overflow-hidden min-h-[300px] flex items-end">
         <div className="absolute inset-0 z-0">
             <Image
                 src={imgSrc || DEFAULT_PLAYLIST_COVER}
                 alt=""
                 fill
-                className="object-cover blur-[120px] scale-150 opacity-60 transition-opacity duration-1000"
+                className="object-cover blur-[100px] scale-125 opacity-50 transition-opacity duration-1000"
                 unoptimized
             />
-            {/* Seamless Blending Mask: Fades from top (light leaks) to bottom (solid content bg) */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
-            <div className="absolute inset-0 bg-black/10" />
+            <div className="absolute inset-0 bg-black/5" />
         </div>
         
-        <header className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-8 text-center md:text-left w-full">
+        <header className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 text-center md:text-left w-full max-w-full">
             <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
                 className="relative group flex-shrink-0"
             >
                 <Image
                     src={imgSrc || playlist.coverArt}
                     alt={playlist.name}
-                    width={240}
-                    height={240}
-                    className="rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] aspect-square object-cover w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] md:w-[240px] md:h-[240px]"
+                    width={220}
+                    height={220}
+                    className="rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.4)] aspect-square object-cover w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] md:w-[220px] md:h-[220px]"
                     priority
                     data-ai-hint={playlist['data-ai-hint']}
                     onError={() => setImgSrc(DEFAULT_PLAYLIST_COVER)}
                     unoptimized
                 />
-                <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
             </motion.div>
             
-            <div className="space-y-4 flex-1 min-w-0">
+            <div className="space-y-3 flex-1 min-w-0 max-w-full overflow-hidden">
                 <div className="space-y-1">
-                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/60">Playlist</p>
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline tracking-tighter text-white drop-shadow-sm line-clamp-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Playlist</p>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter text-white drop-shadow-sm line-clamp-2 text-balance leading-tight">
                         {playlist.name}
                     </h1>
                 </div>
                 
-                {playlist.description && <p className="text-white/70 text-base max-w-2xl line-clamp-2 leading-relaxed">{playlist.description}</p>}
+                {playlist.description && (
+                  <p className="text-white/70 text-sm md:text-base max-w-3xl line-clamp-2 md:line-clamp-3 leading-snug text-balance">
+                    {playlist.description}
+                  </p>
+                )}
                 
-                <div className="text-sm text-white/80 flex items-center justify-center md:justify-start gap-2 flex-wrap font-medium">
-                    <span className="flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded-full">
+                <div className="text-xs md:text-sm text-white/80 flex items-center justify-center md:justify-start gap-2 flex-wrap font-medium">
+                    <span className="flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded-full backdrop-blur-md">
                         {playlist.owner}
                         {playlist.ownerIsVerified && <Icons.verified className="h-4 w-4" />}
                     </span>
-                    <span className="opacity-40 text-xs">{" • "}</span>
+                    <span className="opacity-40">•</span>
                     <span>{tracks.length} tracks</span>
-                    <span className="opacity-40 text-xs">{" • "}</span>
+                    <span className="opacity-40">•</span>
                     <span>{totalMinutes} min</span>
                 </div>
                 
-                <div className="flex items-center justify-center md:justify-start flex-wrap gap-3 pt-2">
-                    <Button size="lg" className="rounded-full h-14 px-8 text-lg font-bold shadow-xl hover:scale-105 transition-transform" onClick={handlePlayPlaylist}>
-                        <Play className="mr-2 h-6 w-6 fill-current"/>
+                <div className="flex items-center justify-center md:justify-start flex-wrap gap-2 pt-1">
+                    <Button size="lg" className="rounded-full h-12 px-6 text-base font-bold shadow-lg hover:scale-105 transition-transform" onClick={handlePlayPlaylist}>
+                        <Play className="mr-2 h-5 w-5 fill-current"/>
                         Play
                     </Button>
                     {canEdit && (
                         <AddSongsDialog playlist={playlist} onTrackAdded={handleTrackAdded}>
-                            <Button size="lg" variant="outline" className="rounded-full h-14 glass-panel hover:bg-white/10">
-                                <Plus className="mr-2 h-5 w-5" />
+                            <Button size="lg" variant="outline" className="rounded-full h-12 glass-panel hover:bg-white/10 px-6 text-sm">
+                                <Plus className="mr-2 h-4 w-4" />
                                 Add Songs
                             </Button>
                         </AddSongsDialog>
                     )}
-                    <Button size="lg" variant="outline" className="rounded-full h-14 w-14 p-0 glass-panel hover:bg-white/10" onClick={handleShare}>
-                        <Share2 className="h-5 w-5"/>
+                    <Button size="icon" variant="outline" className="rounded-full h-12 w-12 glass-panel hover:bg-white/10" onClick={handleShare}>
+                        <Share2 className="h-4 w-4"/>
                     </Button>
                     {canEdit && (
                         <AlertDialog>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                            <Button size="lg" variant="outline" className="rounded-full h-14 w-14 p-0 glass-panel hover:bg-white/10" disabled={isDeleting}>
-                                <MoreHorizontal className="h-5 w-5" />
+                            <Button size="icon" variant="outline" className="rounded-full h-12 w-12 glass-panel hover:bg-white/10" disabled={isDeleting}>
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="glass-panel">
@@ -314,12 +317,12 @@ export default function PlaylistPage() {
                                 This will permanently delete "{playlist.name}".
                             </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90 rounded-full" disabled={isDeleting}>
-                                {isDeleting ? 'Deleting...' : 'Delete'}
-                            </AlertDialogAction>
-                            </AlertDialogFooter>
+                            <div className="flex justify-end gap-3 mt-4">
+                              <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive hover:bg-destructive/90 rounded-full" disabled={isDeleting}>
+                                  {isDeleting ? 'Deleting...' : 'Delete'}
+                              </AlertDialogAction>
+                              <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                            </div>
                         </AlertDialogContent>
                         </AlertDialog>
                     )}
@@ -327,7 +330,7 @@ export default function PlaylistPage() {
             </div>
         </header>
        </div>
-      <section className="px-6 pb-20">
+      <section className="px-6 pb-12">
         <TrackList 
           tracks={tracks} 
           playlist={playlist} 
