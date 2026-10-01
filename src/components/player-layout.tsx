@@ -65,6 +65,36 @@ interface PlayerLayoutProps {
   user: AppUser | null;
 }
 
+// DEFINING THIS OUTSIDE TO PREVENT RE-INITIALIZATION ON RENDER
+const ThemeSubMenu = ({ 
+  theme, 
+  setTheme, 
+  isMobileVersion = false 
+}: { 
+  theme: string | undefined, 
+  setTheme: (t: string) => void, 
+  isMobileVersion?: boolean 
+}) => (
+  <DropdownMenuSub>
+    <DropdownMenuSubTrigger className={cn("rounded-lg px-3", isMobileVersion ? "h-11" : "h-10")}>
+      <div className="flex items-center">
+        <Sun className="mr-3 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 opacity-60" />
+        <Moon className="absolute mr-3 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 opacity-60" />
+        <span className="font-medium capitalize">{theme} theme</span>
+      </div>
+    </DropdownMenuSubTrigger>
+    <DropdownMenuPortal>
+      <DropdownMenuSubContent className="glass-panel min-w-[140px] p-1 z-[100]">
+        <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-md">Light</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-md">Dark</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("sunset")} className="rounded-md">Sunset Groove</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("zenith")} className="rounded-md">Zenith</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")} className="rounded-md">System</DropdownMenuItem>
+      </DropdownMenuSubContent>
+    </DropdownMenuPortal>
+  </DropdownMenuSub>
+);
+
 export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -100,25 +130,6 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   
   const isGuest = user.id === 'guest';
   const userAvatar = user.photoURL || "https://placehold.co/100x100.png";
-
-  const ThemeSubMenu = ({ isMobileVersion = false }: { isMobileVersion?: boolean }) => (
-    <DropdownMenuSub>
-      <DropdownMenuSubTrigger className={cn("rounded-lg px-3", isMobileVersion ? "h-11" : "h-10")}>
-        <Sun className="mr-3 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 opacity-60" />
-        <Moon className="absolute mr-3 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 opacity-60" />
-        <span className="font-medium capitalize">{theme} theme</span>
-      </DropdownMenuSubTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuSubContent className="glass-panel min-w-[140px] p-1">
-          <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-md">Light</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-md">Dark</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("sunset")} className="rounded-md">Sunset Groove</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("zenith")} className="rounded-md">Zenith</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("system")} className="rounded-md">System</DropdownMenuItem>
-        </DropdownMenuSubContent>
-      </DropdownMenuPortal>
-    </DropdownMenuSub>
-  );
 
   return (
     <SidebarProvider defaultOpen>
@@ -238,7 +249,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     <Settings className="mr-3 h-4 w-4 opacity-60" />
                     <span className="font-medium">Preferences</span>
                   </DropdownMenuItem>
-                  <ThemeSubMenu />
+                  <ThemeSubMenu theme={theme} setTheme={setTheme} />
                   <DropdownMenuSeparator className="my-2 opacity-10" />
                    {!isGuest ? (
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg h-10 px-3">
@@ -269,7 +280,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                           <AvatarFallback>{user.name?.charAt(0) || 'G'}</AvatarFallback>
                         </Avatar>
                          {user.isVerified && (
-                             <Icons.verified className="absolute -bottom-1 -right-1 h-4 w-4" />
+                             <Icons.verified className="absolute -bottom-1 -right-1 h-4 w-4 shadow-sm" />
                           )}
                       </div>
                     </DropdownMenuTrigger>
@@ -283,14 +294,14 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator className="my-2 opacity-10" />
                       <DropdownMenuItem onClick={() => router.push('/profile')} disabled={isGuest} className="rounded-lg h-11">
-                        <UserIcon className="mr-3 h-4 w-4" />
+                        <UserIcon className="mr-3 h-4 w-4 opacity-60" />
                         <span>Profile</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push('/settings')} className="rounded-lg h-11">
                         <Settings className="mr-3 h-4 w-4" />
                         <span>Settings</span>
                       </DropdownMenuItem>
-                      <ThemeSubMenu isMobileVersion />
+                      <ThemeSubMenu theme={theme} setTheme={setTheme} isMobileVersion />
                       <DropdownMenuSeparator className="my-2 opacity-10" />
                       {!isGuest ? (
                         <DropdownMenuItem onClick={handleLogout} className="text-destructive rounded-lg h-11">
