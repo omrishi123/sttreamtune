@@ -29,7 +29,7 @@ interface Particle {
   style: React.CSSProperties;
 }
 
-function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean; isFirstLoad: boolean }) {
+function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
     const [subtitle, setSubtitle] = useState(loadingSubtitles[0]);
     const [particles, setParticles] = useState<Particle[]>([]);
     const [progress, setProgress] = useState(0);
@@ -134,7 +134,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [isReadyForApp, setIsReadyForApp] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState(false);
   
   const { showUpdateDialog, updateUrl, latestVersion, updateNotes } = useAppUpdate();
   const { showRefreshDialog, setShowRefreshDialog } = useRecommendationRefresh();
@@ -149,9 +148,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             setUser(fbUser);
             if (hasSelectedPreferences()) {
                 setIsReadyForApp(true);
-                setIsFirstLoad(false);
             } else if (!isWelcomePage && !isAuthPage) {
-                setIsFirstLoad(true);
                 router.replace('/welcome');
             }
         } else {
@@ -180,7 +177,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         <div className="light-leak leak-3" />
       </div>
       
-      <AnimatedLoadingScreen isVisible={!isReadyForApp} isFirstLoad={isFirstLoad} />
+      <AnimatedLoadingScreen isVisible={!isReadyForApp} />
       
       {isReadyForApp && user ? (
          <div className="transition-opacity duration-1000 ease-in-out opacity-100">
