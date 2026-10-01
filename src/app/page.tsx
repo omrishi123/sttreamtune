@@ -1,10 +1,9 @@
-
-
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { PlaylistCard } from '@/components/playlist-card';
 import { homePagePlaylists } from "@/lib/mock-data";
 import { Button } from '@/components/ui/button';
@@ -133,6 +132,30 @@ const buildUserMusicProfile = (
 };
 // #endregion
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const sectionVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -250,8 +273,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
+    <motion.div 
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={sectionVariants} className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold font-headline tracking-tight">
             Listen Now
@@ -288,10 +316,10 @@ export default function HomePage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-      </div>
+      </motion.div>
 
       {shouldShow('Recommended For You') && (
-        <section>
+        <motion.section variants={sectionVariants}>
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold font-headline">Recommended For You</h2>
                 {recommendedTracks.length > 6 && (
@@ -333,36 +361,41 @@ export default function HomePage() {
                   </CardContent>
               </Card>
             )}
-        </section>
+        </motion.section>
       )}
 
 
       {shouldShow('Featured Playlists') && featuredPlaylists.length > 0 && (
-         <PlaylistSection 
-            title="Featured Playlists" 
-            playlists={featuredPlaylists}
-            viewAllLink="/community"
-          />
+         <motion.div variants={sectionVariants}>
+           <PlaylistSection 
+              title="Featured Playlists" 
+              playlists={featuredPlaylists}
+              viewAllLink="/community"
+            />
+         </motion.div>
       )}
       
       {shouldShow('Community Playlists') && recentCommunityPlaylists.length > 0 && (
-         <PlaylistSection 
-            title="Community Playlists" 
-            playlists={recentCommunityPlaylists}
-            viewAllLink="/community"
-          />
+         <motion.div variants={sectionVariants}>
+           <PlaylistSection 
+              title="Community Playlists" 
+              playlists={recentCommunityPlaylists}
+              viewAllLink="/community"
+            />
+         </motion.div>
       )}
       
       {userGenres.map(genre => shouldShow(genre) && (
-        <PlaylistSection
-            key={genre}
-            title={genre}
-            isPersonalized={true}
-        />
+        <motion.div key={genre} variants={sectionVariants}>
+          <PlaylistSection
+              title={genre}
+              isPersonalized={true}
+          />
+        </motion.div>
       ))}
 
       {shouldShow('Top Artists') && (
-        <section>
+        <motion.section variants={sectionVariants}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold font-headline">Top Artists</h2>
              <Button asChild variant="ghost" size="sm">
@@ -395,17 +428,18 @@ export default function HomePage() {
                 </div>
               ))}
           </div>
-        </section>
+        </motion.section>
       )}
 
       {filteredPlaylists.map(section => (
-         <PlaylistSection 
-            key={section.title}
-            title={section.title} 
-            playlists={section.playlists}
-          />
+         <motion.div key={section.title} variants={sectionVariants}>
+           <PlaylistSection 
+              title={section.title} 
+              playlists={section.playlists}
+            />
+         </motion.div>
       ))}
      
-    </div>
+    </motion.div>
   );
 }

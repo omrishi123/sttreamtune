@@ -181,6 +181,10 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <div className="atmospheric-bg">
+        <div className="light-leak leak-1" />
+        <div className="light-leak leak-2" />
+      </div>
       <AnimatedLoadingScreen isVisible={!isReadyForApp} isFirstLoad={isFirstLoad} />
       
       {isReadyForApp && user ? (
