@@ -1,3 +1,4 @@
+
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -21,12 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'hourly',
       priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/live`,
-      lastModified: new Date(),
-      changeFrequency: 'always',
-      priority: 0.7,
     },
     {
       url: `${baseUrl}/artists`,
