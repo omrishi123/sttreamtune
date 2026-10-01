@@ -18,7 +18,7 @@ import {
   ChevronDown,
   PlusCircle,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/context/player-context";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -42,9 +42,9 @@ import { CustomSleepTimerDialog } from "./custom-sleep-timer-dialog";
 
 const EqualizerBars = ({ isPlaying }: { isPlaying: boolean }) => (
     <div className="flex items-end gap-1 h-4 w-4">
-        <span className={cn("w-1 h-1/3 bg-primary/80 rounded-full", isPlaying && "animate-[bounce_1.2s_ease-in-out_infinite] [animation-delay:-0.2s]")}></span>
-        <span className={cn("w-1 h-full bg-primary rounded-full", isPlaying && "animate-[bounce_1.2s_ease-in-out_infinite]")}></span>
-        <span className={cn("w-1 h-2/3 bg-primary/90 rounded-full", isPlaying && "animate-[bounce_1.2s_ease-in-out_infinite] [animation-delay:0.2s]")}></span>
+        <span className={cn("w-1 h-1/3 bg-primary/80 rounded-full", isPlaying && "animate-[bounce-loader_1.2s_ease-in-out_infinite] [animation-delay:-0.2s]")}></span>
+        <span className={cn("w-1 h-full bg-primary rounded-full", isPlaying && "animate-[bounce-loader_1.2s_ease-in-out_infinite]")}></span>
+        <span className={cn("w-1 h-2/3 bg-primary/90 rounded-full", isPlaying && "animate-[bounce-loader_1.2s_ease-in-out_infinite] [animation-delay:0.2s]")}></span>
     </div>
 );
 
@@ -68,14 +68,18 @@ const FloatingPlayer = () => {
                 dragMomentum={false}
                 className="absolute bottom-24 right-4 pointer-events-auto group"
                 onClick={() => setIsMinimized(false)}
+                whileTap={{ scale: 0.9 }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
             >
-                <div className="relative w-16 h-16 rounded-full shadow-2xl cursor-grab active:cursor-grabbing">
+                <div className="relative w-16 h-16 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.5)] border-2 border-white/20 p-0.5 overflow-hidden glass-panel">
                      <Image
                         src={currentTrack.artwork}
                         alt={currentTrack.title}
                         width={64}
                         height={64}
-                        className="rounded-full object-cover"
+                        className="rounded-full object-cover animate-[spin_10s_linear_infinite]"
                         unoptimized
                     />
                 </div>
@@ -157,7 +161,7 @@ export function Player() {
   if (isMobile) {
     return (
       <>
-       <footer className="fixed bottom-[4.75rem] left-4 right-4 glass-panel px-4 py-3 flex flex-col gap-2 rounded-2xl shadow-2xl z-40">
+       <footer className="fixed bottom-[4.75rem] left-4 right-4 glass-panel px-4 py-3 flex flex-col gap-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] z-40">
         
         {/* Top Row: Song Info & Like/Queue */}
         <div 
@@ -165,15 +169,20 @@ export function Player() {
           onClick={openSheetWithImage}
         >
           <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
-            <Image
-              src={currentTrack.artwork}
-              alt={currentTrack.title}
-              width={40}
-              height={40}
-              className="rounded-md"
-              data-ai-hint={currentTrack['data-ai-hint']}
-              unoptimized
-            />
+            <div className="relative flex-shrink-0">
+                <Image
+                src={currentTrack.artwork}
+                alt={currentTrack.title}
+                width={40}
+                height={40}
+                className={cn("rounded-md transition-transform duration-500", isPlaying && "scale-110")}
+                data-ai-hint={currentTrack['data-ai-hint']}
+                unoptimized
+                />
+                {isPlaying && (
+                    <div className="absolute inset-0 bg-primary/20 rounded-md animate-pulse" />
+                )}
+            </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
               <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
@@ -224,7 +233,7 @@ export function Player() {
             </Button>
             <Button
               size="icon"
-              className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10"
+              className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10 shadow-lg"
               onClick={handlePlayPause}
             >
               {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground" />}
@@ -247,13 +256,13 @@ export function Player() {
 
         {/* Bottom Row: Progress Bar */}
          <div className="flex items-center gap-2 w-full">
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(currentTime)}</span>
+            <span className="text-[10px] tabular-nums text-muted-foreground/60 w-8 text-center">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
               onValueChange={handleSeek}
               className="w-full"
             />
-            <span className="text-xs text-muted-foreground w-10 text-center">{formatTime(duration)}</span>
+            <span className="text-[10px] tabular-nums text-muted-foreground/60 w-8 text-center">{formatTime(duration)}</span>
         </div>
         <NowPlayingSheet isOpen={isNowPlayingOpen} onOpenChange={setIsNowPlayingOpen} />
       </footer>
@@ -264,25 +273,28 @@ export function Player() {
 
   return (
     <>
-    <footer className="fixed bottom-0 left-0 right-0 bg-card/50 border-t border-border/20 px-4 py-2 text-card-foreground shadow-lg z-50 backdrop-blur-xl">
-      <div className="grid grid-cols-[minmax(0,1fr)_2fr_minmax(0,1fr)] items-center w-full">
+    <footer className="fixed bottom-0 left-0 right-0 bg-background/30 border-t border-white/5 px-4 py-3 text-card-foreground shadow-2xl z-50 backdrop-blur-3xl">
+      <div className="grid grid-cols-[minmax(0,1fr)_2fr_minmax(0,1fr)] items-center w-full max-w-[1800px] mx-auto">
         {/* Left Section: Song Info */}
         <div 
-            className="flex items-center gap-3 overflow-hidden min-w-0 cursor-pointer"
+            className="flex items-center gap-4 overflow-hidden min-w-0 cursor-pointer group"
             onClick={openSheetWithImage}
         >
-          <Image
-            src={currentTrack.artwork}
-            alt={currentTrack.title}
-            width={56}
-            height={56}
-            className="rounded-md"
-            data-ai-hint={currentTrack['data-ai-hint']}
-            unoptimized
-          />
+          <div className="relative flex-shrink-0">
+            <Image
+                src={currentTrack.artwork}
+                alt={currentTrack.title}
+                width={56}
+                height={56}
+                className={cn("rounded-lg shadow-lg transition-transform duration-500", isPlaying && "scale-105")}
+                data-ai-hint={currentTrack['data-ai-hint']}
+                unoptimized
+            />
+            {isPlaying && <div className="absolute inset-0 bg-primary/10 rounded-lg animate-pulse" />}
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{currentTrack.title}</p>
-            <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+            <p className="font-bold text-sm truncate group-hover:text-primary transition-colors">{currentTrack.title}</p>
+            <p className="text-xs text-muted-foreground truncate font-medium">{currentTrack.artist}</p>
           </div>
            <Button variant="ghost" size="icon" className="ml-2" onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack); }}>
               <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
@@ -290,48 +302,48 @@ export function Player() {
         </div>
 
         {/* Center Section: Player Controls */}
-        <div className="flex flex-col items-center justify-center gap-2">
-          <div className="flex items-center gap-4">
-             <div className="w-8">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <div className="flex items-center gap-6">
+             <div className="w-10 flex justify-center">
                <EqualizerBars isPlaying={isPlaying} />
              </div>
-            <Button variant="ghost" size="icon" onClick={playPrev}>
+            <Button variant="ghost" size="icon" onClick={playPrev} className="hover:text-primary transition-colors">
               <SkipBack className="h-6 w-6" />
             </Button>
             <Button
               size="icon"
-              className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 w-12 shadow-xl hover:scale-105 active:scale-95 transition-all"
               onClick={handlePlayPause}
             >
-              {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground" />}
+              {isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="h-6 w-6 fill-current" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={playNext}>
+            <Button variant="ghost" size="icon" onClick={playNext} className="hover:text-primary transition-colors">
               <SkipForward className="h-6 w-6" />
             </Button>
-             <div className="w-8" />
+             <div className="w-10" />
           </div>
-          <div className="flex items-center gap-2 w-full max-w-xl">
-            <span className="text-xs text-muted-foreground">{formatTime(currentTime)}</span>
+          <div className="flex items-center gap-3 w-full max-w-xl">
+            <span className="text-[10px] tabular-nums font-bold text-muted-foreground/60">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
               onValueChange={handleSeek}
               className="w-full"
             />
-            <span className="text-xs text-muted-foreground">{formatTime(duration)}</span>
+            <span className="text-[10px] tabular-nums font-bold text-muted-foreground/60">{formatTime(duration)}</span>
           </div>
         </div>
 
         {/* Right Section: Volume and Queue */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-3">
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Timer className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full">
+                  <Timer className="h-5 w-5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2" side="top" align="end">
+              <DropdownMenuContent className="mb-2 glass-panel" side="top" align="end">
                 <DropdownMenuLabel>Sleep Timer</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(15 * 60 * 1000, "15 minutes")}>15 minutes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(30 * 60 * 1000, "30 minutes")}>30 minutes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(60 * 60 * 1000, "1 hour")}>1 hour</DropdownMenuItem>
@@ -341,11 +353,11 @@ export function Player() {
                 }}>
                   End of song
                 </DropdownMenuItem>
-                 <DropdownMenuSeparator />
+                 <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsCustomTimerOpen(true); }}>
                   Custom...
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem onClick={() => handleSetSleepTimer(0, "Off")} className="text-destructive">
                   Turn off timer
                 </DropdownMenuItem>
@@ -353,11 +365,11 @@ export function Player() {
             </DropdownMenu>
            <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon">
-                {isMuted || volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full">
+                {isMuted || volume === 0 ? <VolumeX className="h-5 w-5 opacity-60" /> : <Volume2 className="h-5 w-5 opacity-60" />}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-28 p-2 mb-2">
+            <PopoverContent className="w-28 p-3 mb-4 glass-panel">
               <Slider 
                 defaultValue={[volume]} 
                 max={100} 
@@ -369,12 +381,16 @@ export function Player() {
           <div className="w-10">
               <google-cast-launcher />
           </div>
-          <Button variant="ghost" size="icon" onClick={openSheetWithVideo}>
-              <Youtube className="h-5 w-5" />
+          <Button variant="ghost" size="icon" onClick={openSheetWithVideo} className="hover:bg-white/10 rounded-full">
+              <Youtube className="h-5 w-5 opacity-60" />
           </Button>
-           <AddToPlaylistMenu track={currentTrack} />
-           <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)}>
-              <ChevronDown className="h-5 w-5" />
+           <AddToPlaylistMenu track={currentTrack}>
+                <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full">
+                    <PlusCircle className="h-5 w-5 opacity-60" />
+                </Button>
+           </AddToPlaylistMenu>
+           <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)} className="hover:bg-white/10 rounded-full">
+              <ChevronDown className="h-5 w-5 opacity-60" />
            </Button>
           <QueueSheet />
         </div>

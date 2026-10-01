@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Play, Music, Heart, PlusCircle, Trash2, MoreHorizontal } from "lucide-react";
@@ -88,12 +89,12 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
   return (
     <Table className="border-separate border-spacing-y-1">
       <TableHeader>
-        <TableRow className="border-none hover:bg-transparent">
-          <TableHead className="w-12 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground/60">#</TableHead>
-          <TableHead className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Title</TableHead>
-          <TableHead className="hidden md:table-cell text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Album</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Duration</TableHead>
-          <TableHead className="text-right text-xs font-bold uppercase tracking-widest text-muted-foreground/60 pr-4">
+        <TableRow className="border-none hover:bg-transparent text-muted-foreground/50">
+          <TableHead className="w-12 text-center text-[10px] font-bold uppercase tracking-[0.2em]">#</TableHead>
+          <TableHead className="text-[10px] font-bold uppercase tracking-[0.2em]">Title</TableHead>
+          <TableHead className="hidden md:table-cell text-[10px] font-bold uppercase tracking-[0.2em]">Album</TableHead>
+          <TableHead className="hidden sm:table-cell text-[10px] font-bold uppercase tracking-[0.2em]">Duration</TableHead>
+          <TableHead className="text-right text-[10px] font-bold uppercase tracking-[0.2em] pr-4">
             <span className="sr-only">Actions</span>
           </TableHead>
         </TableRow>
@@ -110,8 +111,8 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
               key={`${track.id}-${index}`}
               ref={isLastElement ? onTrackRendered : null}
               className={cn(
-                "group border-none transition-all duration-200 ease-out",
-                isActive ? "bg-white/10" : "hover:bg-white/5"
+                "group border-none transition-all duration-300 ease-out relative",
+                isActive ? "bg-white/10 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]" : "hover:bg-white/5"
               )}
               onDoubleClick={() => handlePlayTrack(track)}
             >
@@ -120,8 +121,17 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
                   className="relative h-5 flex items-center justify-center cursor-pointer"
                   onClick={() => handlePlayTrack(track)}
                 >
-                  <span className={cn("group-hover:hidden font-medium tabular-nums", isActive ? "text-primary" : "text-muted-foreground/60")}>
-                    {isActive && isPlaying ? <Music className="h-4 w-4 text-primary animate-pulse" /> : index + 1}
+                  <span className={cn(
+                    "group-hover:hidden font-medium tabular-nums transition-colors", 
+                    isActive ? "text-primary" : "text-muted-foreground/60"
+                  )}>
+                    {isActive && isPlaying ? (
+                       <div className="flex items-end gap-0.5 h-3">
+                          <div className="w-0.5 bg-primary animate-[bounce-loader_1s_infinite_ease-in-out_-0.2s]" />
+                          <div className="w-0.5 bg-primary animate-[bounce-loader_1s_infinite_ease-in-out]" />
+                          <div className="w-0.5 bg-primary animate-[bounce-loader_1s_infinite_ease-in-out_0.2s]" />
+                       </div>
+                    ) : index + 1}
                   </span>
                    <Button variant="ghost" size="icon" className="absolute inset-0 h-full w-full hidden group-hover:flex items-center justify-center hover:bg-transparent">
                     <Play className="h-4 w-4 fill-current" />
@@ -129,20 +139,33 @@ export function TrackList({ tracks, playlist, onRemoveTrack, onTrackRendered }: 
                 </div>
               </TableCell>
               <TableCell className="max-w-[200px] sm:max-w-xs break-words">
-                <div className={cn("font-semibold line-clamp-1", isActive ? "text-primary" : "text-foreground")}>{track.title}</div>
-                <div className="text-xs text-muted-foreground font-medium hover:text-foreground transition-colors cursor-pointer">
+                <div className={cn(
+                  "font-semibold line-clamp-1 transition-colors", 
+                  isActive ? "text-primary drop-shadow-[0_0_10px_rgba(var(--primary),0.3)]" : "text-foreground"
+                )}>
+                  {track.title}
+                </div>
+                <div className="text-xs text-muted-foreground font-medium hover:text-foreground transition-colors cursor-pointer inline-block">
                   {track.artist}
                 </div>
               </TableCell>
-              <TableCell className="hidden md:table-cell text-muted-foreground font-medium italic opacity-70">
+              <TableCell className="hidden md:table-cell text-muted-foreground font-medium italic opacity-50">
                 {track.album}
               </TableCell>
-              <TableCell className="hidden sm:table-cell tabular-nums font-medium text-muted-foreground/60">
+              <TableCell className="hidden sm:table-cell tabular-nums font-medium text-muted-foreground/40">
                 {formatDuration(track.duration)}
               </TableCell>
               <TableCell className="text-right rounded-r-xl pr-4">
                 <div className="flex items-center justify-end gap-2">
-                   <Button variant="ghost" size="icon" className={cn("opacity-0 group-hover:opacity-100 transition-all active:scale-90", isTrackLiked && "opacity-100 text-primary")} onClick={() => toggleLike(track)}>
+                   <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn(
+                      "opacity-0 group-hover:opacity-100 transition-all active:scale-90", 
+                      isTrackLiked && "opacity-100 text-primary"
+                    )} 
+                    onClick={() => toggleLike(track)}
+                   >
                       <Heart className={cn("h-4 w-4", isTrackLiked && "fill-current")} />
                    </Button>
                    
