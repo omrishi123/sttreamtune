@@ -36,25 +36,26 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
-        const notes = ["♪", "♫", "♬", "♭"];
+        const notes = ["♪", "♫", "♬", "♭", "𝄞", "♩"];
         const spawnParticle = () => {
             const newParticle: Particle = {
                 id: Date.now() + Math.random(),
                 char: notes[Math.floor(Math.random() * notes.length)],
                 style: {
                     left: `${Math.random() * 100}vw`,
-                    animationDelay: `${Math.random() * 2}s`,
-                    fontSize: `${12 + Math.random() * 18}px`,
+                    animationDelay: `${Math.random() * 1}s`, // Reduced delay for faster start
+                    fontSize: `${14 + Math.random() * 20}px`,
                 },
             };
-            setParticles(prev => [...prev, newParticle].slice(-15));
+            setParticles(prev => [...prev, newParticle].slice(-25)); // Increased particle limit
 
             setTimeout(() => {
                 setParticles(prev => prev.filter(p => p.id !== newParticle.id));
             }, 6000);
         };
         
-        const particleInterval = setInterval(spawnParticle, 400);
+        // Spawn particles more frequently
+        const particleInterval = setInterval(spawnParticle, 200);
         return () => clearInterval(particleInterval);
     }, []);
 
@@ -90,10 +91,10 @@ function AnimatedLoadingScreen({ isVisible }: { isVisible: boolean }) {
             {/* Deep Purple Gradient Background */}
             <div className="fixed inset-0 bg-gradient-to-b from-[#2a004f] via-[#0d001a] to-[#0d001a]"></div>
             
-            {/* Floating Particles at bottom */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden text-white/20">
+            {/* Floating Particles - Pure white and visible */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden text-white/40">
                 {particles.map(p => (
-                    <div key={p.id} className="note absolute bottom-[-30px] opacity-0 animate-float" style={p.style}>
+                    <div key={p.id} className="note absolute bottom-[-40px] animate-float font-bold" style={p.style}>
                         {p.char}
                     </div>
                 ))}
