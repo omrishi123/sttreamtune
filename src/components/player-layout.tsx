@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -302,7 +303,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
         <Player />
         
         {isMobile && (
-          <nav className="fixed bottom-0 left-0 right-0 glass-morphic h-16 z-50 md:hidden flex justify-around items-center px-4">
+          <nav className="fixed bottom-4 left-4 right-4 glass-panel h-16 z-50 md:hidden flex justify-around items-center px-4 rounded-2xl shadow-2xl">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
