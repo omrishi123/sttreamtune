@@ -167,16 +167,21 @@ export function AppTour() {
 
       // Calculate tooltip position
       const isMobile = window.innerWidth < 768;
-      const tooltipWidth = isMobile ? Math.min(340, window.innerWidth - 32) : 320;
+      const tooltipWidth = isMobile ? Math.min(320, window.innerWidth - 48) : 320;
       let tTop = 0;
       let tLeft = 0;
 
       if (isMobile) {
         if (y > window.innerHeight / 2) {
-          tTop = y - 220;
+          // Place ABOVE target (usually player or bottom nav)
+          // Add extra clearance if it's the player area to avoid covering buttons
+          const playerClearance = tourType === 'player' ? 120 : 60;
+          tTop = y - 240 - playerClearance;
         } else {
+          // Place BELOW target
           tTop = y + h + 20;
         }
+        // Center horizontally on mobile
         tLeft = (window.innerWidth - tooltipWidth) / 2;
       } else {
         switch (step.position) {
@@ -189,7 +194,7 @@ export function AppTour() {
             tTop = y + (h / 2) - 100;
             break;
           case 'top':
-            tTop = y - 220;
+            tTop = y - 240;
             tLeft = x + (w / 2) - (tooltipWidth / 2);
             break;
           default: // bottom
@@ -197,14 +202,14 @@ export function AppTour() {
             tLeft = x + (w / 2) - (tooltipWidth / 2);
         }
 
-        // Bound checks
+        // Bound checks for Desktop
         tLeft = Math.max(16, Math.min(tLeft, window.innerWidth - tooltipWidth - 16));
         tTop = Math.max(16, Math.min(tTop, window.innerHeight - 240));
       }
 
       setTooltipPos({ top: tTop, left: tLeft });
     }
-  }, [currentStep, steps]);
+  }, [currentStep, steps, tourType]);
 
   // Initial App Tour Trigger
   useEffect(() => {
@@ -291,15 +296,15 @@ export function AppTour() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -20 }}
           className={cn(
-            "fixed z-[10000] pointer-events-auto w-[calc(100vw-32px)] max-w-[340px]",
-            isCenter && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            "fixed z-[10000] pointer-events-auto",
+            isCenter ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-48px)] max-w-[340px]" : "w-[calc(100vw-48px)] max-w-[320px]"
           )}
           style={!isCenter ? {
             top: tooltipPos.top,
             left: tooltipPos.left,
           } : undefined}
         >
-          <div className="glass-panel p-6 rounded-[2rem] shadow-2xl relative overflow-hidden border-white/20 bg-background/40 backdrop-blur-3xl">
+          <div className="glass-panel p-6 rounded-[2rem] shadow-2xl relative overflow-hidden border-white/20 bg-background/60 backdrop-blur-3xl">
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent opacity-50" />
              
              <div className="flex justify-between items-start mb-4">
@@ -309,7 +314,7 @@ export function AppTour() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white"
+                  className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white h-auto p-0"
                   onClick={handleFinish}
                 >
                   Skip Tour
