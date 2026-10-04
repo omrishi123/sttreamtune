@@ -206,8 +206,12 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                     isOpen={showRefreshDialog}
                     onOpenChange={setShowRefreshDialog}
                   />
-                  <AppTour />
                 </PlayerLayout>
+                {/* 
+                  CRITICAL FIX: Move AppTour here so it is a direct sibling of PlayerLayout.
+                  This ensures it is in the root stacking context and above the player bar.
+                */}
+                <AppTour />
               </PlayerProvider>
             </UserDataProvider>
           </div>

@@ -276,7 +276,7 @@ export function AppTour() {
   const isCenter = step.position === 'center';
 
   return (
-    <div className="fixed inset-0 z-[20000] pointer-events-none">
+    <div className="fixed inset-0 z-[100000] pointer-events-none">
       {/* Background Mask */}
       <div 
         className="tour-spotlight pointer-events-auto"
@@ -285,7 +285,7 @@ export function AppTour() {
           '--y': `${spotlight.y}px`,
           '--w': `${spotlight.w}px`,
           '--h': `${spotlight.h}px`,
-          'zIndex': 19999
+          'zIndex': 100000
         } as React.CSSProperties}
         onClick={handleFinish}
       />
@@ -299,7 +299,7 @@ export function AppTour() {
           height: spotlight.h,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed z-[19999] border-2 border-primary rounded-2xl shadow-[0_0_20px_rgba(var(--primary),0.5)] pointer-events-none"
+        className="fixed z-[100001] border-2 border-primary rounded-2xl shadow-[0_0_20px_rgba(var(--primary),0.5)] pointer-events-none"
       />
 
       <AnimatePresence mode="wait">
@@ -309,7 +309,7 @@ export function AppTour() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -20 }}
           className={cn(
-            "fixed z-[20001] pointer-events-auto",
+            "fixed z-[100002] pointer-events-auto",
             isCenter ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-64px)] max-w-[340px]" : "w-[calc(100vw-64px)] max-w-[320px]"
           )}
           style={!isCenter ? {
