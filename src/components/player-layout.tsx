@@ -107,18 +107,18 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
   };
 
   const [navItems, setNavItems] = useState([
-    { href: "/", label: "Home", icon: Home },
-    { href: "/search", label: "Search", icon: Search },
-    { href: "/recommended", label: "Recommended", icon: Flame },
-    { href: "/library", label: "Library", icon: Library },
-    { href: "/community", label: "Community", icon: Users },
+    { href: "/", label: "Home", icon: Home, tourId: 'home-nav' },
+    { href: "/search", label: "Search", icon: Search, tourId: 'search-nav' },
+    { href: "/recommended", label: "Recommended", icon: Flame, tourId: 'recommended-nav' },
+    { href: "/library", label: "Library", icon: Library, tourId: 'library-nav' },
+    { href: "/community", label: "Community", icon: Users, tourId: 'community-nav' },
   ]);
 
   useEffect(() => {
     if (user?.isAdmin) {
       setNavItems(prev => {
         if (prev.some(item => item.href === '/admin')) return prev;
-        return [...prev, { href: "/admin", label: "Admin", icon: ShieldCheck }];
+        return [...prev, { href: "/admin", label: "Admin", icon: ShieldCheck, tourId: 'admin-nav' }];
       });
     }
   }, [user]);
@@ -162,6 +162,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                       asChild
                       isActive={pathname === item.href}
                       tooltip={item.label}
+                      data-tour={item.tourId}
                       className={cn(
                         "transition-all duration-300 rounded-xl h-11",
                         pathname === item.href ? "bg-primary/10 text-primary shadow-sm" : "hover:bg-foreground/5"
@@ -213,7 +214,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
             </SidebarContent>
             <SidebarFooter className="p-4">
                <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger asChild data-tour="profile-trigger">
                    <button className="flex items-center gap-3 w-full p-2 rounded-2xl hover:bg-foreground/5 transition-all group text-left">
                       <div className="relative">
                         <Avatar className="h-9 w-9 border-2 border-transparent group-hover:border-primary/50 transition-all shadow-md">
@@ -271,7 +272,7 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
                     <span className="font-headline font-bold text-lg">StreamTune</span>
                   </Link>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild data-tour="profile-trigger">
                       <div className="relative">
                         <Avatar className="h-9 w-9 border-2 border-foreground/10">
                           <AvatarImage src={userAvatar} alt={user.name} />
@@ -328,7 +329,12 @@ export function PlayerLayout({ children, user }: PlayerLayoutProps) {
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link key={item.href} href={item.href} className="relative flex flex-col items-center gap-0.5 group">
+                <Link 
+                  key={item.href} 
+                  href={item.href} 
+                  data-tour={item.tourId}
+                  className="relative flex flex-col items-center gap-0.5 group"
+                >
                    {isActive && (
                       <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary rounded-full blur-[1px]" />
                    )}

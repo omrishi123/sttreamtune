@@ -178,7 +178,7 @@ export default function SearchPage() {
         <h1 className="text-4xl font-bold font-headline tracking-tight">Search</h1>
         <form onSubmit={onFormSubmit} className="mt-4">
           <div className="flex gap-2 items-center">
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 max-w-md" data-tour="search-input">
               <Input
                 type="search"
                 placeholder="Search for songs, artists, playlists..."
@@ -190,6 +190,7 @@ export default function SearchPage() {
                 type="button"
                 variant="ghost"
                 size="icon"
+                data-tour="voice-search"
                 className={cn(
                     "absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full text-muted-foreground hover:text-primary transition-colors",
                     isListening && "text-primary"

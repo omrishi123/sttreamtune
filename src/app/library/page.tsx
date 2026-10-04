@@ -228,7 +228,7 @@ export default function LibraryPage() {
     <div className="space-y-4 md:space-y-8">
       <div className="flex justify-between items-center gap-2">
         <h1 className="text-2xl md:text-4xl font-bold font-headline tracking-tight">Your Library</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="library-actions">
             <ImportChannelDialog>
                 <Button variant="outline" size="sm">
                     <Tv className="h-4 w-4 sm:mr-2" />

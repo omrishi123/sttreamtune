@@ -15,6 +15,7 @@ import { hasSelectedPreferences, clearUserPreferences } from "@/lib/preferences"
 import { useRecommendationRefresh } from "@/hooks/use-recommendation-refresh";
 import { RefreshRecommendationsDialog } from "@/components/refresh-recommendations-dialog";
 import { Music } from "lucide-react";
+import { AppTour } from "@/components/app-tour";
 
 const loadingSubtitles = [
     "Tuning your vibe...",
@@ -205,6 +206,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                     isOpen={showRefreshDialog}
                     onOpenChange={setShowRefreshDialog}
                   />
+                  <AppTour />
                 </PlayerLayout>
               </PlayerProvider>
             </UserDataProvider>

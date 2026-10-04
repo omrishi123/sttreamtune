@@ -176,3 +176,24 @@
   0%, 100% { height: 4px; }
   50% { height: 12px; }
 }
+
+.tour-spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  clip-path: polygon(
+    0% 0%, 
+    0% 100%, 
+    var(--x) 100%, 
+    var(--x) var(--y), 
+    calc(var(--x) + var(--w)) var(--y), 
+    calc(var(--x) + var(--w)) calc(var(--y) + var(--h)), 
+    var(--x) calc(var(--y) + var(--h)), 
+    var(--x) 100%, 
+    100% 100%, 
+    100% 0%
+  );
+  transition: clip-path 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
