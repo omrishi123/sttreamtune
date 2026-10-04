@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, X, Sparkles } from 'lucide-react';
+import { ChevronRight, X, Sparkles, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TourStep {
@@ -78,8 +78,10 @@ export function AppTour() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [spotlight, setSpotlight] = useState({ x: 0, y: 0, w: 0, h: 0 });
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
   const router = useRouter();
   const pathname = usePathname();
+  const isNavigating = useRef(false);
 
   const updateSpotlight = useCallback(() => {
     const step = TOUR_STEPS[currentStep];
@@ -91,20 +93,60 @@ export function AppTour() {
     const element = document.querySelector(`[data-tour="${step.target}"]`);
     if (element) {
       const rect = element.getBoundingClientRect();
-      setSpotlight({
-        x: rect.left - 8,
-        y: rect.top - 8,
-        w: rect.width + 16,
-        h: rect.height + 16
-      });
+      const padding = 8;
+      const x = rect.left - padding;
+      const y = rect.top - padding;
+      const w = rect.width + (padding * 2);
+      const h = rect.height + (padding * 2);
+
+      setSpotlight({ x, y, w, h });
+
+      // Calculate tooltip position
+      const isMobile = window.innerWidth < 768;
+      let tTop = 0;
+      let tLeft = 0;
+
+      if (isMobile) {
+        // On mobile, try to center or position away from navigation
+        if (y > window.innerHeight / 2) {
+          tTop = y - 220; // Show above
+        } else {
+          tTop = y + h + 20; // Show below
+        }
+        tLeft = (window.innerWidth - 320) / 2;
+      } else {
+        // Desktop positioning based on step preference
+        switch (step.position) {
+          case 'right':
+            tLeft = x + w + 20;
+            tTop = y + (h / 2) - 100;
+            break;
+          case 'left':
+            tLeft = x - 340;
+            tTop = y + (h / 2) - 100;
+            break;
+          case 'top':
+            tTop = y - 220;
+            tLeft = x + (w / 2) - 160;
+            break;
+          default: // bottom
+            tTop = y + h + 20;
+            tLeft = x + (w / 2) - 160;
+        }
+
+        // Bound checks
+        tLeft = Math.max(20, Math.min(tLeft, window.innerWidth - 340));
+        tTop = Math.max(20, Math.min(tTop, window.innerHeight - 240));
+      }
+
+      setTooltipPos({ top: tTop, left: tLeft });
     }
   }, [currentStep]);
 
   useEffect(() => {
     const tourCompleted = localStorage.getItem('streamtune_tour_completed');
     if (!tourCompleted) {
-      // Start tour after a short delay on mount
-      const timer = setTimeout(() => setIsVisible(true), 2000);
+      const timer = setTimeout(() => setIsVisible(true), 2500);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -114,17 +156,18 @@ export function AppTour() {
 
     const step = TOUR_STEPS[currentStep];
     if (pathname !== step.path) {
+      isNavigating.current = true;
       router.push(step.path);
+    } else {
+      isNavigating.current = false;
+      // Wait for DOM to settle
+      const timer = setTimeout(updateSpotlight, 300);
+      return () => clearTimeout(timer);
     }
 
-    // Wait for navigation and rendering
-    const timer = setTimeout(updateSpotlight, 600);
-    window.addEventListener('resize', updateSpotlight);
-    
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updateSpotlight);
-    };
+    const handleResize = () => updateSpotlight();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [currentStep, isVisible, pathname, router, updateSpotlight]);
 
   const handleNext = () => {
@@ -143,6 +186,7 @@ export function AppTour() {
   if (!isVisible) return null;
 
   const step = TOUR_STEPS[currentStep];
+  const isCenter = step.position === 'center';
 
   return (
     <div className="fixed inset-0 z-[9999] pointer-events-none">
@@ -165,32 +209,33 @@ export function AppTour() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -20 }}
           className={cn(
-            "fixed z-[10000] w-full max-w-[320px] pointer-events-auto",
-            step.position === 'center' ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" :
-            step.position === 'bottom' ? "mt-4" : ""
+            "fixed z-[10000] w-[320px] pointer-events-auto",
+            isCenter && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           )}
-          style={step.position !== 'center' ? {
-            top: step.position === 'bottom' ? spotlight.y + spotlight.h : 'auto',
-            left: step.position === 'right' ? spotlight.x + spotlight.w : 
-                  step.position === 'left' ? spotlight.x - 340 : 
-                  spotlight.x + (spotlight.w / 2) - 160,
-            bottom: step.position === 'top' ? (window.innerHeight - spotlight.y) + 12 : 'auto'
+          style={!isCenter ? {
+            top: tooltipPos.top,
+            left: tooltipPos.left,
           } : undefined}
         >
-          <div className="glass-panel p-6 rounded-[2rem] shadow-2xl relative overflow-hidden border-white/20 bg-background/20 backdrop-blur-3xl">
+          <div className="glass-panel p-6 rounded-[2rem] shadow-2xl relative overflow-hidden border-white/20 bg-background/40 backdrop-blur-3xl">
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent opacity-50" />
              
              <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-primary/20 rounded-xl">
                   <Sparkles className="h-5 w-5 text-primary" />
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handleFinish}>
-                  <X className="h-4 w-4" />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white"
+                  onClick={handleFinish}
+                >
+                  Skip Tour
                 </Button>
              </div>
 
              <h3 className="text-xl font-bold font-headline mb-2 text-white">{step.title}</h3>
-             <p className="text-sm text-white/70 leading-relaxed mb-6">
+             <p className="text-sm text-white/80 leading-relaxed mb-6">
                {step.description}
              </p>
 
@@ -200,7 +245,7 @@ export function AppTour() {
                 </span>
                 <Button 
                   size="sm" 
-                  className="rounded-full font-bold shadow-lg shadow-primary/20 pr-3"
+                  className="rounded-full font-bold shadow-lg shadow-primary/20 px-6 h-10"
                   onClick={handleNext}
                 >
                   {currentStep === TOUR_STEPS.length - 1 ? 'Finish' : 'Next'}

@@ -59,11 +59,6 @@ import { AddPlaylistDialog } from "./add-playlist-dialog";
 import { AppInitializer } from "./app-initializer";
 import { LikeAnimation } from "./LikeAnimation";
 
-interface PlayerLayoutProps {
-  children: React.ReactNode;
-  user: AppUser | null;
-}
-
 const ThemeSubMenu = ({ 
   theme, 
   setTheme, 
