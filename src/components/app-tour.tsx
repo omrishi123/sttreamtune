@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -92,13 +91,6 @@ const PLAYER_TOUR_STEPS: TourStep[] = [
     position: 'top'
   },
   {
-    target: 'player-progress',
-    title: 'Timeline Control',
-    description: 'Slide to any part of the song. See exactly how far you\'ve traveled into the vibe.',
-    path: '',
-    position: 'top'
-  },
-  {
     target: 'player-timer',
     title: 'Sweet Dreams',
     description: 'Set a sleep timer to stop playback automatically—perfect for drifting off.',
@@ -152,8 +144,6 @@ export function AppTour() {
     const step = steps[currentStep];
     if (!step) return;
 
-    // Use querySelectorAll to find ALL matches and pick the most appropriate one
-    // (Helps if there are hidden mobile vs visible desktop targets)
     const elements = document.querySelectorAll(`[data-tour="${step.target}"]`);
     let element: HTMLElement | null = null;
     
@@ -176,7 +166,6 @@ export function AppTour() {
 
       setSpotlight({ x, y, w, h });
 
-      // Calculate tooltip position
       const isMobile = window.innerWidth < 768;
       const tooltipWidth = isMobile ? Math.min(300, window.innerWidth - 64) : 340;
       let tTop = 0;
@@ -184,16 +173,13 @@ export function AppTour() {
 
       if (isMobile) {
         if (y > window.innerHeight / 2) {
-          // Place ABOVE target
           const playerClearance = tourType === 'player' ? 160 : 80;
           tTop = y - 240 - playerClearance;
         } else {
-          // Place BELOW target
           tTop = y + h + 20;
         }
         tLeft = (window.innerWidth - tooltipWidth) / 2;
       } else {
-        // Desktop Precision Logic
         const isPlayerTarget = tourType === 'player' || step.target.startsWith('player-');
         
         switch (step.position) {
@@ -206,7 +192,6 @@ export function AppTour() {
             tTop = y + (h / 2) - 100;
             break;
           case 'top':
-            // High-clearance offset for player targets on desktop
             const offset = isPlayerTarget ? 280 : 240;
             tTop = y - offset;
             tLeft = x + (w / 2) - (tooltipWidth / 2);
@@ -217,7 +202,6 @@ export function AppTour() {
         }
       }
 
-      // GLOBAL CLAMPING: Ensure box is always inside viewport with safety padding
       const horizontalPadding = 16;
       const verticalPadding = 20;
       
@@ -228,7 +212,6 @@ export function AppTour() {
     }
   }, [currentStep, steps, tourType]);
 
-  // Initial App Tour Trigger
   useEffect(() => {
     const appTourCompleted = localStorage.getItem('streamtune_tour_completed');
     if (!appTourCompleted) {
@@ -237,7 +220,6 @@ export function AppTour() {
     }
   }, []);
 
-  // Player Tour Trigger
   useEffect(() => {
     const playerTourCompleted = localStorage.getItem('streamtune_player_tour_completed');
     if (currentTrack && !playerTourCompleted && !isVisible) {
@@ -245,7 +227,7 @@ export function AppTour() {
         setTourType('player');
         setCurrentStep(0);
         setIsVisible(true);
-      }, 1500); // Slightly more delay to let track load
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [currentTrack, isVisible]);
@@ -261,7 +243,7 @@ export function AppTour() {
       router.push(step.path);
     } else {
       isNavigating.current = false;
-      const timer = setTimeout(updateSpotlight, 400); // Smooth delay for target location
+      const timer = setTimeout(updateSpotlight, 400);
       return () => clearTimeout(timer);
     }
 
@@ -295,6 +277,7 @@ export function AppTour() {
 
   return (
     <div className="fixed inset-0 z-[20000] pointer-events-none">
+      {/* Background Mask */}
       <div 
         className="tour-spotlight pointer-events-auto"
         style={{
@@ -305,6 +288,18 @@ export function AppTour() {
           'zIndex': 19999
         } as React.CSSProperties}
         onClick={handleFinish}
+      />
+
+      {/* Visible Glowing Border around the spotlight */}
+      <motion.div
+        animate={{
+          left: spotlight.x,
+          top: spotlight.y,
+          width: spotlight.w,
+          height: spotlight.h,
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="fixed z-[19999] border-2 border-primary rounded-2xl shadow-[0_0_20px_rgba(var(--primary),0.5)] pointer-events-none"
       />
 
       <AnimatePresence mode="wait">

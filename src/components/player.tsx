@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useState } from "react";
@@ -256,7 +255,7 @@ export function Player() {
         </div>
 
         {/* Bottom Row: Progress Bar */}
-         <div className="flex items-center gap-2 w-full" data-tour="player-progress">
+         <div className="flex items-center gap-2 w-full">
             <span className="text-[10px] tabular-nums text-muted-foreground/60 w-8 text-center">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
@@ -324,7 +323,7 @@ export function Player() {
             </Button>
              <div className="w-10" />
           </div>
-          <div className="flex items-center gap-3 w-full max-w-xl" data-tour="player-progress">
+          <div className="flex items-center gap-3 w-full max-w-xl">
             <span className="text-[10px] tabular-nums font-bold text-muted-foreground/60">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
