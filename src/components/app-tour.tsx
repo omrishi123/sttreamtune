@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -149,15 +150,25 @@ export function AppTour() {
 
   const updateSpotlight = useCallback(() => {
     const step = steps[currentStep];
-    if (!step || step.target === 'none') {
-      setSpotlight({ x: 0, y: 0, w: 0, h: 0 });
-      return;
+    if (!step) return;
+
+    // Use querySelectorAll to find ALL matches and pick the most appropriate one
+    // (Helps if there are hidden mobile vs visible desktop targets)
+    const elements = document.querySelectorAll(`[data-tour="${step.target}"]`);
+    let element: HTMLElement | null = null;
+    
+    for (let i = 0; i < elements.length; i++) {
+        const el = elements[i] as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            element = el;
+            break;
+        }
     }
 
-    const element = document.querySelector(`[data-tour="${step.target}"]`);
     if (element) {
       const rect = element.getBoundingClientRect();
-      const padding = 8;
+      const padding = 12;
       const x = rect.left - padding;
       const y = rect.top - padding;
       const w = rect.width + (padding * 2);
@@ -167,23 +178,24 @@ export function AppTour() {
 
       // Calculate tooltip position
       const isMobile = window.innerWidth < 768;
-      const tooltipWidth = isMobile ? Math.min(300, window.innerWidth - 64) : 320;
+      const tooltipWidth = isMobile ? Math.min(300, window.innerWidth - 64) : 340;
       let tTop = 0;
       let tLeft = 0;
 
       if (isMobile) {
         if (y > window.innerHeight / 2) {
-          // Place ABOVE target (usually player or bottom nav)
-          // Aggressive clearance for player to prevent hiding behind it
+          // Place ABOVE target
           const playerClearance = tourType === 'player' ? 160 : 80;
           tTop = y - 240 - playerClearance;
         } else {
           // Place BELOW target
           tTop = y + h + 20;
         }
-        // Center horizontally on mobile
         tLeft = (window.innerWidth - tooltipWidth) / 2;
       } else {
+        // Desktop Precision Logic
+        const isPlayerTarget = tourType === 'player' || step.target.startsWith('player-');
+        
         switch (step.position) {
           case 'right':
             tLeft = x + w + 20;
@@ -194,7 +206,9 @@ export function AppTour() {
             tTop = y + (h / 2) - 100;
             break;
           case 'top':
-            tTop = y - 240;
+            // High-clearance offset for player targets on desktop
+            const offset = isPlayerTarget ? 280 : 240;
+            tTop = y - offset;
             tLeft = x + (w / 2) - (tooltipWidth / 2);
             break;
           default: // bottom
@@ -203,9 +217,12 @@ export function AppTour() {
         }
       }
 
-      // GLOBAL CLAMPING: Ensure box is always inside viewport
-      tLeft = Math.max(16, Math.min(tLeft, window.innerWidth - tooltipWidth - 16));
-      tTop = Math.max(16, Math.min(tTop, window.innerHeight - 260));
+      // GLOBAL CLAMPING: Ensure box is always inside viewport with safety padding
+      const horizontalPadding = 16;
+      const verticalPadding = 20;
+      
+      tLeft = Math.max(horizontalPadding, Math.min(tLeft, window.innerWidth - tooltipWidth - horizontalPadding));
+      tTop = Math.max(verticalPadding, Math.min(tTop, window.innerHeight - 280));
 
       setTooltipPos({ top: tTop, left: tLeft });
     }
@@ -228,7 +245,7 @@ export function AppTour() {
         setTourType('player');
         setCurrentStep(0);
         setIsVisible(true);
-      }, 1000);
+      }, 1500); // Slightly more delay to let track load
       return () => clearTimeout(timer);
     }
   }, [currentTrack, isVisible]);
@@ -244,7 +261,7 @@ export function AppTour() {
       router.push(step.path);
     } else {
       isNavigating.current = false;
-      const timer = setTimeout(updateSpotlight, 300);
+      const timer = setTimeout(updateSpotlight, 400); // Smooth delay for target location
       return () => clearTimeout(timer);
     }
 
@@ -277,7 +294,7 @@ export function AppTour() {
   const isCenter = step.position === 'center';
 
   return (
-    <div className="fixed inset-0 z-[9999] pointer-events-none">
+    <div className="fixed inset-0 z-[20000] pointer-events-none">
       <div 
         className="tour-spotlight pointer-events-auto"
         style={{
@@ -285,6 +302,7 @@ export function AppTour() {
           '--y': `${spotlight.y}px`,
           '--w': `${spotlight.w}px`,
           '--h': `${spotlight.h}px`,
+          'zIndex': 19999
         } as React.CSSProperties}
         onClick={handleFinish}
       />
@@ -296,15 +314,15 @@ export function AppTour() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -20 }}
           className={cn(
-            "fixed z-[10000] pointer-events-auto",
-            isCenter ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-64px)] max-w-[340px]" : "w-[calc(100vw-64px)] max-w-[300px]"
+            "fixed z-[20001] pointer-events-auto",
+            isCenter ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-64px)] max-w-[340px]" : "w-[calc(100vw-64px)] max-w-[320px]"
           )}
           style={!isCenter ? {
             top: tooltipPos.top,
             left: tooltipPos.left,
           } : undefined}
         >
-          <div className="glass-panel p-6 rounded-[2rem] shadow-2xl relative overflow-hidden border-white/20 bg-background/80 backdrop-blur-3xl">
+          <div className="glass-panel p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden border-white/20 bg-background/80 backdrop-blur-3xl">
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent opacity-50" />
              
              <div className="flex justify-between items-start mb-4">

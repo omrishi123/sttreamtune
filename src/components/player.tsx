@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useState } from "react";
@@ -247,9 +248,7 @@ export function Player() {
                         <PlusCircle className="h-5 w-5" />
                     </Button>
                 </AddToPlaylistMenu>
-                <div data-tour="player-queue">
-                    <QueueSheet />
-                </div>
+                <QueueSheet />
                 <Button variant="ghost" size="icon" className="w-8 h-8" data-tour="player-video" onClick={(e) => { e.stopPropagation(); openSheetWithVideo(); }}>
                     <Youtube className="h-5 w-5" />
                 </Button>
@@ -395,9 +394,7 @@ export function Player() {
            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)} className="hover:bg-white/10 rounded-full">
               <ChevronDown className="h-5 w-5 opacity-60" />
            </Button>
-           <div data-tour="player-queue">
-              <QueueSheet />
-           </div>
+           <QueueSheet />
         </div>
       </div>
       <NowPlayingSheet isOpen={isNowPlayingOpen} onOpenChange={setIsNowPlayingOpen} />
