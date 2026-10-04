@@ -136,9 +136,9 @@
   100% { transform: scale(1.1) translate(-5%, 10%); opacity: 0.22; }
 }
 
-/* Premium Satin Glassmorphism - Ultra Transparent Fix */
+/* Premium Satin Glassmorphism - Complete Transparency Fix */
 .glass-panel {
-  @apply bg-background/5 backdrop-blur-3xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+  @apply bg-transparent backdrop-blur-3xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
 }
 
 .light .glass-panel {

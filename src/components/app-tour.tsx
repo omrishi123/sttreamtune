@@ -4,8 +4,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, X, Sparkles, LogOut } from 'lucide-react';
+import { ChevronRight, X, Sparkles, LogOut, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePlayer } from '@/context/player-context';
 
 interface TourStep {
   target: string;
@@ -15,7 +16,7 @@ interface TourStep {
   position: 'bottom' | 'top' | 'left' | 'right' | 'center';
 }
 
-const TOUR_STEPS: TourStep[] = [
+const APP_TOUR_STEPS: TourStep[] = [
   {
     target: 'none',
     title: 'Welcome to StreamTune!',
@@ -74,18 +75,81 @@ const TOUR_STEPS: TourStep[] = [
   }
 ];
 
+const PLAYER_TOUR_STEPS: TourStep[] = [
+  {
+    target: 'player-play',
+    title: 'The Heart of Playback',
+    description: 'Start or stop the music instantly. Tap to feel the rhythm.',
+    path: '',
+    position: 'top'
+  },
+  {
+    target: 'player-next',
+    title: 'Jump Through Time',
+    description: 'Go to the next track or back to a favorite. You control the queue.',
+    path: '',
+    position: 'top'
+  },
+  {
+    target: 'player-progress',
+    title: 'Timeline Control',
+    description: 'Slide to any part of the song. See exactly how far you\'ve traveled into the vibe.',
+    path: '',
+    position: 'top'
+  },
+  {
+    target: 'player-timer',
+    title: 'Sweet Dreams',
+    description: 'Set a sleep timer to stop playback automatically—perfect for drifting off.',
+    path: '',
+    position: 'top'
+  },
+  {
+    target: 'player-like',
+    title: 'Save the Vibe',
+    description: 'Heart a song to add it to your Liked Songs. It also helps us tune your Supermix!',
+    path: '',
+    position: 'top'
+  },
+  {
+    target: 'player-add',
+    title: 'Curate Collections',
+    description: 'Quickly drop the current track into any of your own playlists.',
+    path: '',
+    position: 'top'
+  },
+  {
+    target: 'player-video',
+    title: 'Cinema Mode',
+    description: 'Switch to the official high-def YouTube video experience for an immersive session.',
+    path: '',
+    position: 'top'
+  },
+  {
+    target: 'player-queue',
+    title: 'What\'s Next?',
+    description: 'See your upcoming tracks, reorder them, or clear the deck for something new.',
+    path: '',
+    position: 'top'
+  }
+];
+
 export function AppTour() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [tourType, setTourType] = useState<'app' | 'player'>('app');
   const [spotlight, setSpotlight] = useState({ x: 0, y: 0, w: 0, h: 0 });
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
   const router = useRouter();
   const pathname = usePathname();
+  const { currentTrack } = usePlayer();
   const isNavigating = useRef(false);
 
+  const steps = tourType === 'app' ? APP_TOUR_STEPS : PLAYER_TOUR_STEPS;
+
   const updateSpotlight = useCallback(() => {
-    const step = TOUR_STEPS[currentStep];
-    if (step.target === 'none') {
+    const step = steps[currentStep];
+    if (!step || step.target === 'none') {
       setSpotlight({ x: 0, y: 0, w: 0, h: 0 });
       return;
     }
@@ -103,64 +167,78 @@ export function AppTour() {
 
       // Calculate tooltip position
       const isMobile = window.innerWidth < 768;
+      const tooltipWidth = isMobile ? Math.min(340, window.innerWidth - 32) : 320;
       let tTop = 0;
       let tLeft = 0;
 
       if (isMobile) {
-        // On mobile, try to center or position away from navigation
         if (y > window.innerHeight / 2) {
-          tTop = y - 220; // Show above
+          tTop = y - 220;
         } else {
-          tTop = y + h + 20; // Show below
+          tTop = y + h + 20;
         }
-        tLeft = (window.innerWidth - 320) / 2;
+        tLeft = (window.innerWidth - tooltipWidth) / 2;
       } else {
-        // Desktop positioning based on step preference
         switch (step.position) {
           case 'right':
             tLeft = x + w + 20;
             tTop = y + (h / 2) - 100;
             break;
           case 'left':
-            tLeft = x - 340;
+            tLeft = x - (tooltipWidth + 20);
             tTop = y + (h / 2) - 100;
             break;
           case 'top':
             tTop = y - 220;
-            tLeft = x + (w / 2) - 160;
+            tLeft = x + (w / 2) - (tooltipWidth / 2);
             break;
           default: // bottom
             tTop = y + h + 20;
-            tLeft = x + (w / 2) - 160;
+            tLeft = x + (w / 2) - (tooltipWidth / 2);
         }
 
         // Bound checks
-        tLeft = Math.max(20, Math.min(tLeft, window.innerWidth - 340));
-        tTop = Math.max(20, Math.min(tTop, window.innerHeight - 240));
+        tLeft = Math.max(16, Math.min(tLeft, window.innerWidth - tooltipWidth - 16));
+        tTop = Math.max(16, Math.min(tTop, window.innerHeight - 240));
       }
 
       setTooltipPos({ top: tTop, left: tLeft });
     }
-  }, [currentStep]);
+  }, [currentStep, steps]);
 
+  // Initial App Tour Trigger
   useEffect(() => {
-    const tourCompleted = localStorage.getItem('streamtune_tour_completed');
-    if (!tourCompleted) {
+    const appTourCompleted = localStorage.getItem('streamtune_tour_completed');
+    if (!appTourCompleted) {
       const timer = setTimeout(() => setIsVisible(true), 2500);
       return () => clearTimeout(timer);
     }
   }, []);
 
+  // Player Tour Trigger
+  useEffect(() => {
+    const playerTourCompleted = localStorage.getItem('streamtune_player_tour_completed');
+    if (currentTrack && !playerTourCompleted && !isVisible) {
+      const timer = setTimeout(() => {
+        setTourType('player');
+        setCurrentStep(0);
+        setIsVisible(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTrack, isVisible]);
+
   useEffect(() => {
     if (!isVisible) return;
 
-    const step = TOUR_STEPS[currentStep];
-    if (pathname !== step.path) {
+    const step = steps[currentStep];
+    if (!step) return;
+
+    if (step.path && pathname !== step.path) {
       isNavigating.current = true;
       router.push(step.path);
     } else {
       isNavigating.current = false;
-      // Wait for DOM to settle
       const timer = setTimeout(updateSpotlight, 300);
       return () => clearTimeout(timer);
     }
@@ -168,10 +246,10 @@ export function AppTour() {
     const handleResize = () => updateSpotlight();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [currentStep, isVisible, pathname, router, updateSpotlight]);
+  }, [currentStep, isVisible, pathname, router, updateSpotlight, steps]);
 
   const handleNext = () => {
-    if (currentStep < TOUR_STEPS.length - 1) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       handleFinish();
@@ -180,17 +258,21 @@ export function AppTour() {
 
   const handleFinish = () => {
     setIsVisible(false);
-    localStorage.setItem('streamtune_tour_completed', 'true');
+    if (tourType === 'app') {
+      localStorage.setItem('streamtune_tour_completed', 'true');
+    } else {
+      localStorage.setItem('streamtune_player_tour_completed', 'true');
+    }
   };
 
   if (!isVisible) return null;
 
-  const step = TOUR_STEPS[currentStep];
+  const step = steps[currentStep];
+  if (!step) return null;
   const isCenter = step.position === 'center';
 
   return (
     <div className="fixed inset-0 z-[9999] pointer-events-none">
-      {/* Dynamic Spotlight Overlay */}
       <div 
         className="tour-spotlight pointer-events-auto"
         style={{
@@ -204,12 +286,12 @@ export function AppTour() {
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={currentStep}
+          key={`${tourType}-${currentStep}`}
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -20 }}
           className={cn(
-            "fixed z-[10000] w-[320px] pointer-events-auto",
+            "fixed z-[10000] pointer-events-auto w-[calc(100vw-32px)] max-w-[340px]",
             isCenter && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           )}
           style={!isCenter ? {
@@ -222,7 +304,7 @@ export function AppTour() {
              
              <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-primary/20 rounded-xl">
-                  <Sparkles className="h-5 w-5 text-primary" />
+                  {tourType === 'app' ? <Sparkles className="h-5 w-5 text-primary" /> : <Music className="h-5 w-5 text-primary" />}
                 </div>
                 <Button 
                   variant="ghost" 
@@ -241,14 +323,14 @@ export function AppTour() {
 
              <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">
-                  Step {currentStep + 1} / {TOUR_STEPS.length}
+                  Step {currentStep + 1} / {steps.length}
                 </span>
                 <Button 
                   size="sm" 
                   className="rounded-full font-bold shadow-lg shadow-primary/20 px-6 h-10"
                   onClick={handleNext}
                 >
-                  {currentStep === TOUR_STEPS.length - 1 ? 'Finish' : 'Next'}
+                  {currentStep === steps.length - 1 ? 'Finish' : 'Next'}
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
              </div>

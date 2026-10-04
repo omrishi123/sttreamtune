@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -78,7 +77,7 @@ export function QueueSheet() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" data-tour="player-queue">
           <ListMusic className="h-5 w-5" />
           <span className="sr-only">Open queue</span>
         </Button>

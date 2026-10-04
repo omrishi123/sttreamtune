@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useState } from "react";
@@ -127,8 +126,8 @@ export function Player() {
     }
   };
 
-  const handleSetSleepTimer = (durationMillis: number, label: string) => {
-    setSleepTimer(durationMillis);
+  const handleSetSleepTimer = (durationInMillis: number, label: string) => {
+    setSleepTimer(durationInMillis);
     toast({
       title: label === 'Off' ? "Sleep Timer Off" : "Sleep Timer Set",
       description: label !== 'Off' ? `Playback will stop in ${label}.` : `The sleep timer has been turned off.`,
@@ -192,7 +191,7 @@ export function Player() {
               <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}>
                   <ChevronDown className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack); }}>
+              <Button variant="ghost" size="icon" data-tour="player-like" onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack); }}>
                 <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
               </Button>
           </div>
@@ -202,7 +201,7 @@ export function Player() {
          <div className="flex items-center justify-around w-full">
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-8 h-8">
+                <Button variant="ghost" size="icon" className="w-8 h-8" data-tour="player-timer">
                   <Timer className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
@@ -228,34 +227,35 @@ export function Player() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8">
+            <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8" data-tour="player-prev">
               <SkipBack className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               className="bg-primary hover:bg-primary/90 rounded-full h-10 w-10 shadow-lg"
               onClick={handlePlayPause}
+              data-tour="player-play"
             >
               {isPlaying ? <Pause className="h-6 w-6 text-primary-foreground" /> : <Play className="h-6 w-6 text-primary-foreground" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8">
+            <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8" data-tour="player-next">
               <SkipForward className="h-5 w-5" />
             </Button>
              <div className="flex items-center">
                 <AddToPlaylistMenu track={currentTrack}>
-                     <Button variant="ghost" size="icon" className="w-8 h-8">
+                     <Button variant="ghost" size="icon" className="w-8 h-8" data-tour="player-add">
                         <PlusCircle className="h-5 w-5" />
                     </Button>
                 </AddToPlaylistMenu>
                 <QueueSheet />
-                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={(e) => { e.stopPropagation(); openSheetWithVideo(); }}>
+                <Button variant="ghost" size="icon" className="w-8 h-8" data-tour="player-video" onClick={(e) => { e.stopPropagation(); openSheetWithVideo(); }}>
                     <Youtube className="h-5 w-5" />
                 </Button>
              </div>
         </div>
 
         {/* Bottom Row: Progress Bar */}
-         <div className="flex items-center gap-2 w-full">
+         <div className="flex items-center gap-2 w-full" data-tour="player-progress">
             <span className="text-[10px] tabular-nums text-muted-foreground/60 w-8 text-center">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
@@ -296,7 +296,7 @@ export function Player() {
             <p className="font-bold text-sm truncate group-hover:text-primary transition-colors">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate font-medium">{currentTrack.artist}</p>
           </div>
-           <Button variant="ghost" size="icon" className="ml-2" onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack); }}>
+           <Button variant="ghost" size="icon" className="ml-2" data-tour="player-like" onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack); }}>
               <Heart className={cn("h-5 w-5", isCurrentTrackLiked && "fill-primary text-primary")} />
             </Button>
         </div>
@@ -307,22 +307,23 @@ export function Player() {
              <div className="w-10 flex justify-center">
                <EqualizerBars isPlaying={isPlaying} />
              </div>
-            <Button variant="ghost" size="icon" onClick={playPrev} className="hover:text-primary transition-colors">
+            <Button variant="ghost" size="icon" onClick={playPrev} className="hover:text-primary transition-colors" data-tour="player-prev">
               <SkipBack className="h-6 w-6" />
             </Button>
             <Button
               size="icon"
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 w-12 shadow-xl hover:scale-105 active:scale-95 transition-all"
               onClick={handlePlayPause}
+              data-tour="player-play"
             >
               {isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="h-6 w-6 fill-current" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={playNext} className="hover:text-primary transition-colors">
+            <Button variant="ghost" size="icon" onClick={playNext} className="hover:text-primary transition-colors" data-tour="player-next">
               <SkipForward className="h-6 w-6" />
             </Button>
              <div className="w-10" />
           </div>
-          <div className="flex items-center gap-3 w-full max-w-xl">
+          <div className="flex items-center gap-3 w-full max-w-xl" data-tour="player-progress">
             <span className="text-[10px] tabular-nums font-bold text-muted-foreground/60">{formatTime(currentTime)}</span>
             <Slider
               value={[progress]}
@@ -337,7 +338,7 @@ export function Player() {
         <div className="flex items-center justify-end gap-3">
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full">
+                <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full" data-tour="player-timer">
                   <Timer className="h-5 w-5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
@@ -381,11 +382,11 @@ export function Player() {
           <div className="w-10">
               <google-cast-launcher />
           </div>
-          <Button variant="ghost" size="icon" onClick={openSheetWithVideo} className="hover:bg-white/10 rounded-full">
+          <Button variant="ghost" size="icon" onClick={openSheetWithVideo} className="hover:bg-white/10 rounded-full" data-tour="player-video">
               <Youtube className="h-5 w-5 opacity-60" />
           </Button>
            <AddToPlaylistMenu track={currentTrack}>
-                <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full">
+                <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full" data-tour="player-add">
                     <PlusCircle className="h-5 w-5 opacity-60" />
                 </Button>
            </AddToPlaylistMenu>
