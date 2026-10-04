@@ -227,7 +227,7 @@ export function Player() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8" data-tour="player-prev">
+            <Button variant="ghost" size="icon" onClick={playPrev} className="w-8 h-8">
               <SkipBack className="h-5 w-5" />
             </Button>
             <Button
@@ -247,7 +247,9 @@ export function Player() {
                         <PlusCircle className="h-5 w-5" />
                     </Button>
                 </AddToPlaylistMenu>
-                <QueueSheet />
+                <div data-tour="player-queue">
+                    <QueueSheet />
+                </div>
                 <Button variant="ghost" size="icon" className="w-8 h-8" data-tour="player-video" onClick={(e) => { e.stopPropagation(); openSheetWithVideo(); }}>
                     <Youtube className="h-5 w-5" />
                 </Button>
@@ -307,7 +309,7 @@ export function Player() {
              <div className="w-10 flex justify-center">
                <EqualizerBars isPlaying={isPlaying} />
              </div>
-            <Button variant="ghost" size="icon" onClick={playPrev} className="hover:text-primary transition-colors" data-tour="player-prev">
+            <Button variant="ghost" size="icon" onClick={playPrev} className="hover:text-primary transition-colors">
               <SkipBack className="h-6 w-6" />
             </Button>
             <Button
@@ -393,7 +395,9 @@ export function Player() {
            <Button variant="ghost" size="icon" onClick={() => setIsMinimized(true)} className="hover:bg-white/10 rounded-full">
               <ChevronDown className="h-5 w-5 opacity-60" />
            </Button>
-          <QueueSheet />
+           <div data-tour="player-queue">
+              <QueueSheet />
+           </div>
         </div>
       </div>
       <NowPlayingSheet isOpen={isNowPlayingOpen} onOpenChange={setIsNowPlayingOpen} />

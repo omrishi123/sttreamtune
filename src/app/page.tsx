@@ -280,7 +280,7 @@ export default function HomePage() {
       animate="visible"
     >
       <motion.div variants={sectionVariants} className="flex justify-between items-center">
-        <div>
+        <div data-tour="home-header">
           <h1 className="text-4xl font-bold font-headline tracking-tight">
             Listen Now
           </h1>

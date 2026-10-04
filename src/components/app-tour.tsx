@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, X, Sparkles, LogOut, Music } from 'lucide-react';
+import { ChevronRight, X, Sparkles, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePlayer } from '@/context/player-context';
 
@@ -18,11 +18,11 @@ interface TourStep {
 
 const APP_TOUR_STEPS: TourStep[] = [
   {
-    target: 'none',
+    target: 'home-header',
     title: 'Welcome to StreamTune!',
     description: "Let's take a quick look at how to get the most out of your new music experience.",
     path: '/',
-    position: 'center'
+    position: 'bottom'
   },
   {
     target: 'profile-trigger',
@@ -86,7 +86,7 @@ const PLAYER_TOUR_STEPS: TourStep[] = [
   {
     target: 'player-next',
     title: 'Jump Through Time',
-    description: 'Go to the next track or back to a favorite. You control the queue.',
+    description: 'Go to the next track. You control the queue.',
     path: '',
     position: 'top'
   },
@@ -167,15 +167,15 @@ export function AppTour() {
 
       // Calculate tooltip position
       const isMobile = window.innerWidth < 768;
-      const tooltipWidth = isMobile ? Math.min(320, window.innerWidth - 48) : 320;
+      const tooltipWidth = isMobile ? Math.min(300, window.innerWidth - 64) : 320;
       let tTop = 0;
       let tLeft = 0;
 
       if (isMobile) {
         if (y > window.innerHeight / 2) {
           // Place ABOVE target (usually player or bottom nav)
-          // Add extra clearance if it's the player area to avoid covering buttons
-          const playerClearance = tourType === 'player' ? 120 : 60;
+          // Aggressive clearance for player to prevent hiding behind it
+          const playerClearance = tourType === 'player' ? 160 : 80;
           tTop = y - 240 - playerClearance;
         } else {
           // Place BELOW target
@@ -201,11 +201,11 @@ export function AppTour() {
             tTop = y + h + 20;
             tLeft = x + (w / 2) - (tooltipWidth / 2);
         }
-
-        // Bound checks for Desktop
-        tLeft = Math.max(16, Math.min(tLeft, window.innerWidth - tooltipWidth - 16));
-        tTop = Math.max(16, Math.min(tTop, window.innerHeight - 240));
       }
+
+      // GLOBAL CLAMPING: Ensure box is always inside viewport
+      tLeft = Math.max(16, Math.min(tLeft, window.innerWidth - tooltipWidth - 16));
+      tTop = Math.max(16, Math.min(tTop, window.innerHeight - 260));
 
       setTooltipPos({ top: tTop, left: tLeft });
     }
@@ -297,14 +297,14 @@ export function AppTour() {
           exit={{ opacity: 0, scale: 0.9, y: -20 }}
           className={cn(
             "fixed z-[10000] pointer-events-auto",
-            isCenter ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-48px)] max-w-[340px]" : "w-[calc(100vw-48px)] max-w-[320px]"
+            isCenter ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-64px)] max-w-[340px]" : "w-[calc(100vw-64px)] max-w-[300px]"
           )}
           style={!isCenter ? {
             top: tooltipPos.top,
             left: tooltipPos.left,
           } : undefined}
         >
-          <div className="glass-panel p-6 rounded-[2rem] shadow-2xl relative overflow-hidden border-white/20 bg-background/60 backdrop-blur-3xl">
+          <div className="glass-panel p-6 rounded-[2rem] shadow-2xl relative overflow-hidden border-white/20 bg-background/80 backdrop-blur-3xl">
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent opacity-50" />
              
              <div className="flex justify-between items-start mb-4">
