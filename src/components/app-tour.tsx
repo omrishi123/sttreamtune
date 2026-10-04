@@ -299,7 +299,7 @@ export function AppTour() {
           height: spotlight.h,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed z-[100001] border-2 border-primary rounded-2xl shadow-[0_0_20px_rgba(var(--primary),0.5)] pointer-events-none"
+        className="fixed z-[100001] border-2 border-primary rounded-2xl shadow-[0_0_30px_rgba(var(--primary),0.8)] pointer-events-none"
       />
 
       <AnimatePresence mode="wait">
@@ -317,7 +317,7 @@ export function AppTour() {
             left: tooltipPos.left,
           } : undefined}
         >
-          <div className="glass-panel p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden border-white/20 bg-background/80 backdrop-blur-3xl">
+          <div className="glass-panel p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden border-white/20 bg-background/90 backdrop-blur-3xl">
              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent opacity-50" />
              
              <div className="flex justify-between items-start mb-4">
@@ -335,7 +335,7 @@ export function AppTour() {
              </div>
 
              <h3 className="text-xl font-bold font-headline mb-2 text-white">{step.title}</h3>
-             <p className="text-sm text-white/80 leading-relaxed mb-6">
+             <p className="text-sm text-white/90 leading-relaxed mb-6">
                {step.description}
              </p>
 
